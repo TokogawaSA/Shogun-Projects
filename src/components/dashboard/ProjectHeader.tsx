@@ -11,8 +11,7 @@ import {
   Check
 } from 'lucide-react';
 import clsx from 'clsx';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '../../services/firebase';
+import { apiClient } from '../../services/api';
 import { useProject } from '../../context/ProjectContext';
 import { useAuth } from '../../context/AuthContext';
 import { Project } from '../../types';
@@ -52,11 +51,9 @@ export const ProjectHeader: React.FC = () => {
     };
 
     try {
-      // Save to Firestore
-      const projRef = doc(db, 'projects', newId);
-      await setDoc(projRef, createdProject);
+      await apiClient.post('/projects', createdProject);
     } catch (err) {
-      console.warn('Firestore project save fallback:', err);
+      console.warn('Project save fallback:', err);
     }
 
     setProjects((prev) => [createdProject, ...prev]);
@@ -131,7 +128,7 @@ export const ProjectHeader: React.FC = () => {
           </div>
 
           <p className="text-xs text-slate-400 mt-0.5 max-w-xl line-clamp-1">
-            {activeProject?.description || 'Collaborative workspace synchronized via Cloud Firestore'}
+            {activeProject?.description || 'Collaborative workspace synchronized via Antigravity REST Platform'}
           </p>
         </div>
       </div>

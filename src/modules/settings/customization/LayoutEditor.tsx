@@ -9,8 +9,7 @@ import {
   Loader2,
   Edit3,
 } from 'lucide-react';
-import { onSnapshot, doc, setDoc } from 'firebase/firestore';
-import { db } from '../../../services/firebase';
+import { apiClient } from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import {
   LayoutBlock,
@@ -47,20 +46,19 @@ export const LayoutEditor: React.FC = () => {
 
   // Load Schema for Selected Module
   useEffect(() => {
+    let isMounted = true;
     setLoading(true);
-    const schemaDocRef = doc(db, `tenants/${tenantId}/module_schemas`, selectedModule);
 
-    const unsubscribe = onSnapshot(
-      schemaDocRef,
-      (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data() as ModuleSchema;
+    const loadSchema = async () => {
+      try {
+        const data = await apiClient.get<ModuleSchema>(`/settings/schemas/${selectedModule}`).catch(() => null);
+        if (data && isMounted) {
           setBlocks(data.blocks || []);
           setFields(data.fields || []);
           if (data.blocks && data.blocks.length > 0 && !newFieldBlockId) {
             setNewFieldBlockId(data.blocks[0].blockId);
           }
-        } else {
+        } else if (isMounted) {
           // Default initial schema layout
           const defaultBlocks: LayoutBlock[] = [
             { blockId: 'blk_core', label: 'Primary Information', sortOrder: 1, isCollapsible: false },
@@ -80,14 +78,17 @@ export const LayoutEditor: React.FC = () => {
           setFields(defaultFields);
           setNewFieldBlockId(defaultBlocks[0].blockId);
         }
-        setLoading(false);
-      },
-      () => {
-        setLoading(false);
+      } catch {
+        // Continue
+      } finally {
+        if (isMounted) setLoading(false);
       }
-    );
+    };
 
-    return () => unsubscribe();
+    loadSchema();
+    return () => {
+      isMounted = false;
+    };
   }, [tenantId, selectedModule, newFieldBlockId]);
 
   const handleAddBlock = (e: React.FormEvent) => {
@@ -118,7 +119,7 @@ export const LayoutEditor: React.FC = () => {
     if (!newFieldLabel.trim() || !newFieldBlockId) return;
 
     const newField: CustomField = {
-      fieldId: `cf_${Date.now()}`,
+      fieldId: `field_${Date.now()}`,
       blockId: newFieldBlockId,
       label: newFieldLabel.trim(),
       type: newFieldType,
@@ -163,11 +164,7 @@ export const LayoutEditor: React.FC = () => {
     };
 
     try {
-      await setDoc(
-        doc(db, `tenants/${tenantId}/module_schemas`, selectedModule),
-        schemaData,
-        { merge: true }
-      );
+      await apiClient.post(`/settings/schemas/${selectedModule}`, schemaData);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
@@ -182,8 +179,8 @@ export const LayoutEditor: React.FC = () => {
       {/* Header & Module Switcher */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-            <TableProperties className="w-5 h-5 text-indigo-400" />
+          <h2 className="text-xl font-bold text-slate-100 tracking-tight flex items-center gap-2">
+            <TableProperties className="w-5 h-5 text-indigo-600" />
             Layout & Custom Fields Designer
           </h2>
           <p className="text-xs text-slate-400">
@@ -197,7 +194,7 @@ export const LayoutEditor: React.FC = () => {
             <select
               value={selectedModule}
               onChange={(e) => setSelectedModule(e.target.value as SupportedModule)}
-              className="bg-transparent text-xs font-bold text-indigo-300 focus:outline-none cursor-pointer"
+              className="bg-transparent text-xs font-bold text-indigo-600 focus:outline-none cursor-pointer"
             >
               <option value="deals">Deals Pipeline</option>
               <option value="accounts">Client Accounts</option>
@@ -208,7 +205,7 @@ export const LayoutEditor: React.FC = () => {
           </div>
 
           {saveSuccess && (
-            <span className="text-xs text-emerald-400 flex items-center gap-1 font-semibold">
+            <span className="text-xs text-emerald-600 flex items-center gap-1 font-semibold">
               <CheckCircle2 className="w-4 h-4" /> Saved!
             </span>
           )}
@@ -216,7 +213,7 @@ export const LayoutEditor: React.FC = () => {
           <button
             onClick={handleSaveSchema}
             disabled={saving}
-            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-2"
+            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 flex items-center gap-2"
           >
             {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
             <span>{saving ? 'Saving Schema...' : 'Save Schema Layout'}</span>
@@ -232,7 +229,7 @@ export const LayoutEditor: React.FC = () => {
           className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center gap-3 backdrop-blur-md"
         >
           <div className="flex-1 space-y-1">
-            <label className="text-[11px] font-semibold text-slate-300 font-mono uppercase">
+            <label className="text-[11px] font-semibold text-slate-200 font-mono uppercase">
               Add Layout Block
             </label>
             <input
@@ -240,14 +237,14 @@ export const LayoutEditor: React.FC = () => {
               placeholder="e.g. Warranty & Contract Terms"
               value={newBlockLabel}
               onChange={(e) => setNewBlockLabel(e.target.value)}
-              className="w-full px-3 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              className="w-full px-3 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500"
             />
           </div>
           <button
             type="submit"
-            className="mt-4 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-white transition-all flex items-center gap-1"
+            className="mt-4 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-100 transition-all flex items-center gap-1"
           >
-            <Plus className="w-3.5 h-3.5 text-indigo-400" />
+            <Plus className="w-3.5 h-3.5 text-indigo-600" />
             <span>Create Block</span>
           </button>
         </form>
@@ -335,8 +332,8 @@ export const LayoutEditor: React.FC = () => {
                 {/* Block Header */}
                 <div className="px-5 py-3.5 bg-slate-800/60 border-b border-slate-800 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-indigo-400" />
-                    <h3 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
+                    <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                    <h3 className="text-xs font-bold text-slate-100 uppercase tracking-wider font-mono">
                       {block.label}
                     </h3>
                     <span className="text-[10px] px-2 py-0.2 rounded-full bg-slate-800 text-slate-400 font-mono">
@@ -346,7 +343,7 @@ export const LayoutEditor: React.FC = () => {
 
                   <button
                     onClick={() => handleRemoveBlock(block.blockId)}
-                    className="text-slate-500 hover:text-rose-400 p-1 transition-colors"
+                    className="text-slate-400 hover:text-rose-600 p-1 transition-colors"
                     title="Delete Block"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -356,7 +353,7 @@ export const LayoutEditor: React.FC = () => {
                 {/* Block Fields Grid */}
                 <div className="p-5">
                   {blockFields.length === 0 ? (
-                    <div className="p-4 rounded-xl border border-dashed border-slate-800 text-center text-[11px] text-slate-500 font-mono">
+                    <div className="p-4 rounded-xl border border-dashed border-slate-800 text-center text-[11px] text-slate-400 font-mono">
                       Drag or insert custom fields into this block.
                     </div>
                   ) : (
@@ -368,13 +365,13 @@ export const LayoutEditor: React.FC = () => {
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <p className="text-xs font-bold text-white">{field.label}</p>
+                              <p className="text-xs font-bold text-slate-100">{field.label}</p>
                               <div className="flex items-center gap-2 mt-1">
-                                <span className="text-[10px] px-2 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono uppercase">
+                                <span className="text-[10px] px-2 py-0.2 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 font-mono uppercase font-semibold">
                                   {field.type}
                                 </span>
                                 {field.isRequired && (
-                                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 font-mono font-semibold">
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-50 text-rose-700 border border-rose-200 font-mono font-semibold">
                                     Required
                                   </span>
                                 )}
@@ -383,7 +380,7 @@ export const LayoutEditor: React.FC = () => {
 
                             <button
                               onClick={() => handleRemoveField(field.fieldId)}
-                              className="text-slate-500 hover:text-rose-400 p-1 opacity-60 group-hover/field:opacity-100 transition-opacity"
+                              className="text-slate-400 hover:text-rose-600 p-1 opacity-60 group-hover/field:opacity-100 transition-opacity"
                               title="Delete Field"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -394,10 +391,10 @@ export const LayoutEditor: React.FC = () => {
                           {field.type === 'picklist' && (
                             <button
                               onClick={() => openPicklistModalForField(field)}
-                              className="w-full py-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-[11px] font-semibold text-indigo-300 hover:text-white flex items-center justify-between transition-colors"
+                              className="w-full py-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-[11px] font-semibold text-indigo-700 hover:text-indigo-900 flex items-center justify-between transition-colors"
                             >
                               <span className="flex items-center gap-1.5">
-                                <ListFilter className="w-3 h-3 text-indigo-400" />
+                                <ListFilter className="w-3 h-3 text-indigo-600" />
                                 <span>Options ({field.picklistValues?.length || 0})</span>
                               </span>
                               <Edit3 className="w-3 h-3 text-slate-400" />

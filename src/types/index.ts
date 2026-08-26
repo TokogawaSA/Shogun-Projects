@@ -71,6 +71,23 @@ export interface Task {
   // Subtasks list
   subtasks?: SubTask[];
 
+  // Multi-Level Sub-Task Hierarchy (nested parent/child tree)
+  parentTaskId?: string | null;
+
+  // Milestones & Dependencies
+  milestoneId?: string | null;
+  predecessorTaskIds?: string[];
+
+  // Time Tracking & Costing
+  estimatedHours?: number;
+  actualHours?: number; // derived from TimeLogs
+  isRecurring?: boolean;
+  recurrenceRule?: 'daily' | 'weekly' | 'monthly';
+  timeLogs?: import('./catalogAndProjects').TimeLog[];
+
+  // Catalog & Deliverable Linkage
+  lineItemId?: string | null;
+
   // Optional extensions for UI state and telemetry
   category?: TaskCategory | string;
   assignedAgent?: AgentType | string;
@@ -109,3 +126,5 @@ export interface Lead {
 // Re-export CRM Modular types
 export * from './crm';
 export * from './settings';
+export * from './ppm';
+export * from './catalogAndProjects';

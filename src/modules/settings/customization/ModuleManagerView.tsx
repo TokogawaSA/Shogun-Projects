@@ -12,8 +12,7 @@ import {
   DollarSign,
   Loader2,
 } from 'lucide-react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../../services/firebase';
+import { apiClient } from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import { ActiveModules, SupportedModule } from '../../../types/settings';
 
@@ -37,12 +36,9 @@ export const ModuleManagerView: React.FC = () => {
     const fetchSystemConfig = async () => {
       setLoading(true);
       try {
-        const configDoc = await getDoc(doc(db, `tenants/${tenantId}/config/system`));
-        if (configDoc.exists()) {
-          const data = configDoc.data();
-          if (data.activeModules) {
-            setActiveModules(data.activeModules as ActiveModules);
-          }
+        const data = await apiClient.get<any>('/settings/system').catch(() => null);
+        if (data && data.activeModules) {
+          setActiveModules(data.activeModules as ActiveModules);
         }
       } catch (err) {
         console.warn('Using default active modules state:', err);
@@ -66,15 +62,11 @@ export const ModuleManagerView: React.FC = () => {
     setSaveSuccess(false);
 
     try {
-      await setDoc(
-        doc(db, `tenants/${tenantId}/config/system`),
-        {
-          activeModules,
-          updatedAt: new Date().toISOString(),
-          updatedBy: user?.uid || 'system',
-        },
-        { merge: true }
-      );
+      await apiClient.post('/settings/system', {
+        activeModules,
+        updatedAt: new Date().toISOString(),
+        updatedBy: user?.uid || 'system',
+      });
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
@@ -133,8 +125,8 @@ export const ModuleManagerView: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-            <Layers className="w-5 h-5 text-indigo-400" />
+          <h2 className="text-xl font-bold text-slate-100 tracking-tight flex items-center gap-2">
+            <Layers className="w-5 h-5 text-indigo-600" />
             Module Manager
           </h2>
           <p className="text-xs text-slate-400">
@@ -144,14 +136,14 @@ export const ModuleManagerView: React.FC = () => {
 
         <div className="flex items-center gap-3">
           {saveSuccess && (
-            <span className="text-xs text-emerald-400 flex items-center gap-1 font-semibold">
+            <span className="text-xs text-emerald-600 flex items-center gap-1 font-semibold">
               <CheckCircle2 className="w-4 h-4" /> Configuration Saved!
             </span>
           )}
           <button
             onClick={handleSaveModules}
             disabled={saving}
-            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-2"
+            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 flex items-center gap-2"
           >
             {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
             <span>{saving ? 'Saving...' : 'Save Configuration'}</span>
@@ -162,7 +154,7 @@ export const ModuleManagerView: React.FC = () => {
       {/* Module Grid */}
       {loading ? (
         <div className="p-12 text-center text-slate-400">
-          <Loader2 className="w-6 h-6 animate-spin text-indigo-400 mx-auto mb-2" />
+          <Loader2 className="w-6 h-6 animate-spin text-indigo-600 mx-auto mb-2" />
           <p className="text-xs">Loading module states...</p>
         </div>
       ) : (
@@ -180,15 +172,15 @@ export const ModuleManagerView: React.FC = () => {
                   <div
                     className={`w-10 h-10 rounded-xl flex items-center justify-center border flex-shrink-0 ${mod.accentColor}`}
                   >
-                    <Icon className="w-5 h-5" />
+                    <Icon className="w-5 h-5 text-white" />
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-bold text-white truncate">{mod.name}</h3>
+                      <h3 className="text-sm font-bold text-slate-100 truncate">{mod.name}</h3>
                       <span
                         className={`text-[10px] px-2 py-0.2 rounded-full font-mono font-semibold ${
                           isActive
-                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             : 'bg-slate-800 text-slate-400 border border-slate-700'
                         }`}
                       >

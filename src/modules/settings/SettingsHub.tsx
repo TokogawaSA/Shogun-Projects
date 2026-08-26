@@ -94,7 +94,7 @@ const HubCard: React.FC<HubCardProps> = ({
             <Icon className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+            <h3 className="text-base font-bold text-slate-100 tracking-tight flex items-center gap-2">
               {title}
             </h3>
             <p className="text-xs text-slate-400 leading-relaxed">{description}</p>
@@ -112,20 +112,20 @@ const HubCard: React.FC<HubCardProps> = ({
               to={link.to}
               className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/50 hover:border-slate-600 transition-all duration-150 group/item"
             >
-              <div className="p-2 rounded-lg bg-slate-700/50 text-slate-300 group-hover/item:text-indigo-400 group-hover/item:bg-indigo-500/10 transition-colors">
+              <div className="p-2 rounded-lg bg-slate-700/50 text-slate-300 group-hover/item:text-indigo-600 group-hover/item:bg-indigo-50 transition-colors">
                 <LinkIcon className="w-4 h-4" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-1">
-                  <span className="text-xs font-semibold text-slate-200 group-hover/item:text-white truncate">
+                  <span className="text-xs font-semibold text-slate-200 group-hover/item:text-indigo-600 truncate">
                     {link.label}
                   </span>
                   {link.badge && (
-                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
                       {link.badge}
                     </span>
                   )}
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover/item:text-indigo-400 group-hover/item:translate-x-0.5 transition-all opacity-0 group-hover/item:opacity-100 flex-shrink-0" />
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover/item:text-indigo-600 group-hover/item:translate-x-0.5 transition-all opacity-0 group-hover/item:opacity-100 flex-shrink-0" />
                 </div>
                 <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
                   {link.description}
@@ -317,11 +317,11 @@ export const SettingsHub: React.FC = () => {
               <span className="text-[10px] font-mono uppercase px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
                 VTiger-Style Administration Hub
               </span>
-              <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
+              <span className="text-[10px] font-mono text-emerald-600 flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3" /> Tenant Isolated
               </span>
             </div>
-            <h1 className="text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
+            <h1 className="text-2xl lg:text-3xl font-extrabold text-slate-100 tracking-tight">
               Platform & CRM Settings
             </h1>
             <p className="text-sm text-slate-300 leading-relaxed">
@@ -338,7 +338,7 @@ export const SettingsHub: React.FC = () => {
                 placeholder="Search settings modules..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 text-xs bg-slate-900/90 border border-slate-700/80 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-sans shadow-lg"
+                className="w-full pl-9 pr-4 py-2.5 text-xs bg-slate-900/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-sans shadow-sm"
               />
             </div>
           </div>
@@ -347,39 +347,39 @@ export const SettingsHub: React.FC = () => {
         {/* Quick Metric Bar */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-slate-800/80">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20">
+            <div className="p-2 rounded-lg bg-sky-50 text-sky-700 border border-sky-200">
               <Users className="w-4 h-4" />
             </div>
             <div>
               <p className="text-xs text-slate-400">Access Control</p>
-              <p className="text-sm font-bold text-white font-mono">RBAC + Field Security</p>
+              <p className="text-sm font-bold text-slate-100 font-mono">RBAC + Field Security</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+            <div className="p-2 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200">
               <Layers className="w-4 h-4" />
             </div>
             <div>
               <p className="text-xs text-slate-400">Active Modules</p>
-              <p className="text-sm font-bold text-white font-mono">5 Core Modules</p>
+              <p className="text-sm font-bold text-slate-100 font-mono">5 Core Modules</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <div className="p-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
               <Zap className="w-4 h-4" />
             </div>
             <div>
               <p className="text-xs text-slate-400">Workflow Engine</p>
-              <p className="text-sm font-bold text-white font-mono">Serverless Gen 2</p>
+              <p className="text-sm font-bold text-slate-100 font-mono">Serverless Gen 2</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <div className="p-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
               <Mail className="w-4 h-4" />
             </div>
             <div>
               <p className="text-xs text-slate-400">Email Gateway</p>
-              <p className="text-sm font-bold text-white font-mono">SMTP / SendGrid</p>
+              <p className="text-sm font-bold text-slate-100 font-mono">SMTP / SendGrid</p>
             </div>
           </div>
         </div>

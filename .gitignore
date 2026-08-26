@@ -6,8 +6,11 @@ functions/node_modules
 # Build outputs
 dist
 dist-ssr
+server/dist
 *.local
 functions/lib
+*.zip
+*.timestamp-*.mjs
 
 # Environment Variables
 .env

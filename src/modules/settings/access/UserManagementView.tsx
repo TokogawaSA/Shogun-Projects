@@ -13,9 +13,7 @@ import {
   AlertCircle,
   KeyRound
 } from 'lucide-react';
-import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
-import { httpsCallable } from 'firebase/functions';
-import { db, functions } from '../../../services/firebase';
+import { apiClient } from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 
 interface TenantUserRecord {
@@ -48,22 +46,17 @@ export const UserManagementView: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
-  // Load users from Firestore with fallback
+  // Load users
   useEffect(() => {
+    let isMounted = true;
     setLoading(true);
-    const usersRef = collection(db, `tenants/${tenantId}/users`);
 
-    const unsubscribe = onSnapshot(
-      usersRef,
-      (snapshot) => {
-        if (!snapshot.empty) {
-          const loaded: TenantUserRecord[] = snapshot.docs.map((docSnap) => ({
-            uid: docSnap.id,
-            ...(docSnap.data() as Omit<TenantUserRecord, 'uid'>),
-          }));
-          setUsersList(loaded);
-        } else {
-          // Provide default seed list if tenant is freshly initialized
+    const loadUsers = async () => {
+      try {
+        const res = await apiClient.get<TenantUserRecord[]>('/settings/users').catch(() => []);
+        if (Array.isArray(res) && res.length > 0 && isMounted) {
+          setUsersList(res);
+        } else if (isMounted) {
           setUsersList([
             {
               uid: user?.uid || 'usr_primary_admin',
@@ -94,30 +87,21 @@ export const UserManagementView: React.FC = () => {
             },
           ]);
         }
-        setLoading(false);
-      },
-      (error) => {
-        console.warn('Could not listen to tenant users collection:', error);
-        // Fallback state
-        setUsersList([
-          {
-            uid: user?.uid || 'usr_primary_admin',
-            email: user?.email || 'admin@shogunate.dev',
-            displayName: user?.displayName || 'Primary Administrator',
-            role: 'admin',
-            profileId: 'admin_profile',
-            isTenantAdmin: true,
-            updatedAt: new Date().toISOString(),
-          },
-        ]);
-        setLoading(false);
+      } catch {
+        // Continue
+      } finally {
+        if (isMounted) setLoading(false);
       }
-    );
+    };
 
-    return () => unsubscribe();
-  }, [tenantId, user]);
+    loadUsers();
+    return () => {
+      isMounted = false;
+    };
+  }, [tenantId]);
 
   const openInviteModal = (existing?: TenantUserRecord) => {
+    setStatusMessage(null);
     if (existing) {
       setEditingUser(existing);
       setFormUid(existing.uid);
@@ -149,38 +133,20 @@ export const UserManagementView: React.FC = () => {
     setStatusMessage(null);
 
     const targetUid = formUid.trim() || `usr_${Date.now()}`;
-    const payload = {
-      targetUid,
-      tenantId,
+    const docData: TenantUserRecord = {
+      uid: targetUid,
+      email: formEmail,
+      displayName: formDisplayName || formEmail.split('@')[0],
       role: formRole,
       profileId: formProfileId,
       isTenantAdmin: formIsAdmin,
+      updatedAt: new Date().toISOString(),
     };
 
     try {
-      // 1. Attempt Cloud Function execution
-      try {
-        const setUserClaimsFn = httpsCallable(functions, 'setUserCustomClaims');
-        await setUserClaimsFn(payload);
-      } catch (cfErr) {
-        console.warn('Cloud function execution note:', cfErr);
-      }
+      await apiClient.post('/settings/users', docData);
 
-      // 2. Persist direct document update in Firestore
-      const userDocRef = doc(db, `tenants/${tenantId}/users`, targetUid);
-      const docData: TenantUserRecord = {
-        uid: targetUid,
-        email: formEmail,
-        displayName: formDisplayName || formEmail.split('@')[0],
-        role: formRole,
-        profileId: formProfileId,
-        isTenantAdmin: formIsAdmin,
-        updatedAt: new Date().toISOString(),
-      };
-
-      await setDoc(userDocRef, docData, { merge: true });
-
-      // Update local state if needed
+      // Update local state
       setUsersList((prev) => {
         const idx = prev.findIndex((u) => u.uid === targetUid);
         if (idx >= 0) {
@@ -192,14 +158,14 @@ export const UserManagementView: React.FC = () => {
       });
 
       setStatusMessage({
-        text: `Successfully configured custom claims and profile for ${formEmail}`,
+        text: `Successfully configured role and profile for ${formEmail}`,
         type: 'success',
       });
       setIsModalOpen(false);
     } catch (err: any) {
       console.error('Error saving user claims:', err);
       setStatusMessage({
-        text: err.message || 'Failed to update user custom claims.',
+        text: err.message || 'Failed to save user assignment.',
         type: 'error',
       });
     } finally {
@@ -217,7 +183,7 @@ export const UserManagementView: React.FC = () => {
             User Management & Custom Claims
           </h2>
           <p className="text-xs text-slate-400">
-            Manage tenant roster, grant admin claims, and map permission profiles via Firebase Auth Gen 2.
+            Manage tenant roster, grant admin claims, and map permission profiles via system RBAC service.
           </p>
         </div>
         <button

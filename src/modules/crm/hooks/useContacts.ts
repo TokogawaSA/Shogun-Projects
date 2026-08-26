@@ -1,15 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  collection,
-  query,
-  orderBy,
-  onSnapshot,
-  doc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-} from 'firebase/firestore';
-import { db } from '../../../services/firebase';
+import { apiClient } from '../../../services/api';
 import { Contact, ContactLifecycleStage } from '../../../types/crm';
 
 const fallbackContacts: Contact[] = [
@@ -43,36 +33,6 @@ const fallbackContacts: Contact[] = [
     createdAt: new Date(Date.now() - 3600000 * 24 * 18).toISOString(),
     updatedAt: new Date(Date.now() - 3600000 * 24 * 5).toISOString(),
   },
-  {
-    id: 'cnt-103',
-    tenantId: 'tenant-default',
-    accountId: 'acc-shogun-root',
-    firstName: 'Kenji',
-    lastName: 'Sato',
-    email: 'kenji.sato@shogunate.dev',
-    phone: '+81 3 5555 0142',
-    jobTitle: 'Chief Systems Architect',
-    isPrimaryContact: true,
-    lifecycleStage: 'advocate',
-    lastContactedAt: new Date(Date.now() - 3600000 * 12).toISOString(),
-    createdAt: new Date(Date.now() - 3600000 * 24 * 60).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'cnt-104',
-    tenantId: 'tenant-default',
-    accountId: 'acc-apex-global',
-    firstName: 'Aria',
-    lastName: 'Sterling',
-    email: 'aria.sterling@apexglobal.com',
-    phone: '+1 (312) 800-9944',
-    jobTitle: 'Director of Procurement',
-    isPrimaryContact: false,
-    lifecycleStage: 'lead',
-    lastContactedAt: new Date(Date.now() - 3600000 * 24 * 46).toISOString(),
-    createdAt: new Date(Date.now() - 3600000 * 24 * 48).toISOString(),
-    updatedAt: new Date(Date.now() - 3600000 * 24 * 46).toISOString(),
-  },
 ];
 
 export interface UseContactsResult {
@@ -86,6 +46,7 @@ export interface UseContactsResult {
   addContact: (data: Omit<Contact, 'id' | 'createdAt' | 'updatedAt'>) => Promise<string>;
   updateContact: (id: string, updates: Partial<Contact>) => Promise<void>;
   deleteContact: (id: string) => Promise<void>;
+  refetch: () => Promise<void>;
 }
 
 export const useContacts = (accountId?: string): UseContactsResult => {
@@ -95,100 +56,83 @@ export const useContacts = (accountId?: string): UseContactsResult => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedLifecycle, setSelectedLifecycle] = useState<string>('all');
 
-  useEffect(() => {
+  const fetchContacts = useCallback(async () => {
     setLoading(true);
-    const contactsRef = collection(db, 'contacts');
-    const q = query(contactsRef, orderBy('createdAt', 'desc'));
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        if (!snapshot.empty) {
-          const loaded: Contact[] = snapshot.docs.map((docSnap) => {
-            const data = docSnap.data();
-            return {
-              id: docSnap.id,
-              tenantId: data.tenantId || 'tenant-default',
-              accountId: data.accountId || data.organizationId || 'acc-shogun-root',
-              firstName: data.firstName || '',
-              lastName: data.lastName || '',
-              email: data.email || '',
-              phone: data.phone,
-              jobTitle: data.jobTitle || 'Stakeholder',
-              isPrimaryContact: Boolean(data.isPrimaryContact),
-              lifecycleStage: (data.lifecycleStage as ContactLifecycleStage) || 'lead',
-              lastContactedAt: data.lastContactedAt || null,
-              createdAt: typeof data.createdAt === 'object' && data.createdAt?.toDate 
-                ? data.createdAt.toDate().toISOString() 
-                : String(data.createdAt || new Date().toISOString()),
-              updatedAt: typeof data.updatedAt === 'object' && data.updatedAt?.toDate 
-                ? data.updatedAt.toDate().toISOString() 
-                : String(data.updatedAt || new Date().toISOString()),
-            };
-          });
-          setContacts(loaded);
-        } else {
-          setContacts(fallbackContacts);
-        }
-        setLoading(false);
-      },
-      (err) => {
-        console.warn('Contacts snapshot fallback to mock data:', err);
-        setError(err instanceof Error ? err : new Error(String(err)));
-        setContacts((prev) => (prev.length > 0 ? prev : fallbackContacts));
-        setLoading(false);
+    setError(null);
+    try {
+      const data = await apiClient.get<any[]>('/crm/contacts');
+      if (data && data.length > 0) {
+        const mapped: Contact[] = data.map((d) => ({
+          id: d.id,
+          tenantId: d.tenantId,
+          accountId: d.accountId || 'acc-shogun-root',
+          firstName: d.firstName || '',
+          lastName: d.lastName || '',
+          email: d.email || '',
+          phone: d.phone,
+          jobTitle: d.jobTitle || 'Stakeholder',
+          isPrimaryContact: Boolean(d.isPrimaryContact),
+          lifecycleStage: (d.lifecycleStage as ContactLifecycleStage) || 'lead',
+          lastContactedAt: d.lastContactedAt || null,
+          createdAt: typeof d.createdAt === 'string' ? d.createdAt : new Date().toISOString(),
+          updatedAt: typeof d.updatedAt === 'string' ? d.updatedAt : new Date().toISOString(),
+        }));
+        setContacts(mapped);
+      } else {
+        setContacts(fallbackContacts);
       }
-    );
-
-    return () => unsubscribe();
-  }, []);
-
-  const addContact = useCallback(async (data: Omit<Contact, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
-    const newId = `cnt-${Date.now().toString(36)}`;
-    const now = new Date().toISOString();
-    const newContact: Contact = {
-      ...data,
-      id: newId,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    setContacts((prev) => [newContact, ...prev]);
-
-    try {
-      const docRef = doc(db, 'contacts', newId);
-      await setDoc(docRef, newContact);
-    } catch (err) {
-      console.warn('Firestore addContact fallback:', err);
-    }
-
-    return newId;
-  }, []);
-
-  const updateContact = useCallback(async (id: string, updates: Partial<Contact>) => {
-    const now = new Date().toISOString();
-    setContacts((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, ...updates, updatedAt: now } : c))
-    );
-
-    try {
-      const docRef = doc(db, 'contacts', id);
-      await updateDoc(docRef, { ...updates, updatedAt: now });
-    } catch (err) {
-      console.warn('Firestore updateContact fallback:', err);
+    } catch (err: any) {
+      console.warn('[useContacts] REST fetch failed, using fallback:', err);
+      setContacts(fallbackContacts);
+      setError(err);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  const deleteContact = useCallback(async (id: string) => {
-    setContacts((prev) => prev.filter((c) => c.id !== id));
+  useEffect(() => {
+    fetchContacts();
+  }, [fetchContacts]);
 
-    try {
-      const docRef = doc(db, 'contacts', id);
-      await deleteDoc(docRef);
-    } catch (err) {
-      console.warn('Firestore deleteContact fallback:', err);
-    }
-  }, []);
+  const addContact = useCallback(
+    async (data: Omit<Contact, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
+      try {
+        const created = await apiClient.post<any>('/crm/contacts', data);
+        await fetchContacts();
+        return created.id;
+      } catch (err: any) {
+        console.error('[useContacts] Add contact error:', err);
+        throw err;
+      }
+    },
+    [fetchContacts]
+  );
+
+  const updateContact = useCallback(
+    async (id: string, updates: Partial<Contact>) => {
+      try {
+        await apiClient.put(`/crm/contacts/${id}`, updates);
+        await fetchContacts();
+      } catch (err: any) {
+        console.error('[useContacts] Update contact error:', err);
+        throw err;
+      }
+    },
+    [fetchContacts]
+  );
+
+  const deleteContact = useCallback(
+    async (id: string) => {
+      try {
+        await apiClient.delete(`/crm/contacts/${id}`);
+        setContacts((prev) => prev.filter((c) => c.id !== id));
+      } catch (err: any) {
+        console.error('[useContacts] Delete contact error:', err);
+        throw err;
+      }
+    },
+    []
+  );
 
   const filteredContacts = useMemo(() => {
     return contacts.filter((c) => {
@@ -218,6 +162,7 @@ export const useContacts = (accountId?: string): UseContactsResult => {
     addContact,
     updateContact,
     deleteContact,
+    refetch: fetchContacts,
   };
 };
 

@@ -1,16 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  collection,
-  query,
-  orderBy,
-  onSnapshot,
-  doc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  addDoc,
-} from 'firebase/firestore';
-import { db } from '../../../services/firebase';
+import { apiClient } from '../../../services/api';
 import { Deal, PipelineStage } from '../../../types/crm';
 import { Project, Task } from '../../../types';
 import { useAuth } from '../../../context/AuthContext';
@@ -49,54 +38,6 @@ const fallbackDeals: Deal[] = [
     createdAt: new Date(Date.now() - 3600000 * 24 * 25).toISOString(),
     updatedAt: new Date(Date.now() - 3600000 * 24 * 10).toISOString(),
   },
-  {
-    id: 'del-303',
-    tenantId: 'tenant-default',
-    title: 'Fintech Real-Time Audit Ledger Migration',
-    accountId: 'acc-vanguard-fin',
-    primaryContactId: 'cnt-102',
-    pipelineStage: 'proposal',
-    value: 210000,
-    currency: 'USD',
-    winProbability: 50,
-    expectedCloseDate: 'Oct 01, 2026',
-    linkedProjectId: null,
-    assignedRepId: 'usr-admin-master',
-    createdAt: new Date(Date.now() - 3600000 * 24 * 7).toISOString(),
-    updatedAt: new Date(Date.now() - 3600000 * 24 * 1).toISOString(),
-  },
-  {
-    id: 'del-304',
-    tenantId: 'tenant-default',
-    title: 'Cloud Functions Gen 2 Microservice Suite',
-    accountId: 'acc-hyperion-tech',
-    primaryContactId: 'cnt-101',
-    pipelineStage: 'discovery',
-    value: 42000,
-    currency: 'USD',
-    winProbability: 25,
-    expectedCloseDate: 'Oct 20, 2026',
-    linkedProjectId: null,
-    assignedRepId: 'usr-admin-master',
-    createdAt: new Date(Date.now() - 3600000 * 24 * 3).toISOString(),
-    updatedAt: new Date(Date.now() - 3600000 * 24 * 1).toISOString(),
-  },
-  {
-    id: 'del-305',
-    tenantId: 'tenant-default',
-    title: 'Legacy Monolith Architecture Review',
-    accountId: 'acc-apex-global',
-    primaryContactId: 'cnt-104',
-    pipelineStage: 'closed_lost',
-    value: 30000,
-    currency: 'USD',
-    winProbability: 0,
-    expectedCloseDate: 'Aug 10, 2026',
-    linkedProjectId: null,
-    assignedRepId: 'usr-admin-master',
-    createdAt: new Date(Date.now() - 3600000 * 24 * 40).toISOString(),
-    updatedAt: new Date(Date.now() - 3600000 * 24 * 30).toISOString(),
-  }
 ];
 
 export interface UseDealsResult {
@@ -111,6 +52,7 @@ export interface UseDealsResult {
   updateDealStage: (id: string, stage: PipelineStage) => Promise<void>;
   deleteDeal: (id: string) => Promise<void>;
   convertDealToProject: (dealId: string, projectData: { title: string; description: string; accountId: string }) => Promise<string>;
+  refetch: () => Promise<void>;
 }
 
 export const useDeals = (): UseDealsResult => {
@@ -121,197 +63,189 @@ export const useDeals = (): UseDealsResult => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
+  const fetchDeals = useCallback(async () => {
     setLoading(true);
-    const dealsRef = collection(db, 'deals');
-    const q = query(dealsRef, orderBy('createdAt', 'desc'));
+    setError(null);
+    try {
+      const data = await apiClient.get<any[]>('/crm/deals');
+      if (data && data.length > 0) {
+        const mapped: Deal[] = data.map((d) => {
+          const val = Number(d.amount) || Number(d.value) || 0;
+          const stage = (d.stage || d.pipelineStage || 'discovery') as PipelineStage;
 
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        if (!snapshot.empty) {
-          const loaded: Deal[] = snapshot.docs.map((docSnap) => {
-            const data = docSnap.data();
-            const val = Number(data.value) || Number(data.amount) || 0;
-            const stage = (data.pipelineStage || data.stage || 'discovery') as PipelineStage;
-
-            return {
-              id: docSnap.id,
-              tenantId: data.tenantId || 'tenant-default',
-              title: data.title || 'Opportunity',
-              accountId: data.accountId || data.organizationId || 'acc-shogun-root',
-              primaryContactId: data.primaryContactId || data.contactId || 'cnt-101',
-              pipelineStage: stage,
-              value: val,
-              currency: data.currency || 'USD',
-              winProbability: Number(data.winProbability) || (stage === 'closed_won' ? 100 : 25),
-              expectedCloseDate: data.expectedCloseDate || 'Q4 2026',
-              linkedProjectId: data.linkedProjectId || data.projectId || null,
-              assignedRepId: data.assignedRepId || user?.uid || 'usr-admin-master',
-              createdAt: typeof data.createdAt === 'object' && data.createdAt?.toDate 
-                ? data.createdAt.toDate().toISOString() 
-                : String(data.createdAt || new Date().toISOString()),
-              updatedAt: typeof data.updatedAt === 'object' && data.updatedAt?.toDate 
-                ? data.updatedAt.toDate().toISOString() 
-                : String(data.updatedAt || new Date().toISOString()),
-            };
-          });
-          setDeals(loaded);
-        } else {
-          setDeals(fallbackDeals);
-        }
-        setLoading(false);
-      },
-      (err) => {
-        console.warn('Deals snapshot fallback to mock data:', err);
-        setError(err instanceof Error ? err : new Error(String(err)));
-        setDeals((prev) => (prev.length > 0 ? prev : fallbackDeals));
-        setLoading(false);
+          return {
+            id: d.id,
+            tenantId: d.tenantId,
+            title: d.dealName || d.title || 'Opportunity',
+            accountId: d.accountId || 'acc-shogun-root',
+            primaryContactId: d.contactId || d.primaryContactId || 'cnt-101',
+            pipelineStage: stage,
+            value: val,
+            currency: d.currency || 'USD',
+            winProbability: Number(d.probability) || (stage === 'closed_won' ? 100 : 25),
+            expectedCloseDate: typeof d.closingDate === 'string' ? d.closingDate.slice(0, 10) : 'Q4 2026',
+            linkedProjectId: d.linkedProjectId || null,
+            assignedRepId: d.assignedUserId || 'usr-admin-master',
+            createdAt: typeof d.createdAt === 'string' ? d.createdAt : new Date().toISOString(),
+            updatedAt: typeof d.updatedAt === 'string' ? d.updatedAt : new Date().toISOString(),
+          };
+        });
+        setDeals(mapped);
+      } else {
+        setDeals(fallbackDeals);
       }
-    );
-
-    return () => unsubscribe();
-  }, [user]);
-
-  const addDeal = useCallback(async (data: Omit<Deal, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
-    const newId = `del-${Date.now().toString(36)}`;
-    const now = new Date().toISOString();
-    const newDeal: Deal = {
-      ...data,
-      id: newId,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    setDeals((prev) => [newDeal, ...prev]);
-
-    try {
-      const docRef = doc(db, 'deals', newId);
-      await setDoc(docRef, newDeal);
-    } catch (err) {
-      console.warn('Firestore addDeal fallback:', err);
-    }
-
-    return newId;
-  }, []);
-
-  const updateDeal = useCallback(async (id: string, updates: Partial<Deal>) => {
-    const now = new Date().toISOString();
-    setDeals((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, ...updates, updatedAt: now } : d))
-    );
-
-    try {
-      const docRef = doc(db, 'deals', id);
-      await updateDoc(docRef, { ...updates, updatedAt: now });
-    } catch (err) {
-      console.warn('Firestore updateDeal fallback:', err);
+    } catch (err: any) {
+      console.warn('[useDeals] REST fetch failed, using fallback:', err);
+      setDeals(fallbackDeals);
+      setError(err);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  const updateDealStage = useCallback(async (id: string, stage: PipelineStage) => {
-    const now = new Date().toISOString();
-    const winProb = stage === 'closed_won' ? 100 : stage === 'closed_lost' ? 0 : stage === 'negotiation' ? 75 : stage === 'proposal' ? 50 : 25;
+  useEffect(() => {
+    fetchDeals();
+  }, [fetchDeals]);
 
-    setDeals((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, pipelineStage: stage, winProbability: winProb, updatedAt: now } : d))
-    );
-
-    try {
-      const docRef = doc(db, 'deals', id);
-      await updateDoc(docRef, {
-        pipelineStage: stage,
-        stage,
-        winProbability: winProb,
-        updatedAt: now,
-      });
-    } catch (err) {
-      console.warn('Firestore updateDealStage fallback:', err);
-    }
-  }, []);
-
-  const deleteDeal = useCallback(async (id: string) => {
-    setDeals((prev) => prev.filter((d) => d.id !== id));
-
-    try {
-      const docRef = doc(db, 'deals', id);
-      await deleteDoc(docRef);
-    } catch (err) {
-      console.warn('Firestore deleteDeal fallback:', err);
-    }
-  }, []);
-
-  const convertDealToProject = useCallback(async (
-    dealId: string,
-    projectData: { title: string; description: string; accountId: string }
-  ): Promise<string> => {
-    const userUid = user?.uid || 'usr-admin-master';
-    const newProjectId = `proj-deal-${Date.now().toString(36)}`;
-    const now = new Date().toISOString();
-
-    const createdProject: Project = {
-      id: newProjectId,
-      tenantId: 'tenant-default',
-      title: projectData.title,
-      description: projectData.description,
-      organizationId: projectData.accountId || 'org-shogunate-root',
-      accountId: projectData.accountId,
-      dealId,
-      primaryContactId: deals.find((d) => d.id === dealId)?.primaryContactId || null,
-      ownerId: userUid,
-      members: [userUid],
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    // 1. Optimistically create Project in state
-    setProjects((prev) => [createdProject, ...prev]);
-    setCurrentProjectId(newProjectId);
-
-    // 2. Update deal state
-    await updateDeal(dealId, {
-      pipelineStage: 'closed_won',
-      linkedProjectId: newProjectId,
-    });
-
-    // 3. Persist to Firestore with timeout race
-    try {
-      const projRef = doc(db, 'projects', newProjectId);
-      const projPromise = setDoc(projRef, createdProject);
-
-      const handoverTask: Omit<Task, 'id'> = {
-        projectId: newProjectId,
-        title: `Sales-to-Delivery Handover: ${projectData.title}`,
-        description: `Project onboarded from Closed-Won deal ${dealId}. Initialize multi-agent sprint planning.`,
-        status: 'todo',
-        priority: 'urgent',
-        category: 'Client Interface',
-        assignedAgent: 'Sentinel',
-        creatorId: userUid,
-        dueDate: 'Day 3 Kickoff',
-        progress: 0,
-        relatedEntityType: 'deal',
-        relatedEntityId: dealId,
-        subtasks: [
-          { id: 'st-d-1', title: 'Review deal requirements & budget allocations', completed: false, createdAt: now },
-          { id: 'st-d-2', title: 'Orchestrate Sentinel & Worker subagent roles', completed: false, createdAt: now },
-        ],
-        createdAt: now,
-        updatedAt: now,
+  const addDeal = useCallback(
+    async (data: Omit<Deal, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
+      const payload = {
+        dealName: data.title,
+        accountId: data.accountId,
+        contactId: data.primaryContactId,
+        amount: data.value,
+        currency: data.currency,
+        stage: data.pipelineStage,
+        probability: data.winProbability,
       };
 
-      const taskPromise = addDoc(collection(db, 'projects', newProjectId, 'tasks'), handoverTask);
+      try {
+        const created = await apiClient.post<any>('/crm/deals', payload);
+        await fetchDeals();
+        return created.id;
+      } catch (err: any) {
+        console.error('[useDeals] Add deal error:', err);
+        throw err;
+      }
+    },
+    [fetchDeals]
+  );
 
-      await Promise.race([
-        Promise.all([projPromise, taskPromise]),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Sync timeout')), 1200)),
-      ]);
-    } catch (err) {
-      console.warn('Firestore project conversion fallback:', err);
-    }
+  const updateDeal = useCallback(
+    async (id: string, updates: Partial<Deal>) => {
+      const payload: Record<string, any> = {};
+      if (updates.title) payload.dealName = updates.title;
+      if (updates.value !== undefined) payload.amount = updates.value;
+      if (updates.pipelineStage) payload.stage = updates.pipelineStage;
+      if (updates.winProbability !== undefined) payload.probability = updates.winProbability;
+      if (updates.linkedProjectId !== undefined) payload.linkedProjectId = updates.linkedProjectId;
 
-    return newProjectId;
-  }, [user, deals, updateDeal, setProjects, setCurrentProjectId]);
+      try {
+        await apiClient.put(`/crm/deals/${id}`, payload);
+        await fetchDeals();
+      } catch (err: any) {
+        console.error('[useDeals] Update deal error:', err);
+        throw err;
+      }
+    },
+    [fetchDeals]
+  );
+
+  const updateDealStage = useCallback(
+    async (id: string, stage: PipelineStage) => {
+      const winProb =
+        stage === 'closed_won'
+          ? 100
+          : stage === 'closed_lost'
+          ? 0
+          : stage === 'negotiation'
+          ? 75
+          : stage === 'proposal'
+          ? 50
+          : 25;
+
+      try {
+        await apiClient.put(`/crm/deals/${id}`, {
+          stage,
+          probability: winProb,
+        });
+        await fetchDeals();
+      } catch (err: any) {
+        console.error('[useDeals] Update deal stage error:', err);
+        throw err;
+      }
+    },
+    [fetchDeals]
+  );
+
+  const deleteDeal = useCallback(
+    async (id: string) => {
+      try {
+        await apiClient.delete(`/crm/deals/${id}`);
+        setDeals((prev) => prev.filter((d) => d.id !== id));
+      } catch (err: any) {
+        console.error('[useDeals] Delete deal error:', err);
+        throw err;
+      }
+    },
+    []
+  );
+
+  const convertDealToProject = useCallback(
+    async (
+      dealId: string,
+      projectData: { title: string; description: string; accountId: string }
+    ): Promise<string> => {
+      const userUid = user?.uid || 'usr-admin-master';
+
+      try {
+        // 1. Create Project via REST API
+        const projectPayload = {
+          title: projectData.title,
+          description: projectData.description,
+          accountId: projectData.accountId,
+          dealId,
+          ownerId: userUid,
+          members: [userUid],
+        };
+
+        const createdProject = await apiClient.post<Project>('/projects', projectPayload);
+        const newProjectId = createdProject.id;
+
+        // 2. Update deal state
+        await updateDeal(dealId, {
+          pipelineStage: 'closed_won',
+          linkedProjectId: newProjectId,
+        });
+
+        // 3. Create handover task
+        const handoverTask: Partial<Task> = {
+          projectId: newProjectId,
+          title: `Sales-to-Delivery Handover: ${projectData.title}`,
+          description: `Project onboarded from Closed-Won deal ${dealId}. Initialize multi-agent sprint planning.`,
+          status: 'todo',
+          priority: 'urgent',
+          category: 'Client Interface',
+          assignedAgent: 'Sentinel',
+          creatorId: userUid,
+          dueDate: new Date(Date.now() + 3 * 86400000).toISOString(),
+          relatedEntityType: 'deal',
+          relatedEntityId: dealId,
+        };
+
+        await apiClient.post('/projects/tasks', handoverTask);
+
+        setProjects((prev) => [createdProject, ...prev]);
+        setCurrentProjectId(newProjectId);
+
+        return newProjectId;
+      } catch (err: any) {
+        console.error('[useDeals] Convert deal to project error:', err);
+        throw err;
+      }
+    },
+    [user, updateDeal, setProjects, setCurrentProjectId]
+  );
 
   const totalPipelineValue = useMemo(() => {
     return deals
@@ -345,6 +279,7 @@ export const useDeals = (): UseDealsResult => {
     updateDealStage,
     deleteDeal,
     convertDealToProject,
+    refetch: fetchDeals,
   };
 };
 

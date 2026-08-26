@@ -10,9 +10,7 @@ import {
   RefreshCw,
   Globe,
 } from 'lucide-react';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '../../../services/firebase';
-import { useAuth } from '../../../context/AuthContext';
+import { apiClient } from '../../../services/api';
 import {
   WorkflowRule,
   SupportedModule,
@@ -35,9 +33,6 @@ export const WorkflowBuilderModal: React.FC<WorkflowBuilderModalProps> = ({
   existingWorkflow,
   onSaved,
 }) => {
-  const { user } = useAuth();
-  const tenantId = user?.tenantId || 'tenant-default';
-
   const [activeStep, setActiveStep] = useState<1 | 2 | 3>(1);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -104,23 +99,26 @@ export const WorkflowBuilderModal: React.FC<WorkflowBuilderModalProps> = ({
       case 'send_email':
         newAction = {
           type: 'send_email',
-          config: { templateId: 'tpl_default', recipientField: 'ownerEmail' },
+          config: {
+            templateId: 'tpl_welcome',
+            recipientField: 'ownerEmail',
+          },
         };
         break;
       case 'create_task':
         newAction = {
           type: 'create_task',
           config: {
-            taskTitle: 'Automated Follow-up Task',
+            taskTitle: 'Follow-up on Workflow Event',
             dueInDays: 3,
-            priority: 'high',
+            priority: 'medium',
           },
         };
         break;
       case 'update_field':
         newAction = {
           type: 'update_field',
-          config: { targetField: 'status', newValue: 'In Progress' },
+          config: { targetField: 'lifecycleStage', value: 'Customer' },
         };
         break;
       case 'call_webhook':
@@ -166,7 +164,7 @@ export const WorkflowBuilderModal: React.FC<WorkflowBuilderModalProps> = ({
     };
 
     try {
-      await setDoc(doc(db, `tenants/${tenantId}/workflows`, workflowId), payload, { merge: true });
+      await apiClient.post('/settings/workflows', payload);
       if (onSaved) onSaved(payload);
       onClose();
     } catch (err: any) {

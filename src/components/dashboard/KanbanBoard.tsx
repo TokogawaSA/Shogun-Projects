@@ -13,11 +13,10 @@ import {
   Filter 
 } from 'lucide-react';
 import clsx from 'clsx';
-import { collection, addDoc } from 'firebase/firestore';
-import { db } from '../../services/firebase';
+import { apiClient } from '../../services/api';
 import { useProject } from '../../context/ProjectContext';
 import { useAuth } from '../../context/AuthContext';
-import { useFirestoreTasks } from '../../hooks/useFirestoreTasks';
+import { useTasks } from '../../hooks/useTasks';
 import { Task, TaskStatus, TaskPriority, TaskCategory, AgentType } from '../../types';
 import { TaskCard } from './TaskCard';
 import { TaskDetailModal } from './TaskDetailModal';
@@ -27,19 +26,19 @@ const initialFallbackTasks: Task[] = [
   {
     id: 'TSK-101',
     projectId: 'proj-shogun-1',
-    title: 'Configure Firebase MCP Server (.agents/mcp_config.json)',
-    description: 'Bind npx firebase-tools@latest mcp command to Antigravity IDE agent runner for autonomous operations.',
+    title: 'Configure Node.js Express REST API & PostgreSQL Engine',
+    description: 'Set up multi-tenant Prisma client connection pooling and JWT authentication middleware.',
     status: 'done',
     priority: 'urgent',
-    category: 'Agentic Orchestration',
+    category: 'Database & Identity',
     assignedAgent: 'Sentinel',
     progress: 100,
     creatorId: 'usr-admin-master',
     dueDate: 'Aug 18',
     subtasks: [
-      { id: 'sub-1', title: 'Verify MCP configuration schema in .agents', completed: true, createdAt: new Date(Date.now() - 3600000 * 48).toISOString() },
-      { id: 'sub-2', title: 'Test firebase-tools MCP endpoint connection', completed: true, createdAt: new Date(Date.now() - 3600000 * 40).toISOString() },
-      { id: 'sub-3', title: 'Expose Firestore tools to Sentinel subagent', completed: true, createdAt: new Date(Date.now() - 3600000 * 30).toISOString() },
+      { id: 'sub-1', title: 'Verify PostgreSQL 16+ relational schema & migrations', completed: true, createdAt: new Date(Date.now() - 3600000 * 48).toISOString() },
+      { id: 'sub-2', title: 'Test multi-tenant RLS isolation middleware', completed: true, createdAt: new Date(Date.now() - 3600000 * 40).toISOString() },
+      { id: 'sub-3', title: 'Configure JWT session validation and route guards', completed: true, createdAt: new Date(Date.now() - 3600000 * 30).toISOString() },
     ],
     createdAt: new Date(Date.now() - 3600000 * 48).toISOString(),
     updatedAt: new Date(Date.now() - 3600000 * 24).toISOString(),
@@ -67,8 +66,8 @@ const initialFallbackTasks: Task[] = [
   {
     id: 'TSK-103',
     projectId: 'proj-shogun-1',
-    title: 'Implement Firestore onSnapshot persistent listeners',
-    description: 'Establish WebSocket connections for real-time document synchronization with optimistic local state updates.',
+    title: 'Implement Socket.io Real-Time Room Subscriptions',
+    description: 'Establish WebSocket connections for real-time task and project updates with cache invalidation.',
     status: 'in_progress',
     priority: 'high',
     category: 'State & Synchronization',
@@ -77,9 +76,9 @@ const initialFallbackTasks: Task[] = [
     creatorId: 'usr-admin-master',
     dueDate: 'Aug 19',
     subtasks: [
-      { id: 'sub-7', title: 'Connect onSnapshot to Firestore tasks collection', completed: true, createdAt: new Date(Date.now() - 3600000 * 20).toISOString() },
-      { id: 'sub-8', title: 'Implement optimistic local state reducer', completed: true, createdAt: new Date(Date.now() - 3600000 * 15).toISOString() },
-      { id: 'sub-9', title: 'Handle offline reconnect jitter and snapshot fallbacks', completed: false, createdAt: new Date(Date.now() - 3600000 * 10).toISOString() },
+      { id: 'sub-7', title: 'Connect Socket.io client to project room', completed: true, createdAt: new Date(Date.now() - 3600000 * 20).toISOString() },
+      { id: 'sub-8', title: 'Implement optimistic local state updates', completed: true, createdAt: new Date(Date.now() - 3600000 * 15).toISOString() },
+      { id: 'sub-9', title: 'Handle reconnect jitter and room re-joins', completed: false, createdAt: new Date(Date.now() - 3600000 * 10).toISOString() },
       { id: 'sub-10', title: 'Add real-time latency telemetry indicator', completed: false, createdAt: new Date(Date.now() - 3600000 * 5).toISOString() },
     ],
     createdAt: new Date(Date.now() - 3600000 * 20).toISOString(),
@@ -88,7 +87,7 @@ const initialFallbackTasks: Task[] = [
   {
     id: 'TSK-104',
     projectId: 'proj-shogun-1',
-    title: 'Security Layer Audit & Nonce Verification',
+    title: 'Security Layer Audit & Role-Based Authorization',
     description: 'Auditor subagent scans REST permission callbacks and ensures strict sanitization gates.',
     status: 'review',
     priority: 'medium',
@@ -100,7 +99,7 @@ const initialFallbackTasks: Task[] = [
     subtasks: [
       { id: 'sub-11', title: 'Inspect permission_callback on custom REST paths', completed: true, createdAt: new Date(Date.now() - 3600000 * 10).toISOString() },
       { id: 'sub-12', title: 'Sanitize input payloads against XSS/injection', completed: true, createdAt: new Date(Date.now() - 3600000 * 6).toISOString() },
-      { id: 'sub-13', title: 'Verify nonce expiration policies', completed: false, createdAt: new Date(Date.now() - 3600000 * 2).toISOString() },
+      { id: 'sub-13', title: 'Verify JWT expiration and renewal policies', completed: false, createdAt: new Date(Date.now() - 3600000 * 2).toISOString() },
     ],
     createdAt: new Date(Date.now() - 3600000 * 10).toISOString(),
     updatedAt: new Date().toISOString(),
@@ -108,8 +107,8 @@ const initialFallbackTasks: Task[] = [
   {
     id: 'TSK-105',
     projectId: 'proj-shogun-1',
-    title: 'Deploy Cloud Functions Gen 2 Webhook Triggers',
-    description: 'Author event-driven TypeScript Cloud Functions with Node.js 20+ runtime for automated audit logs.',
+    title: 'Deploy BullMQ Background Worker Queues',
+    description: 'Author event-driven TypeScript queue workers with Redis backend for asynchronous jobs.',
     status: 'todo',
     priority: 'high',
     category: 'Serverless Compute',
@@ -118,9 +117,9 @@ const initialFallbackTasks: Task[] = [
     creatorId: 'usr-admin-master',
     dueDate: 'Aug 21',
     subtasks: [
-      { id: 'sub-14', title: 'Define Cloud Function trigger on project document updates', completed: false, createdAt: new Date().toISOString() },
-      { id: 'sub-15', title: 'Configure Action Scheduler queue dispatchers', completed: false, createdAt: new Date().toISOString() },
-      { id: 'sub-16', title: 'Deploy Gen 2 functions to Google Cloud region', completed: false, createdAt: new Date().toISOString() },
+      { id: 'sub-14', title: 'Define BullMQ worker on deal closed-won events', completed: false, createdAt: new Date().toISOString() },
+      { id: 'sub-15', title: 'Configure email dispatch queue with rate limits', completed: false, createdAt: new Date().toISOString() },
+      { id: 'sub-16', title: 'Verify worker concurrency and retry policies', completed: false, createdAt: new Date().toISOString() },
     ],
     createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
     updatedAt: new Date().toISOString(),
@@ -128,8 +127,8 @@ const initialFallbackTasks: Task[] = [
   {
     id: 'TSK-106',
     projectId: 'proj-shogun-1',
-    title: 'Firebase App Hosting & Global CDN Pipeline',
-    description: 'Configure single-command automated deployment pipeline with SSL termination and asset caching.',
+    title: 'cPanel Passenger Node.js Deployment Pipeline',
+    description: 'Configure automated packaging script with Phusion Passenger entry and asset distribution.',
     status: 'todo',
     priority: 'medium',
     category: 'Edge Delivery',
@@ -138,8 +137,8 @@ const initialFallbackTasks: Task[] = [
     creatorId: 'usr-admin-master',
     dueDate: 'Aug 22',
     subtasks: [
-      { id: 'sub-17', title: 'Configure apphosting.yaml build settings', completed: false, createdAt: new Date().toISOString() },
-      { id: 'sub-18', title: 'Verify SSL certificate provisioning', completed: false, createdAt: new Date().toISOString() },
+      { id: 'sub-17', title: 'Configure server.js Passenger entry file', completed: false, createdAt: new Date().toISOString() },
+      { id: 'sub-18', title: 'Verify .htaccess SPA rewrites and gzip caching', completed: false, createdAt: new Date().toISOString() },
     ],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -147,18 +146,18 @@ const initialFallbackTasks: Task[] = [
 ];
 
 const columns: { status: TaskStatus; label: string; icon: React.ComponentType<{ className?: string }>; color: string; badgeColor: string }[] = [
-  { status: 'todo', label: 'To Do', icon: CircleDot, color: 'border-slate-700/80', badgeColor: 'bg-slate-800 text-slate-300' },
-  { status: 'in_progress', label: 'In Progress', icon: Flame, color: 'border-indigo-500/80', badgeColor: 'bg-indigo-500/20 text-indigo-300' },
-  { status: 'review', label: 'In Review', icon: Eye, color: 'border-amber-500/80', badgeColor: 'bg-amber-500/20 text-amber-300' },
-  { status: 'done', label: 'Done', icon: CheckCircle2, color: 'border-emerald-500/80', badgeColor: 'bg-emerald-500/20 text-emerald-300' },
+  { status: 'todo', label: 'To Do', icon: CircleDot, color: 'border-slate-700', badgeColor: 'bg-slate-800 text-slate-400 border border-slate-700' },
+  { status: 'in_progress', label: 'In Progress', icon: Flame, color: 'border-indigo-200', badgeColor: 'bg-indigo-50 text-indigo-700 border border-indigo-200' },
+  { status: 'review', label: 'In Review', icon: Eye, color: 'border-amber-200', badgeColor: 'bg-amber-50 text-amber-700 border border-amber-200' },
+  { status: 'done', label: 'Done', icon: CheckCircle2, color: 'border-emerald-200', badgeColor: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
 ];
 
 export const KanbanBoard: React.FC = () => {
   const { currentProjectId, projects } = useProject();
   const { user } = useAuth();
   
-  // Real-time Firestore sync hook
-  const { tasks: firestoreTasks, loading, error } = useFirestoreTasks(currentProjectId || undefined);
+  // Real-time REST sync hook
+  const { tasks: fetchedTasks, loading, error } = useTasks(currentProjectId || undefined);
 
   // Local optimistic state layer
   const [localTasks, setLocalTasks] = useState<Task[]>([]);
@@ -179,10 +178,10 @@ export const KanbanBoard: React.FC = () => {
   const [newTaskDueDate, setNewTaskDueDate] = useState('Aug 25');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Determine active task list: prioritize Firestore tasks if loaded and non-empty, otherwise local or contextual fallback
+  // Determine active task list: prioritize fetched tasks if loaded and non-empty, otherwise local or contextual fallback
   const displayTasks = useMemo(() => {
-    if (firestoreTasks.length > 0) {
-      return firestoreTasks;
+    if (fetchedTasks.length > 0) {
+      return fetchedTasks;
     }
     if (localTasks.length > 0) {
       return localTasks;
@@ -213,7 +212,7 @@ export const KanbanBoard: React.FC = () => {
       ];
     }
     return initialFallbackTasks;
-  }, [firestoreTasks, localTasks, currentProjectId, projects, user]);
+  }, [fetchedTasks, localTasks, currentProjectId, projects, user]);
 
   const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
     setLocalTasks((prev) => {
@@ -277,10 +276,9 @@ export const KanbanBoard: React.FC = () => {
     setNewTaskDesc('');
     setIsNewTaskModalOpen(false);
 
-    // Background Firestore synchronization
+    // Persist via REST API
     try {
-      const tasksColRef = collection(db, 'projects', currentProjectId, 'tasks');
-      const addPromise = addDoc(tasksColRef, {
+      await apiClient.post('/projects/tasks', {
         projectId: createdTask.projectId,
         title: createdTask.title,
         description: createdTask.description,
@@ -292,17 +290,11 @@ export const KanbanBoard: React.FC = () => {
         dueDate: createdTask.dueDate,
         progress: createdTask.progress,
         subtasks: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
-
-      // Timeout race so local development is never stalled
-      await Promise.race([
-        addPromise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Sync timeout')), 1500))
-      ]);
     } catch (err) {
-      console.warn('Firestore task write completed with local fallback:', err);
+      console.warn('Task save completed with local state fallback:', err);
     }
   };
 
@@ -355,7 +347,7 @@ export const KanbanBoard: React.FC = () => {
             {loading ? (
               <>
                 <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />
-                <span>Syncing Firestore...</span>
+                <span>Syncing Tasks...</span>
               </>
             ) : error ? (
               <>
@@ -447,17 +439,17 @@ export const KanbanBoard: React.FC = () => {
 
       {/* New Task Creation Modal */}
       {isNewTaskModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="glass-panel p-6 rounded-2xl border border-slate-700 bg-slate-900 w-full max-w-lg shadow-2xl relative">
             <button
               onClick={() => setIsNewTaskModalOpen(false)}
-              className="absolute top-5 right-5 text-slate-400 hover:text-white"
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-100"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-indigo-400" /> Create New Project Task
+            <h3 className="text-lg font-bold text-slate-100 mb-4 flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-indigo-600" /> Create New Project Task
             </h3>
 
             <form onSubmit={handleCreateTask} className="space-y-4">

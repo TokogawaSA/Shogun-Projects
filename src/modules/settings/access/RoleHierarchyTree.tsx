@@ -10,8 +10,7 @@ import {
   ChevronRight,
   Loader2,
 } from 'lucide-react';
-import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../../../services/firebase';
+import { apiClient } from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import { Role } from '../../../types/settings';
 
@@ -33,19 +32,15 @@ export const RoleHierarchyTree: React.FC = () => {
   const [collapsedNodes, setCollapsedNodes] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
+    let isMounted = true;
     setLoading(true);
-    const rolesRef = collection(db, `tenants/${tenantId}/roles`);
 
-    const unsubscribe = onSnapshot(
-      rolesRef,
-      (snapshot) => {
-        if (!snapshot.empty) {
-          const loaded: Role[] = snapshot.docs.map((d) => ({
-            id: d.id,
-            ...(d.data() as Omit<Role, 'id'>),
-          }));
-          setRoles(loaded);
-        } else {
+    const loadRoles = async () => {
+      try {
+        const res = await apiClient.get<Role[]>('/settings/roles').catch(() => []);
+        if (Array.isArray(res) && res.length > 0 && isMounted) {
+          setRoles(res);
+        } else if (isMounted) {
           // Default seed hierarchy
           const initialRoles: Role[] = [
             {
@@ -93,14 +88,17 @@ export const RoleHierarchyTree: React.FC = () => {
           ];
           setRoles(initialRoles);
         }
-        setLoading(false);
-      },
-      () => {
-        setLoading(false);
+      } catch {
+        // Continue
+      } finally {
+        if (isMounted) setLoading(false);
       }
-    );
+    };
 
-    return () => unsubscribe();
+    loadRoles();
+    return () => {
+      isMounted = false;
+    };
   }, [tenantId]);
 
   const toggleCollapse = (id: string) => {
@@ -111,8 +109,8 @@ export const RoleHierarchyTree: React.FC = () => {
     if (role) {
       setEditingRole(role);
       setRoleName(role.name);
-      setParentRoleId(role.parentRoleId);
-      setAssignedProfileId(role.assignedProfileId);
+      setParentRoleId(role.parentRoleId || null);
+      setAssignedProfileId(role.assignedProfileId || 'standard_profile');
       setDescription(role.description || '');
     } else {
       setEditingRole(null);
@@ -126,7 +124,7 @@ export const RoleHierarchyTree: React.FC = () => {
 
   const handleSaveRole = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!roleName) return;
+    if (!roleName.trim()) return;
 
     setSaving(true);
     const roleId = editingRole?.id || `role_${Date.now()}`;
@@ -140,7 +138,7 @@ export const RoleHierarchyTree: React.FC = () => {
     };
 
     try {
-      await setDoc(doc(db, `tenants/${tenantId}/roles`, roleId), roleData, { merge: true });
+      await apiClient.post('/settings/roles', roleData);
       setRoles((prev) => {
         const idx = prev.findIndex((r) => r.id === roleId);
         if (idx >= 0) {
@@ -161,7 +159,7 @@ export const RoleHierarchyTree: React.FC = () => {
   const handleDeleteRole = async (roleId: string) => {
     if (!confirm('Are you sure you want to remove this role?')) return;
     try {
-      await deleteDoc(doc(db, `tenants/${tenantId}/roles`, roleId));
+      await apiClient.delete(`/settings/roles/${roleId}`);
       setRoles(roles.filter((r) => r.id !== roleId));
     } catch (err) {
       console.error('Failed to delete role:', err);

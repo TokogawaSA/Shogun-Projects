@@ -9,8 +9,7 @@ import {
   CheckCircle2,
   Loader2,
 } from 'lucide-react';
-import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../../../services/firebase';
+import { apiClient } from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import { EmailTemplate, SupportedModule } from '../../../types/settings';
 
@@ -66,22 +65,18 @@ export const EmailTemplateEditor: React.FC = () => {
   };
 
   useEffect(() => {
+    let isMounted = true;
     setLoading(true);
-    const templatesRef = collection(db, `tenants/${tenantId}/templates`);
 
-    const unsubscribe = onSnapshot(
-      templatesRef,
-      (snapshot) => {
-        if (!snapshot.empty) {
-          const loaded: EmailTemplate[] = snapshot.docs.map((d) => ({
-            id: d.id,
-            ...(d.data() as Omit<EmailTemplate, 'id'>),
-          }));
-          setTemplates(loaded);
-          if (!selectedTemplateId && loaded.length > 0) {
-            loadTemplateIntoEditor(loaded[0]);
+    const loadTemplates = async () => {
+      try {
+        const res = await apiClient.get<EmailTemplate[]>('/settings/templates').catch(() => []);
+        if (Array.isArray(res) && res.length > 0 && isMounted) {
+          setTemplates(res);
+          if (!selectedTemplateId) {
+            loadTemplateIntoEditor(res[0]);
           }
-        } else {
+        } else if (isMounted) {
           // Default seed templates
           const defaultTemplates: EmailTemplate[] = [
             {
@@ -112,21 +107,26 @@ export const EmailTemplateEditor: React.FC = () => {
             },
           ];
           setTemplates(defaultTemplates);
-          loadTemplateIntoEditor(defaultTemplates[0]);
+          if (!selectedTemplateId) {
+            loadTemplateIntoEditor(defaultTemplates[0]);
+          }
         }
-        setLoading(false);
-      },
-      () => {
-        setLoading(false);
+      } catch {
+        // Continue
+      } finally {
+        if (isMounted) setLoading(false);
       }
-    );
+    };
 
-    return () => unsubscribe();
+    loadTemplates();
+    return () => {
+      isMounted = false;
+    };
   }, [tenantId]);
 
   const loadTemplateIntoEditor = (tpl: EmailTemplate) => {
     setSelectedTemplateId(tpl.id);
-    setTemplateName(tpl.name);
+    setTemplateName(tpl.name || '');
     setTargetModule((tpl.targetModule as SupportedModule) || (tpl.module as SupportedModule) || 'deals');
     setSubject(tpl.subject || '');
     setHtmlBody(tpl.htmlBody || tpl.bodyHtml || '');
@@ -166,11 +166,14 @@ export const EmailTemplateEditor: React.FC = () => {
     };
 
     try {
-      await setDoc(
-        doc(db, `tenants/${tenantId}/templates`, selectedTemplateId),
-        templateData,
-        { merge: true }
-      );
+      await apiClient.post('/settings/templates', templateData);
+      setTemplates((prev) => {
+        const existing = prev.some((t) => t.id === selectedTemplateId);
+        if (existing) {
+          return prev.map((t) => (t.id === selectedTemplateId ? templateData : t));
+        }
+        return [...prev, templateData];
+      });
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
@@ -183,7 +186,7 @@ export const EmailTemplateEditor: React.FC = () => {
   const handleDeleteTemplate = async (templateId: string) => {
     if (!confirm('Are you sure you want to delete this email template?')) return;
     try {
-      await deleteDoc(doc(db, `tenants/${tenantId}/templates`, templateId));
+      await apiClient.delete(`/settings/templates/${templateId}`);
       setTemplates(templates.filter((t) => t.id !== templateId));
       if (selectedTemplateId === templateId) {
         setSelectedTemplateId(null);

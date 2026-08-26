@@ -52,14 +52,14 @@ export const PicklistEditorModal: React.FC<PicklistEditorModalProps> = ({
       <div className="relative w-full max-w-md rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-6 space-y-5">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">
-            <ListFilter className="w-5 h-5 text-indigo-400" />
-            <h3 className="text-sm font-bold text-white">
-              Picklist Options: <span className="text-indigo-300 font-mono">{fieldName}</span>
+            <ListFilter className="w-5 h-5 text-indigo-600" />
+            <h3 className="text-sm font-bold text-slate-100">
+              Picklist Options: <span className="text-indigo-700 font-mono font-semibold">{fieldName}</span>
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+            className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-slate-800"
           >
             <X className="w-4 h-4" />
           </button>
@@ -72,11 +72,11 @@ export const PicklistEditorModal: React.FC<PicklistEditorModalProps> = ({
             placeholder="Type new option label..."
             value={newOption}
             onChange={(e) => setNewOption(e.target.value)}
-            className="flex-1 px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            className="flex-1 px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500"
           />
           <button
             type="submit"
-            className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all flex items-center gap-1"
+            className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all flex items-center gap-1 shadow-sm"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add</span>
@@ -86,20 +86,20 @@ export const PicklistEditorModal: React.FC<PicklistEditorModalProps> = ({
         {/* Option List */}
         <div className="max-h-64 overflow-y-auto space-y-1.5 pr-1">
           {options.length === 0 ? (
-            <p className="text-xs text-slate-500 text-center py-4">No picklist options configured.</p>
+            <p className="text-xs text-slate-400 text-center py-4">No picklist options configured.</p>
           ) : (
             options.map((opt, idx) => (
               <div
                 key={`${opt}-${idx}`}
                 className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/50 border border-slate-700/60 text-xs text-slate-200"
               >
-                <span className="font-medium">{opt}</span>
+                <span className="font-medium text-slate-100">{opt}</span>
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
                     disabled={idx === 0}
                     onClick={() => handleMove(idx, 'up')}
-                    className="p-1 text-slate-400 hover:text-white disabled:opacity-30"
+                    className="p-1 text-slate-400 hover:text-slate-200 disabled:opacity-30"
                   >
                     ▲
                   </button>
@@ -107,14 +107,14 @@ export const PicklistEditorModal: React.FC<PicklistEditorModalProps> = ({
                     type="button"
                     disabled={idx === options.length - 1}
                     onClick={() => handleMove(idx, 'down')}
-                    className="p-1 text-slate-400 hover:text-white disabled:opacity-30"
+                    className="p-1 text-slate-400 hover:text-slate-200 disabled:opacity-30"
                   >
                     ▼
                   </button>
                   <button
                     type="button"
                     onClick={() => handleRemove(idx)}
-                    className="p-1 text-slate-500 hover:text-rose-400 transition-colors ml-1"
+                    className="p-1 text-slate-400 hover:text-rose-600 transition-colors ml-1"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -129,14 +129,14 @@ export const PicklistEditorModal: React.FC<PicklistEditorModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white"
+            className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-slate-200"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleSave}
-            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-lg shadow-indigo-600/20"
+            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-indigo-600/20"
           >
             <Save className="w-3.5 h-3.5" />
             <span>Apply Options</span>

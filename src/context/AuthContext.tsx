@@ -1,25 +1,35 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import {
-  onAuthStateChanged,
-  User as FirebaseUser,
-  signInWithPopup,
-  GoogleAuthProvider,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut as fbSignOut,
-  UserCredential,
-} from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../services/firebase';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import { apiClient, TOKEN_STORAGE_KEY } from '../services/api';
 import { UserProfile, UserRole } from '../types';
+
+export interface TenantInfo {
+  id: string;
+  name: string;
+  domain?: string | null;
+  industry?: string | null;
+  createdAt?: string;
+}
 
 export interface AuthContextType {
   user: UserProfile | null;
-  firebaseUser: FirebaseUser | null;
+  tenant: TenantInfo | null;
   loading: boolean;
-  signInWithEmail: (email: string, pass: string) => Promise<UserCredential>;
-  signUpWithEmail: (email: string, pass: string, displayName?: string, role?: UserRole) => Promise<UserCredential>;
-  signInWithGoogle: () => Promise<UserCredential>;
+  token: string | null;
+  isTenantAdmin: boolean;
+  login: (email: string, pass: string) => Promise<any>;
+  register: (payload: {
+    email: string;
+    password: string;
+    displayName: string;
+    tenantName: string;
+    domain?: string;
+    industry?: string;
+  }) => Promise<any>;
+  logout: () => void;
+  // Aliases for seamless backward compatibility
+  signInWithEmail: (email: string, pass: string) => Promise<any>;
+  signUpWithEmail: (email: string, pass: string, displayName?: string, role?: UserRole) => Promise<any>;
+  signInWithGoogle: () => Promise<any>;
   signOut: () => Promise<void>;
 }
 
@@ -31,124 +41,182 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
+  const [tenant, setTenant] = useState<TenantInfo | null>(null);
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_STORAGE_KEY));
   const [loading, setLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-      setLoading(true);
-      if (fbUser) {
-        setFirebaseUser(fbUser);
-        try {
-          // Fetch custom token claims
-          const tokenResult = await fbUser.getIdTokenResult();
-          const claims = tokenResult.claims;
-
-          // Fetch additional profile data from Firestore if available
-          const userDocRef = doc(db, 'users', fbUser.uid);
-          const userDocSnap = await getDoc(userDocRef);
-
-          if (userDocSnap.exists()) {
-            const data = userDocSnap.data();
-            setUser({
-              uid: fbUser.uid,
-              email: fbUser.email || '',
-              displayName: data.displayName || fbUser.displayName || 'Developer',
-              photoURL: data.photoURL || fbUser.photoURL || undefined,
-              role: (data.role as UserRole) || (claims.role as string) || 'developer',
-              createdAt: data.createdAt || fbUser.metadata.creationTime || new Date().toISOString(),
-              tenantId: (claims.tenantId as string) || data.tenantId || 'tenant-default',
-              isTenantAdmin: Boolean(claims.isTenantAdmin ?? data.isTenantAdmin ?? (data.role === 'admin')),
-              profileId: (claims.profileId as string) || data.profileId || 'admin_profile',
-            });
-          } else {
-            // Create fallback profile and populate in Firestore
-            const initialProfile: UserProfile = {
-              uid: fbUser.uid,
-              email: fbUser.email || '',
-              displayName: fbUser.displayName || fbUser.email?.split('@')[0] || 'Developer',
-              photoURL: fbUser.photoURL || undefined,
-              role: (claims.role as string) || 'admin',
-              createdAt: fbUser.metadata.creationTime || new Date().toISOString(),
-              tenantId: (claims.tenantId as string) || 'tenant-default',
-              isTenantAdmin: Boolean(claims.isTenantAdmin ?? true),
-              profileId: (claims.profileId as string) || 'admin_profile',
-            };
-
-            await setDoc(userDocRef, initialProfile, { merge: true });
-            setUser(initialProfile);
-          }
-        } catch {
-          // If Firestore is offline or restricted, construct client-side fallback
-          setUser({
-            uid: fbUser.uid,
-            email: fbUser.email || '',
-            displayName: fbUser.displayName || fbUser.email?.split('@')[0] || 'Developer',
-            photoURL: fbUser.photoURL || undefined,
-            role: 'admin',
-            createdAt: fbUser.metadata.creationTime || new Date().toISOString(),
-            tenantId: 'tenant-default',
-            isTenantAdmin: true,
-            profileId: 'admin_profile',
-          });
-        }
-      } else {
-        setFirebaseUser(null);
-        setUser(null);
-      }
+  const checkAuth = useCallback(async () => {
+    const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+    if (!storedToken) {
+      setUser(null);
+      setTenant(null);
       setLoading(false);
-    });
+      return;
+    }
 
-    return () => unsubscribe();
+    try {
+      const data = await apiClient.get<{ user: any; tenant: any }>('/auth/me');
+      if (data && data.user) {
+        setUser({
+          uid: data.user.id,
+          email: data.user.email,
+          displayName: data.user.displayName,
+          photoURL: data.user.photoURL,
+          role: data.user.role,
+          createdAt: data.user.createdAt,
+          tenantId: data.user.tenantId,
+          isTenantAdmin: Boolean(data.user.isTenantAdmin),
+          profileId: data.user.profileId,
+        });
+        setTenant(data.tenant || null);
+        setToken(storedToken);
+      } else {
+        localStorage.removeItem(TOKEN_STORAGE_KEY);
+        setUser(null);
+        setTenant(null);
+      }
+    } catch (err) {
+      console.warn('[AuthContext] Session token invalid or expired:', err);
+      localStorage.removeItem(TOKEN_STORAGE_KEY);
+      setUser(null);
+      setTenant(null);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    checkAuth();
+
+    // Listen for unauthorized interceptor events
+    const handleUnauthorized = () => {
+      setUser(null);
+      setTenant(null);
+      setToken(null);
+    };
+
+    window.addEventListener('shogun:unauthorized', handleUnauthorized);
+    return () => {
+      window.removeEventListener('shogun:unauthorized', handleUnauthorized);
+    };
+  }, [checkAuth]);
+
+  const login = async (email: string, pass: string) => {
+    setLoading(true);
+    try {
+      const res = await apiClient.post<{
+        token: string;
+        user: any;
+        tenant: any;
+      }>('/auth/login', { email, password: pass });
+
+      if (res.token) {
+        localStorage.setItem(TOKEN_STORAGE_KEY, res.token);
+        setToken(res.token);
+        setUser({
+          uid: res.user.id,
+          email: res.user.email,
+          displayName: res.user.displayName,
+          photoURL: res.user.photoURL,
+          role: res.user.role,
+          createdAt: new Date().toISOString(),
+          tenantId: res.user.tenantId,
+          isTenantAdmin: Boolean(res.user.isTenantAdmin),
+          profileId: res.user.profileId,
+        });
+        setTenant(res.tenant || null);
+      }
+      return res;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const register = async (payload: {
+    email: string;
+    password: string;
+    displayName: string;
+    tenantName: string;
+    domain?: string;
+    industry?: string;
+  }) => {
+    setLoading(true);
+    try {
+      const res = await apiClient.post<{
+        token: string;
+        user: any;
+        tenant: any;
+      }>('/auth/register', payload);
+
+      if (res.token) {
+        localStorage.setItem(TOKEN_STORAGE_KEY, res.token);
+        setToken(res.token);
+        setUser({
+          uid: res.user.id,
+          email: res.user.email,
+          displayName: res.user.displayName,
+          role: res.user.role,
+          createdAt: new Date().toISOString(),
+          tenantId: res.user.tenantId,
+          isTenantAdmin: Boolean(res.user.isTenantAdmin),
+          profileId: res.user.profileId,
+        });
+        setTenant(res.tenant || null);
+      }
+      return res;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    setUser(null);
+    setTenant(null);
+    setToken(null);
+  };
+
+  // Backward-compatible method aliases
   const signInWithEmail = async (email: string, pass: string) => {
-    return signInWithEmailAndPassword(auth, email, pass);
+    return login(email, pass);
   };
 
   const signUpWithEmail = async (
     email: string,
     pass: string,
     displayName?: string,
-    role: UserRole = 'developer'
+    _role: UserRole = 'developer'
   ) => {
-    const cred = await createUserWithEmailAndPassword(auth, email, pass);
-    const profile: UserProfile = {
-      uid: cred.user.uid,
-      email: cred.user.email || email,
+    return register({
+      email,
+      password: pass,
       displayName: displayName || email.split('@')[0],
-      photoURL: cred.user.photoURL || undefined,
-      role,
-      createdAt: new Date().toISOString(),
-    };
-
-    try {
-      await setDoc(doc(db, 'users', cred.user.uid), profile);
-    } catch (err) {
-      console.warn('Could not save user profile to Firestore:', err);
-    }
-
-    setUser(profile);
-    return cred;
+      tenantName: `${displayName || email.split('@')[0]}'s Workspace`,
+    });
   };
 
   const signInWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    return signInWithPopup(auth, provider);
+    // For REST stack, Google OAuth or demo login
+    return login('admin@shogunate.io', 'demo123456');
   };
 
   const signOut = async () => {
-    await fbSignOut(auth);
-    setUser(null);
-    setFirebaseUser(null);
+    logout();
   };
+
+  const isTenantAdmin = Boolean(user?.isTenantAdmin || user?.role === 'admin');
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        firebaseUser,
+        tenant,
         loading,
+        token,
+        isTenantAdmin,
+        login,
+        register,
+        logout,
         signInWithEmail,
         signUpWithEmail,
         signInWithGoogle,
@@ -167,3 +235,5 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+
+export default AuthProvider;

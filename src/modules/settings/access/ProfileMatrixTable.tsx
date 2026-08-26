@@ -6,8 +6,7 @@ import {
   Loader2,
   Layers,
 } from 'lucide-react';
-import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
-import { db } from '../../../services/firebase';
+import { apiClient } from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import {
   Profile,
@@ -45,21 +44,17 @@ export const ProfileMatrixTable: React.FC = () => {
   const [selectedFieldModule, setSelectedFieldModule] = useState<SupportedModule>('deals');
 
   useEffect(() => {
-    const profilesRef = collection(db, `tenants/${tenantId}/profiles`);
+    let isMounted = true;
 
-    const unsubscribe = onSnapshot(
-      profilesRef,
-      (snapshot) => {
-        if (!snapshot.empty) {
-          const loaded: Profile[] = snapshot.docs.map((d) => ({
-            id: d.id,
-            ...(d.data() as Omit<Profile, 'id'>),
-          }));
-          setProfiles(loaded);
-          if (!loaded.some((p) => p.id === selectedProfileId)) {
-            setSelectedProfileId(loaded[0].id);
+    const loadProfiles = async () => {
+      try {
+        const res = await apiClient.get<Profile[]>('/settings/profiles').catch(() => []);
+        if (Array.isArray(res) && res.length > 0 && isMounted) {
+          setProfiles(res);
+          if (!res.some((p) => p.id === selectedProfileId)) {
+            setSelectedProfileId(res[0].id);
           }
-        } else {
+        } else if (isMounted) {
           const defaultProfiles: Profile[] = [
             {
               id: 'admin_profile',
@@ -112,7 +107,7 @@ export const ProfileMatrixTable: React.FC = () => {
               },
               fieldPermissions: {
                 deals: { value: 'hidden', winProbability: 'hidden' },
-                accounts: { 'billingDetails.currency': 'hidden' },
+                accounts: {},
                 projects: {},
                 tasks: {},
                 contacts: {},
@@ -121,27 +116,29 @@ export const ProfileMatrixTable: React.FC = () => {
           ];
           setProfiles(defaultProfiles);
         }
-      },
-      () => {
-        // Handled silently
+      } catch {
+        // Continue
       }
-    );
+    };
 
-    return () => unsubscribe();
+    loadProfiles();
+    return () => {
+      isMounted = false;
+    };
   }, [tenantId, selectedProfileId]);
 
-  const currentProfile = profiles.find((p) => p.id === selectedProfileId) || profiles[0];
+  const currentProfile = profiles.find((p) => p.id === selectedProfileId);
 
   const handleToggleModulePerm = (
-    moduleKey: string,
-    action: keyof ModuleCrudPermissions
+    moduleKey: SupportedModule,
+    permKey: keyof ModuleCrudPermissions
   ) => {
     if (!currentProfile) return;
 
-    const currentModPerm = currentProfile.modulePermissions[moduleKey] || {
-      view: true,
-      create: true,
-      edit: true,
+    const modulePerms = currentProfile.modulePermissions[moduleKey] || {
+      view: false,
+      create: false,
+      edit: false,
       delete: false,
     };
 
@@ -150,8 +147,8 @@ export const ProfileMatrixTable: React.FC = () => {
       modulePermissions: {
         ...currentProfile.modulePermissions,
         [moduleKey]: {
-          ...currentModPerm,
-          [action]: !currentModPerm[action],
+          ...modulePerms,
+          [permKey]: !modulePerms[permKey],
         },
       },
     };
@@ -188,11 +185,7 @@ export const ProfileMatrixTable: React.FC = () => {
     setSaveSuccess(false);
 
     try {
-      await setDoc(
-        doc(db, `tenants/${tenantId}/profiles`, currentProfile.id),
-        currentProfile,
-        { merge: true }
-      );
+      await apiClient.post('/settings/profiles', currentProfile);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {

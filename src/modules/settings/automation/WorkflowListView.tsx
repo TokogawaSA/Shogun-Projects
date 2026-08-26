@@ -12,8 +12,7 @@ import {
   Globe,
   Loader2,
 } from 'lucide-react';
-import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../../../services/firebase';
+import { apiClient } from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import { WorkflowRule } from '../../../types/settings';
 import { WorkflowBuilderModal } from './WorkflowBuilderModal';
@@ -28,19 +27,15 @@ export const WorkflowListView: React.FC = () => {
   const [selectedWorkflow, setSelectedWorkflow] = useState<WorkflowRule | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
     setLoading(true);
-    const workflowsRef = collection(db, `tenants/${tenantId}/workflows`);
 
-    const unsubscribe = onSnapshot(
-      workflowsRef,
-      (snapshot) => {
-        if (!snapshot.empty) {
-          const loaded: WorkflowRule[] = snapshot.docs.map((d) => ({
-            id: d.id,
-            ...(d.data() as Omit<WorkflowRule, 'id'>),
-          }));
-          setWorkflows(loaded);
-        } else {
+    const loadWorkflows = async () => {
+      try {
+        const res = await apiClient.get<WorkflowRule[]>('/settings/workflows').catch(() => []);
+        if (Array.isArray(res) && res.length > 0 && isMounted) {
+          setWorkflows(res);
+        } else if (isMounted) {
           // Default seed workflow rules
           const initialRules: WorkflowRule[] = [
             {
@@ -87,20 +82,23 @@ export const WorkflowListView: React.FC = () => {
           ];
           setWorkflows(initialRules);
         }
-        setLoading(false);
-      },
-      () => {
-        setLoading(false);
+      } catch {
+        // Continue
+      } finally {
+        if (isMounted) setLoading(false);
       }
-    );
+    };
 
-    return () => unsubscribe();
+    loadWorkflows();
+    return () => {
+      isMounted = false;
+    };
   }, [tenantId]);
 
   const toggleWorkflowStatus = async (wf: WorkflowRule) => {
     const nextState = !wf.isActive;
     try {
-      await updateDoc(doc(db, `tenants/${tenantId}/workflows`, wf.id), {
+      await apiClient.put(`/settings/workflows/${wf.id}`, {
         isActive: nextState,
         updatedAt: new Date().toISOString(),
       });
@@ -115,7 +113,7 @@ export const WorkflowListView: React.FC = () => {
   const handleDeleteWorkflow = async (workflowId: string) => {
     if (!confirm('Are you sure you want to remove this workflow rule?')) return;
     try {
-      await deleteDoc(doc(db, `tenants/${tenantId}/workflows`, workflowId));
+      await apiClient.delete(`/settings/workflows/${workflowId}`);
       setWorkflows(workflows.filter((w) => w.id !== workflowId));
     } catch (err) {
       console.error('Failed to delete workflow:', err);
