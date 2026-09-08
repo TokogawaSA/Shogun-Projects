@@ -1,18 +1,17 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import {
+  LayoutDashboard,
   FolderKanban,
-  Kanban, 
-  DollarSign, 
-  Building2, 
-  Users, 
-  Target, 
-  CalendarRange, 
-  Cpu, 
-  Settings, 
-  Layers, 
-  Sparkles,
+  DollarSign,
+  Building2,
+  Users,
+  Target,
+  CalendarRange,
+  Cpu,
+  Settings,
+  Layers,
   Award,
   Gauge,
   BarChart3,
@@ -25,15 +24,22 @@ import {
   FileText,
   Boxes,
   BookOpen,
-  FileSpreadsheet
+  FileSpreadsheet,
+  LogOut
 } from 'lucide-react';
 import clsx from 'clsx';
 
 export const Sidebar: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, tenant, logout } = useAuth();
   const workspaceItems = [
     { to: '/', label: 'Overview', icon: LayoutDashboard },
-    { to: '/projects', label: 'Projects', icon: FolderKanban },
-    { to: '/board', label: 'Kanban Board', icon: Kanban },
+    { to: '/board', label: 'Task Hub', icon: Layers },
+    { to: '/projects', label: 'Spaces & Projects', icon: FolderKanban },
+  ];
+
+  const pmItems = [
+    { to: '/pm', label: 'PM 360 Hub', icon: FolderKanban },
   ];
 
   const ppmItems = [
@@ -101,6 +107,34 @@ export const Sidebar: React.FC = () => {
                     'flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150',
                     isActive
                       ? 'bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-sm font-semibold'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/70'
+                  )
+                }
+              >
+                <Icon className="w-4 h-4" />
+                <span>{item.label}</span>
+              </NavLink>
+            );
+          })}
+        </div>
+
+        {/* General Project Management Subsystem */}
+        <div className="space-y-1">
+          <div className="px-3 pb-1 text-[10px] font-semibold text-indigo-400 uppercase tracking-wider font-mono flex items-center justify-between">
+            <span>Project Management</span>
+            <span className="text-[9px] px-1.5 py-0.2 rounded bg-indigo-950 text-indigo-300 border border-indigo-800">PM 360</span>
+          </div>
+          {pmItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  clsx(
+                    'flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150',
+                    isActive
+                      ? 'bg-indigo-600 text-white shadow-sm font-semibold'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/70'
                   )
                 }
@@ -222,15 +256,46 @@ export const Sidebar: React.FC = () => {
         </div>
       </nav>
 
-      {/* Footer / Status */}
-      <div className="p-4 border-t border-slate-700 bg-slate-900/50">
-        <div className="p-3 rounded-lg bg-indigo-50/70 border border-indigo-200/80 flex items-center gap-3">
-          <Sparkles className="w-5 h-5 text-indigo-600 flex-shrink-0 animate-pulse" />
-          <div className="text-xs">
-            <p className="font-semibold text-indigo-950">REST API Engine Live</p>
-            <p className="text-[11px] text-slate-400">Gemini 3.7 Agent Active</p>
+      {/* Footer / User Profile & Logout */}
+      <div className="p-4 border-t border-slate-700 bg-slate-900/50 space-y-2">
+        {user ? (
+          <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-800/80 border border-slate-700">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center flex-shrink-0">
+                {user.displayName?.[0]?.toUpperCase() || 'U'}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-slate-100 truncate">{user.displayName || user.email}</p>
+                <p className="text-[10px] text-slate-400 font-mono truncate">{tenant?.name || 'Workspace'}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                logout();
+                navigate('/login');
+              }}
+              title="Sign Out"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-700 transition"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <NavLink
+              to="/login"
+              className="flex-1 py-1.5 text-center text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition"
+            >
+              Sign In
+            </NavLink>
+            <NavLink
+              to="/register"
+              className="flex-1 py-1.5 text-center text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition border border-slate-700"
+            >
+              Register
+            </NavLink>
+          </div>
+        )}
       </div>
     </aside>
   );

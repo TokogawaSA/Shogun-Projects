@@ -22,6 +22,8 @@ export interface UpdateTaskInput {
   predecessorTaskIds?: any;
   relatedEntityType?: string | null;
   relatedEntityId?: string | null;
+  customFields?: any;
+  attachments?: any;
 }
 
 export async function updateTaskWithEvents(
@@ -67,6 +69,8 @@ export async function updateTaskWithEvents(
         ...(input.predecessorTaskIds !== undefined && { predecessorTaskIds: input.predecessorTaskIds }),
         ...(input.relatedEntityType !== undefined && { relatedEntityType: input.relatedEntityType }),
         ...(input.relatedEntityId !== undefined && { relatedEntityId: input.relatedEntityId }),
+        ...(input.customFields !== undefined && { customFields: input.customFields }),
+        ...(input.attachments !== undefined && { attachments: input.attachments }),
       },
     });
 

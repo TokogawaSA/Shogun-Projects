@@ -5,6 +5,10 @@ import { z } from 'zod';
 import { prisma } from '../config/db.js';
 import { AuthUserClaims } from '../types/auth.js';
 
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  throw new Error('[FATAL SECURITY EXCEPTION] JWT_SECRET must be explicitly defined in environment variables for production execution.');
+}
+
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_jwt_key_change_in_production_32chars_min';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 

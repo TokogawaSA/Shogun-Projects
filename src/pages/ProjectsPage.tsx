@@ -15,7 +15,7 @@ import {
   AlertCircle 
 } from 'lucide-react';
 import clsx from 'clsx';
-import { apiClient } from '../services/apiClient';
+import { apiClient } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useProject } from '../context/ProjectContext';
 import { Project } from '../types';
@@ -116,6 +116,7 @@ export const ProjectsPage: React.FC = () => {
 
     try {
       const created = await apiClient.post<any>('/projects', payload);
+
       const newProject: Project = {
         id: created.id || `proj-${Date.now().toString(36)}`,
         title: created.title || payload.title,
@@ -166,6 +167,35 @@ export const ProjectsPage: React.FC = () => {
         >
           <Plus className="w-4 h-4" />
           <span>New Project</span>
+        </button>
+      </div>
+
+      {/* Hero Banner: ClickUp-Grade Multi-View Engine */}
+      <div className="p-5 bg-gradient-to-r from-indigo-950/70 via-slate-900/90 to-purple-950/70 border border-indigo-500/30 rounded-2xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 uppercase tracking-wider font-mono">
+              ClickUp-Grade Architecture
+            </span>
+            <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              6 Polymorphic Views Active
+            </span>
+          </div>
+          <h2 className="text-base font-bold text-slate-100">
+            Universal Multi-View Task Hub & Hierarchy Engine
+          </h2>
+          <p className="text-xs text-slate-300 max-w-2xl">
+            Toggle seamlessly between <strong>List Table</strong>, <strong>Kanban Board</strong>, <strong>Gantt Timeline</strong>, <strong>Calendar</strong>, <strong>Workload Matrix</strong>, and <strong>Mind Map Graph</strong> with recursive subtasks, dynamic custom fields, and dependency cycle prevention.
+          </p>
+        </div>
+
+        <button
+          onClick={() => navigate('/board')}
+          className="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 transition flex items-center gap-2 flex-shrink-0"
+        >
+          <span>Open Task Hub & Views</span>
+          <ArrowRight className="w-4 h-4" />
         </button>
       </div>
 

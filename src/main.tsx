@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { ProjectProvider } from './context/ProjectContext';
+import { HierarchyProvider } from './context/HierarchyContext';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -21,7 +22,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ProjectProvider>
-          <App />
+          <HierarchyProvider>
+            <App />
+          </HierarchyProvider>
         </ProjectProvider>
       </AuthProvider>
     </QueryClientProvider>

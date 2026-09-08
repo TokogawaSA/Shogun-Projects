@@ -215,6 +215,34 @@ export async function processTaskStatusChanged(payload: TaskStatusChangedPayload
   });
 }
 
+import { executeWorkflow } from '../workflows/workflowRunner.js';
+
+/**
+ * Evaluates active custom database workflow rules against incoming event payload
+ */
+export async function evaluateCustomWorkflows(targetModule: string, eventPayload: Record<string, any>): Promise<any[]> {
+  try {
+    const tenantId = eventPayload.tenantId || 'tenant-default';
+    const activeRules = await prisma.workflowRule.findMany({
+      where: {
+        tenantId,
+        targetModule,
+        isActive: true,
+      },
+    });
+
+    const executionResults = [];
+    for (const rule of activeRules) {
+      const res = await executeWorkflow(rule, { ...eventPayload, targetModule });
+      executionResults.push(res);
+    }
+    return executionResults;
+  } catch (err: any) {
+    console.error('[WorkflowWorker] Custom workflow evaluation error:', err.message);
+    return [];
+  }
+}
+
 /**
  * Initialize BullMQ Workflow Worker
  */
@@ -224,11 +252,20 @@ export function createWorkflowWorker(concurrency = 5): Worker {
     async (job: Job) => {
       console.log(`[WorkflowWorker] Processing job ${job.id} (${job.name})...`);
 
+      let systemResult: any = null;
+      let customResults: any[] = [];
+
       switch (job.name) {
         case 'deal.stage_updated':
-          return processDealStageUpdated(job.data as DealStageUpdatedPayload);
+          systemResult = await processDealStageUpdated(job.data as DealStageUpdatedPayload);
+          customResults = await evaluateCustomWorkflows('deals', job.data);
+          return { systemResult, customResults };
+
         case 'task.status_changed':
-          return processTaskStatusChanged(job.data as TaskStatusChangedPayload);
+          systemResult = await processTaskStatusChanged(job.data as TaskStatusChangedPayload);
+          customResults = await evaluateCustomWorkflows('tasks', job.data);
+          return { systemResult, customResults };
+
         default:
           console.warn(`[WorkflowWorker] Unrecognized job name: ${job.name}`);
           return { skipped: true, reason: 'unknown_job' };

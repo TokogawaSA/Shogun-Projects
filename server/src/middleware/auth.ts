@@ -2,6 +2,10 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { AuthUserClaims } from '../types/auth.js';
 
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  throw new Error('[FATAL SECURITY EXCEPTION] JWT_SECRET must be explicitly defined in environment variables for production execution.');
+}
+
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_jwt_key_change_in_production_32chars_min';
 
 /**

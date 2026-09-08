@@ -229,6 +229,7 @@ export interface WorkflowRule {
   conditions: WorkflowCondition[];
   actions: WorkflowAction[];
   isActive: boolean;
+  graphData?: any; // Intermediate Representation (IR): { trigger, nodes, edges }
   createdAt?: string;
   updatedAt?: string;
 }

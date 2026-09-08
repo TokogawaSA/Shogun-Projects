@@ -5,6 +5,10 @@ import jwt from 'jsonwebtoken';
 import { createRedisConnection } from './config/redis.js';
 import { AuthUserClaims } from './types/auth.js';
 
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  throw new Error('[FATAL SECURITY EXCEPTION] JWT_SECRET must be explicitly defined in environment variables for production execution.');
+}
+
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_jwt_key_change_in_production_32chars_min';
 
 export interface AuthenticatedSocket extends Socket {
@@ -31,14 +35,18 @@ export function initSocketServer(httpServer: HttpServer): SocketIOServer {
     transports: ['websocket', 'polling'],
   });
 
-  // Attach Redis adapter for horizontal scaling if Redis is configured
-  try {
-    const pubClient = createRedisConnection();
-    const subClient = createRedisConnection();
-    io.adapter(createAdapter(pubClient, subClient));
-    console.log('🔗 [Socket.io Gateway] Redis Pub/Sub Adapter attached successfully.');
-  } catch (err: any) {
-    console.warn('[Socket.io Gateway] Running without Redis adapter (in-memory fallback):', err.message);
+  // Attach Redis adapter for horizontal scaling if Redis is explicitly configured
+  if (process.env.REDIS_URL || process.env.ENABLE_REDIS === 'true') {
+    try {
+      const pubClient = createRedisConnection();
+      const subClient = createRedisConnection();
+      io.adapter(createAdapter(pubClient, subClient));
+      console.log('🔗 [Socket.io Gateway] Redis Pub/Sub Adapter attached successfully.');
+    } catch (err: any) {
+      console.warn('[Socket.io Gateway] Running without Redis adapter (in-memory fallback):', err.message);
+    }
+  } else {
+    console.log('⚡ [Socket.io Gateway] Running in standalone in-memory mode.');
   }
 
   // Socket Authentication Middleware

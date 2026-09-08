@@ -4,7 +4,9 @@ import {
   updateModuleSchema,
   getWorkflowRules,
   createWorkflowRule,
+  updateWorkflowRule,
   deleteWorkflowRule,
+  executeWorkflowRule,
   getProfiles,
   getRoles,
   getEmailTemplates,
@@ -20,7 +22,9 @@ settingsRouter.put('/schemas/:moduleName', updateModuleSchema);
 // Workflows
 settingsRouter.get('/workflows', getWorkflowRules);
 settingsRouter.post('/workflows', createWorkflowRule);
+settingsRouter.put('/workflows/:id', updateWorkflowRule);
 settingsRouter.delete('/workflows/:id', deleteWorkflowRule);
+settingsRouter.post('/workflows/execute', executeWorkflowRule);
 
 // RBAC Profiles & Roles
 settingsRouter.get('/profiles', getProfiles);

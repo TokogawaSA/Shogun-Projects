@@ -18,7 +18,10 @@ export async function getPortfolios(req: Request, res: Response): Promise<void> 
     });
     res.json(portfolios);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch portfolios.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to fetch portfolios.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -42,7 +45,10 @@ export async function createPortfolio(req: Request, res: Response): Promise<void
 
     res.status(201).json(portfolio);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to create portfolio.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to create portfolio.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -61,7 +67,10 @@ export async function getResourceProfiles(req: Request, res: Response): Promise<
     });
     res.json(profiles);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch resource profiles.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to fetch resource profiles.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -70,6 +79,13 @@ export async function upsertResourceProfile(req: Request, res: Response): Promis
     const tenantId = req.user!.tenantId;
     const data = req.body;
     const userId = data.userId || req.user!.userId;
+
+    // Verify user belongs to caller's tenant
+    const targetUser = await prisma.user.findFirst({ where: { id: userId, tenantId } });
+    if (!targetUser) {
+      res.status(404).json({ error: 'User profile not found in active tenant.' });
+      return;
+    }
 
     const profile = await prisma.resourceProfile.upsert({
       where: { userId },
@@ -95,7 +111,10 @@ export async function upsertResourceProfile(req: Request, res: Response): Promis
 
     res.json(profile);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to save resource profile.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to save resource profile.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -201,7 +220,10 @@ export async function recalculateFinancials(req: Request, res: Response): Promis
     });
   } catch (err: any) {
     console.error('[Recalculate Financials Error]:', err);
-    res.status(500).json({ error: 'Failed to recalculate financials.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to recalculate financials.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -228,7 +250,10 @@ export async function getRisks(req: Request, res: Response): Promise<void> {
 
     res.json(risks);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch risks.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to fetch risks.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -269,7 +294,10 @@ export async function createRisk(req: Request, res: Response): Promise<void> {
       isCritical,
     });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to create risk item.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to create risk item.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -311,6 +339,9 @@ export async function updateRisk(req: Request, res: Response): Promise<void> {
       isCritical,
     });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to update risk item.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to update risk item.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }

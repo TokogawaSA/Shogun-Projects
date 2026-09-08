@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '../services/apiClient';
+import { apiClient } from '../services/api';
 
 export interface Account360Summary {
   accountId: string;
@@ -31,3 +31,5 @@ export function useAccount360(accountId: string) {
     enabled: Boolean(accountId),
   });
 }
+
+export default useAccount360;

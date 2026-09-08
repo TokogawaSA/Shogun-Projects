@@ -47,12 +47,30 @@ export type TaskCategory =
 
 export type AgentType = 'Sentinel' | 'Worker' | 'Auditor' | 'Human' | 'None';
 
+export interface TaskAttachment {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  url?: string;
+  uploadedBy?: string;
+  uploadedAt: string;
+}
+
 export interface SubTask {
   id: string;
+  taskId?: string;
   title: string;
+  description?: string;
   completed: boolean;
   assigneeId?: string;
+  assigneeName?: string;
+  priority?: TaskPriority;
+  dueDate?: string;
+  attachments?: TaskAttachment[];
+  customFields?: Record<string, any>;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface Task {
@@ -64,6 +82,8 @@ export interface Task {
   priority: TaskPriority;
   assigneeId?: string;
   creatorId: string;
+  // Dates & Schedulers
+  startDate?: string;
   dueDate?: string;
   createdAt: string;
   updatedAt: string;
@@ -73,6 +93,30 @@ export interface Task {
 
   // Multi-Level Sub-Task Hierarchy (nested parent/child tree)
   parentTaskId?: string | null;
+  treePath?: string; // Materialized path (e.g., 'ws.sp.fl.ls.tsk.subtsk')
+  depthLevel?: number; // 0 = Root, 1 = Subtask, 2 = Sub-subtask
+
+  // Structural Hierarchy Container Linkage
+  listId?: string | null;
+  folderId?: string | null;
+  spaceId?: string | null;
+
+  // Multi-Assignees
+  assigneeIds?: string[];
+  assignees?: import('./taskEngine').TaskAssigneeAllocation[];
+
+  // Dynamic Custom Fields Engine
+  customFields?: Record<string, any>;
+
+  // Rich Task Dependencies DAG
+  dependencies?: import('./taskEngine').TaskDependencyItem[];
+
+  // Advanced Recurrence Config
+  advancedRecurrence?: import('./taskEngine').AdvancedRecurrenceConfig;
+
+  // Pre-computed Rollups
+  subtaskCountTotal?: number;
+  subtaskCountCompleted?: number;
 
   // Milestones & Dependencies
   milestoneId?: string | null;
@@ -97,6 +141,21 @@ export interface Task {
   // CRM & Entity Relationship Linkage
   relatedEntityType?: 'project' | 'deal' | 'account' | 'contact' | null;
   relatedEntityId?: string | null;
+
+  // File Attachments, Acceptance Criteria & Project Context
+  attachments?: TaskAttachment[];
+  acceptanceCriteria?: Array<{ id: string; text: string; completed: boolean }>;
+  projectInfo?: {
+    id: string;
+    title: string;
+    description?: string;
+    clientName?: string;
+    milestoneTitle?: string;
+    budgetTotal?: number;
+    hoursBudgeted?: number;
+    hoursSpent?: number;
+    status?: string;
+  };
 }
 
 // ==========================================
@@ -128,3 +187,9 @@ export * from './crm';
 export * from './settings';
 export * from './ppm';
 export * from './catalogAndProjects';
+export * from './projectManagement';
+export * from './hierarchy';
+export * from './taskEngine';
+export * from './views';
+
+

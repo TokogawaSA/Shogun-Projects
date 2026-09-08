@@ -1,15 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Workflow,
-  Plus,
-  Trash2,
-  X,
-  Save,
-  Mail,
-  CheckSquare,
-  RefreshCw,
-  Globe,
-} from 'lucide-react';
+import { Workflow, X, Save, Layers, ListFilter } from 'lucide-react';
 import { apiClient } from '../../../services/api';
 import {
   WorkflowRule,
@@ -17,8 +7,11 @@ import {
   WorkflowTriggerType,
   WorkflowCondition,
   WorkflowAction,
-  ConditionOperator,
 } from '../../../types/settings';
+import { convertLinearToDAG, convertDAGToLinear } from '../../../types/workflow';
+import LinearRuleBuilder from '../workflow-builder/LinearRuleBuilder';
+import WorkflowCanvas from '../workflow-builder/WorkflowCanvas';
+import { Node, Edge } from '@xyflow/react';
 
 interface WorkflowBuilderModalProps {
   isOpen: boolean;
@@ -33,31 +26,31 @@ export const WorkflowBuilderModal: React.FC<WorkflowBuilderModalProps> = ({
   existingWorkflow,
   onSaved,
 }) => {
-  const [activeStep, setActiveStep] = useState<1 | 2 | 3>(1);
+  // Paradigm mode: 'linear' (Paradigm A) vs 'dag' (Paradigm B)
+  const [paradigm, setParadigm] = useState<'linear' | 'dag'>('dag');
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Step 1: Meta
-  const [name, setName] = useState(existingWorkflow?.name || '');
+  // Core Rule Meta
+  const [name, setName] = useState(existingWorkflow?.name || existingWorkflow?.title || '');
   const [description, setDescription] = useState(existingWorkflow?.description || '');
   const [targetModule, setTargetModule] = useState<SupportedModule>(
     (existingWorkflow?.targetModule as SupportedModule) || 'deals'
   );
   const [triggerType, setTriggerType] = useState<WorkflowTriggerType>(
-    existingWorkflow?.triggerType || 'on_create'
+    existingWorkflow?.triggerType || 'on_stage_change'
   );
   const [isActive, setIsActive] = useState<boolean>(
     existingWorkflow?.isActive !== undefined ? existingWorkflow.isActive : true
   );
 
-  // Step 2: Conditions
+  // Paradigm A Linear State
   const [conditions, setConditions] = useState<WorkflowCondition[]>(
     existingWorkflow?.conditions && existingWorkflow.conditions.length > 0
       ? existingWorkflow.conditions
-      : [{ field: 'value', operator: 'greater_than', value: 5000 }]
+      : [{ field: 'amount', operator: 'greater_than', value: 10000 }]
   );
 
-  // Step 3: Actions
   const [actions, setActions] = useState<WorkflowAction[]>(
     existingWorkflow?.actions && existingWorkflow.actions.length > 0
       ? existingWorkflow.actions
@@ -65,84 +58,59 @@ export const WorkflowBuilderModal: React.FC<WorkflowBuilderModalProps> = ({
           {
             type: 'send_email',
             config: {
-              templateId: 'tpl_welcome',
-              recipientField: 'ownerEmail',
+              templateId: 'tmpl_standard_welcome',
+              recipientField: '{{deal.primaryContact.email}}',
             },
           },
         ]
   );
 
+  // Paradigm B Graph State (IR)
+  const initialIR = convertLinearToDAG(
+    existingWorkflow?.id || `wf_${Date.now()}`,
+    'tenant-default',
+    name || 'New Workflow Rule',
+    description,
+    targetModule,
+    triggerType,
+    isActive,
+    conditions,
+    actions
+  );
+
+  const [graphNodes, setGraphNodes] = useState<Node[]>(
+    existingWorkflow?.graphData?.nodes || initialIR.nodes
+  );
+  const [graphEdges, setGraphEdges] = useState<Edge[]>(
+    existingWorkflow?.graphData?.edges || initialIR.edges
+  );
+
   if (!isOpen) return null;
 
-  // Condition Handlers
-  const handleAddCondition = () => {
-    setConditions([
-      ...conditions,
-      { field: 'status', operator: 'equals', value: 'Closed Won' },
-    ]);
-  };
+  const handleGraphChange = (newNodes: Node[], newEdges: Edge[]) => {
+    setGraphNodes(newNodes);
+    setGraphEdges(newEdges);
 
-  const handleUpdateCondition = (index: number, field: keyof WorkflowCondition, val: any) => {
-    const updated = [...conditions];
-    updated[index] = { ...updated[index], [field]: val };
-    setConditions(updated);
-  };
+    // Sync graph nodes back to linear conditions and actions
+    const extracted = convertDAGToLinear({
+      id: existingWorkflow?.id || `wf_${Date.now()}`,
+      tenantId: 'tenant-default',
+      name,
+      targetModule,
+      triggerType,
+      isActive,
+      trigger: { id: 'node_1', type: 'event_trigger', module: targetModule, event: triggerType },
+      nodes: newNodes as any,
+      edges: newEdges as any,
+    });
 
-  const handleRemoveCondition = (index: number) => {
-    setConditions(conditions.filter((_, i) => i !== index));
-  };
-
-  // Action Handlers
-  const handleAddAction = (type: WorkflowAction['type']) => {
-    let newAction: WorkflowAction;
-    switch (type) {
-      case 'send_email':
-        newAction = {
-          type: 'send_email',
-          config: {
-            templateId: 'tpl_welcome',
-            recipientField: 'ownerEmail',
-          },
-        };
-        break;
-      case 'create_task':
-        newAction = {
-          type: 'create_task',
-          config: {
-            taskTitle: 'Follow-up on Workflow Event',
-            dueInDays: 3,
-            priority: 'medium',
-          },
-        };
-        break;
-      case 'update_field':
-        newAction = {
-          type: 'update_field',
-          config: { targetField: 'lifecycleStage', value: 'Customer' },
-        };
-        break;
-      case 'call_webhook':
-        newAction = {
-          type: 'call_webhook',
-          config: {
-            url: 'https://api.external.service/webhook',
-            method: 'POST',
-            payloadTemplate: '{"event": "workflow_trigger", "id": "{{docId}}"}',
-          },
-        };
-        break;
-    }
-    setActions([...actions, newAction]);
-  };
-
-  const handleRemoveAction = (index: number) => {
-    setActions(actions.filter((_, i) => i !== index));
+    if (extracted.conditions.length > 0) setConditions(extracted.conditions);
+    if (extracted.actions.length > 0) setActions(extracted.actions);
   };
 
   const handleSaveWorkflow = async () => {
     if (!name.trim()) {
       setErrorMessage('Workflow name is required.');
-      setActiveStep(1);
       return;
     }
 
@@ -150,15 +118,24 @@ export const WorkflowBuilderModal: React.FC<WorkflowBuilderModalProps> = ({
     setErrorMessage(null);
 
     const workflowId = existingWorkflow?.id || `wf_${Date.now()}`;
+    const graphDataPayload = {
+      id: workflowId,
+      trigger: { id: 'node_1', type: 'event_trigger', module: targetModule, event: triggerType },
+      nodes: graphNodes,
+      edges: graphEdges,
+    };
+
     const payload: WorkflowRule = {
       id: workflowId,
       name: name.trim(),
+      title: name.trim(),
       description: description.trim(),
       targetModule,
       triggerType,
       isActive,
       conditions,
       actions,
+      graphData: graphDataPayload,
       createdAt: existingWorkflow?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -177,22 +154,51 @@ export const WorkflowBuilderModal: React.FC<WorkflowBuilderModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-      <div className="relative w-full max-w-2xl rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+      <div className="relative w-full max-w-5xl rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl flex flex-col max-h-[95vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/90">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-              <Workflow className="w-4 h-4" />
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+              <Workflow className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">
+              <h3 className="text-sm font-bold text-white tracking-tight">
                 {existingWorkflow ? 'Edit Automation Workflow' : 'Create Automation Workflow'}
               </h3>
               <p className="text-[11px] text-slate-400">
-                Configure reactive triggers, condition matrices, and automated action cascades.
+                Visual Graph Canvas (DAG) & Rule-Based Automation Engine.
               </p>
             </div>
           </div>
+
+          {/* Paradigm Toggle Switcher */}
+          <div className="flex items-center p-1 bg-slate-950 border border-slate-800 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setParadigm('linear')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                paradigm === 'linear'
+                  ? 'bg-amber-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <ListFilter size={14} />
+              <span>Paradigm A: Linear Card Builder</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setParadigm('dag')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                paradigm === 'dag'
+                  ? 'bg-amber-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Layers size={14} />
+              <span>Paradigm B: Node Canvas (DAG)</span>
+            </button>
+          </div>
+
           <button
             onClick={onClose}
             className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
@@ -201,94 +207,50 @@ export const WorkflowBuilderModal: React.FC<WorkflowBuilderModalProps> = ({
           </button>
         </div>
 
-        {/* Step Navigation Bar */}
-        <div className="grid grid-cols-3 border-b border-slate-800 bg-slate-950/50 text-xs font-semibold">
-          <button
-            type="button"
-            onClick={() => setActiveStep(1)}
-            className={`py-3 px-4 flex items-center justify-center gap-2 transition-colors border-b-2 ${
-              activeStep === 1
-                ? 'border-amber-500 text-amber-300 bg-amber-500/5'
-                : 'border-transparent text-slate-400 hover:text-white'
-            }`}
-          >
-            <span className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold">
-              1
-            </span>
-            <span>Target & Trigger</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveStep(2)}
-            className={`py-3 px-4 flex items-center justify-center gap-2 transition-colors border-b-2 ${
-              activeStep === 2
-                ? 'border-amber-500 text-amber-300 bg-amber-500/5'
-                : 'border-transparent text-slate-400 hover:text-white'
-            }`}
-          >
-            <span className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold">
-              2
-            </span>
-            <span>Match Conditions ({conditions.length})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveStep(3)}
-            className={`py-3 px-4 flex items-center justify-center gap-2 transition-colors border-b-2 ${
-              activeStep === 3
-                ? 'border-amber-500 text-amber-300 bg-amber-500/5'
-                : 'border-transparent text-slate-400 hover:text-white'
-            }`}
-          >
-            <span className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold">
-              3
-            </span>
-            <span>Action Cascade ({actions.length})</span>
-          </button>
-        </div>
-
-        {/* Body Content */}
-        <div className="p-6 overflow-y-auto space-y-5 flex-1">
+        {/* Content Body */}
+        <div className="p-6 overflow-y-auto flex-1 space-y-4">
           {errorMessage && (
             <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-500/30 text-rose-300 text-xs font-semibold">
               {errorMessage}
             </div>
           )}
 
-          {/* STEP 1: Basic Info & Trigger */}
-          {activeStep === 1 && (
+          {paradigm === 'linear' ? (
+            <LinearRuleBuilder
+              name={name}
+              setName={setName}
+              description={description}
+              setDescription={setDescription}
+              targetModule={targetModule}
+              setTargetModule={setTargetModule}
+              triggerType={triggerType}
+              setTriggerType={setTriggerType}
+              isActive={isActive}
+              setIsActive={setIsActive}
+              conditions={conditions}
+              setConditions={setConditions}
+              actions={actions}
+              setActions={setActions}
+            />
+          ) : (
             <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-300">Workflow Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. VIP Deal Closed Notification"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-300">Description</label>
-                <textarea
-                  rows={2}
-                  placeholder="Explain when and why this rule executes..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300">Workflow Name</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Closed-Won Onboarding Automation"
+                    className="w-full px-3 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+                <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-300">Target Module</label>
                   <select
                     value={targetModule}
                     onChange={(e) => setTargetModule(e.target.value as SupportedModule)}
-                    className="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500 font-sans"
+                    className="w-full px-3 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded-xl text-white font-sans"
                   >
                     <option value="deals">Deals & Revenue</option>
                     <option value="projects">Projects Hub</option>
@@ -297,13 +259,12 @@ export const WorkflowBuilderModal: React.FC<WorkflowBuilderModalProps> = ({
                     <option value="contacts">Contacts Directory</option>
                   </select>
                 </div>
-
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-300">Trigger Event</label>
                   <select
                     value={triggerType}
                     onChange={(e) => setTriggerType(e.target.value as WorkflowTriggerType)}
-                    className="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500 font-sans"
+                    className="w-full px-3 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded-xl text-white font-sans"
                   >
                     <option value="on_create">On Record Created</option>
                     <option value="on_update">On Record Updated</option>
@@ -313,348 +274,19 @@ export const WorkflowBuilderModal: React.FC<WorkflowBuilderModalProps> = ({
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-slate-800/50 border border-slate-700/60 flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-bold text-white">Rule Execution Status</h4>
-                  <p className="text-[11px] text-slate-400">
-                    Active workflows are evaluated on write events in Cloud Function Gen 2.
-                  </p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isActive}
-                    onChange={(e) => setIsActive(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
-                </label>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 2: Match Conditions */}
-          {activeStep === 2 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-slate-400">
-                  Specify criteria that records must satisfy to trigger action dispatchers.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleAddCondition}
-                  className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 text-xs font-bold transition-all flex items-center gap-1"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add Condition</span>
-                </button>
-              </div>
-
-              {conditions.length === 0 ? (
-                <div className="p-8 rounded-xl border border-dashed border-slate-800 text-center text-xs text-slate-500">
-                  No conditions set. The workflow will trigger on every event for this module.
-                </div>
-              ) : (
-                <div className="space-y-2.5">
-                  {conditions.map((cond, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3 rounded-xl bg-slate-800/60 border border-slate-700 flex flex-wrap items-center gap-2"
-                    >
-                      <input
-                        type="text"
-                        placeholder="Field Name (e.g. value)"
-                        value={cond.field}
-                        onChange={(e) => handleUpdateCondition(idx, 'field', e.target.value)}
-                        className="flex-1 min-w-[120px] px-2.5 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
-                      />
-
-                      <select
-                        value={cond.operator}
-                        onChange={(e) =>
-                          handleUpdateCondition(idx, 'operator', e.target.value as ConditionOperator)
-                        }
-                        className="px-2.5 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-lg text-amber-300 font-sans"
-                      >
-                        <option value="equals">equals (=)</option>
-                        <option value="not_equals">not equals (!=)</option>
-                        <option value="greater_than">greater than (&gt;)</option>
-                        <option value="less_than">less than (&lt;)</option>
-                        <option value="contains">contains</option>
-                        <option value="starts_with">starts with</option>
-                        <option value="is_empty">is empty</option>
-                        <option value="is_not_empty">is not empty</option>
-                      </select>
-
-                      <input
-                        type="text"
-                        placeholder="Value to compare"
-                        value={cond.value !== undefined ? String(cond.value) : ''}
-                        onChange={(e) => handleUpdateCondition(idx, 'value', e.target.value)}
-                        className="flex-1 min-w-[120px] px-2.5 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
-                      />
-
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveCondition(idx)}
-                        className="p-1.5 text-slate-500 hover:text-rose-400 rounded-lg hover:bg-slate-700 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* STEP 3: Action Cascade */}
-          {activeStep === 3 && (
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-xs text-slate-400">
-                  Select and configure actions executed in sequence when conditions pass.
-                </p>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => handleAddAction('send_email')}
-                    className="px-2.5 py-1 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400 hover:bg-sky-500/20 text-xs font-semibold flex items-center gap-1"
-                  >
-                    <Mail className="w-3.5 h-3.5" /> Email
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleAddAction('create_task')}
-                    className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 text-xs font-semibold flex items-center gap-1"
-                  >
-                    <CheckSquare className="w-3.5 h-3.5" /> Task
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleAddAction('update_field')}
-                    className="px-2.5 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500/20 text-xs font-semibold flex items-center gap-1"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" /> Field
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleAddAction('call_webhook')}
-                    className="px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 text-xs font-semibold flex items-center gap-1"
-                  >
-                    <Globe className="w-3.5 h-3.5" /> Webhook
-                  </button>
-                </div>
-              </div>
-
-              {actions.length === 0 ? (
-                <div className="p-8 rounded-xl border border-dashed border-slate-800 text-center text-xs text-slate-500">
-                  No actions attached. Add an action above to execute on trigger.
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {actions.map((act, idx) => (
-                    <div
-                      key={idx}
-                      className="p-4 rounded-xl bg-slate-800/70 border border-slate-700 space-y-3"
-                    >
-                      <div className="flex items-center justify-between border-b border-slate-700/60 pb-2">
-                        <span className="text-xs font-bold text-white flex items-center gap-1.5 uppercase font-mono">
-                          {act.type === 'send_email' && <Mail className="w-3.5 h-3.5 text-sky-400" />}
-                          {act.type === 'create_task' && (
-                            <CheckSquare className="w-3.5 h-3.5 text-emerald-400" />
-                          )}
-                          {act.type === 'update_field' && (
-                            <RefreshCw className="w-3.5 h-3.5 text-purple-400" />
-                          )}
-                          {act.type === 'call_webhook' && (
-                            <Globe className="w-3.5 h-3.5 text-indigo-400" />
-                          )}
-                          <span>Action {idx + 1}: {act.type.replace('_', ' ')}</span>
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveAction(idx)}
-                          className="p-1 text-slate-500 hover:text-rose-400 transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-
-                      {/* Action Type Form Configs */}
-                      {act.type === 'send_email' && (
-                        <div className="grid grid-cols-2 gap-3 text-xs">
-                          <div>
-                            <label className="text-[10px] text-slate-400 font-mono uppercase">
-                              Template Key
-                            </label>
-                            <input
-                              type="text"
-                              value={act.config?.templateId || ''}
-                              onChange={(e) => {
-                                const updated = [...actions];
-                                if (!updated[idx].config) (updated[idx] as any).config = {};
-                                (updated[idx] as any).config.templateId = e.target.value;
-                                setActions(updated);
-                              }}
-                              className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[10px] text-slate-400 font-mono uppercase">
-                              Recipient Field / Email
-                            </label>
-                            <input
-                              type="text"
-                              value={act.config?.recipientField || ''}
-                              onChange={(e) => {
-                                const updated = [...actions];
-                                if (!updated[idx].config) (updated[idx] as any).config = {};
-                                (updated[idx] as any).config.recipientField = e.target.value;
-                                setActions(updated);
-                              }}
-                              placeholder="ownerEmail or client@mail.com"
-                              className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {act.type === 'create_task' && (
-                        <div className="grid grid-cols-3 gap-3 text-xs">
-                          <div className="col-span-2">
-                            <label className="text-[10px] text-slate-400 font-mono uppercase">
-                              Task Title
-                            </label>
-                            <input
-                              type="text"
-                              value={act.config?.taskTitle || ''}
-                              onChange={(e) => {
-                                const updated = [...actions];
-                                if (!updated[idx].config) (updated[idx] as any).config = {};
-                                (updated[idx] as any).config.taskTitle = e.target.value;
-                                setActions(updated);
-                              }}
-                              className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[10px] text-slate-400 font-mono uppercase">
-                              Due In (Days)
-                            </label>
-                            <input
-                              type="number"
-                              value={act.config?.dueInDays || 1}
-                              onChange={(e) => {
-                                const updated = [...actions];
-                                if (!updated[idx].config) (updated[idx] as any).config = {};
-                                (updated[idx] as any).config.dueInDays = Number(e.target.value);
-                                setActions(updated);
-                              }}
-                              className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {act.type === 'update_field' && (
-                        <div className="grid grid-cols-2 gap-3 text-xs">
-                          <div>
-                            <label className="text-[10px] text-slate-400 font-mono uppercase">
-                              Target Field
-                            </label>
-                            <input
-                              type="text"
-                              value={act.config?.targetField || ''}
-                              onChange={(e) => {
-                                const updated = [...actions];
-                                if (!updated[idx].config) (updated[idx] as any).config = {};
-                                (updated[idx] as any).config.targetField = e.target.value;
-                                setActions(updated);
-                              }}
-                              className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[10px] text-slate-400 font-mono uppercase">
-                              New Field Value
-                            </label>
-                            <input
-                              type="text"
-                              value={String(act.config?.newValue || '')}
-                              onChange={(e) => {
-                                const updated = [...actions];
-                                if (!updated[idx].config) (updated[idx] as any).config = {};
-                                (updated[idx] as any).config.newValue = e.target.value;
-                                setActions(updated);
-                              }}
-                              className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {act.type === 'call_webhook' && (
-                        <div className="space-y-2 text-xs">
-                          <div className="flex gap-2">
-                            <select
-                              value={act.config?.method || 'POST'}
-                              onChange={(e) => {
-                                const updated = [...actions];
-                                if (!updated[idx].config) (updated[idx] as any).config = {};
-                                (updated[idx] as any).config.method = e.target.value;
-                                setActions(updated);
-                              }}
-                              className="px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-amber-300 font-mono font-bold"
-                            >
-                              <option value="POST">POST</option>
-                              <option value="GET">GET</option>
-                              <option value="PUT">PUT</option>
-                            </select>
-                            <input
-                              type="url"
-                              value={act.config?.url || ''}
-                              onChange={(e) => {
-                                const updated = [...actions];
-                                if (!updated[idx].config) (updated[idx] as any).config = {};
-                                (updated[idx] as any).config.url = e.target.value;
-                                setActions(updated);
-                              }}
-                              placeholder="https://api.domain.com/endpoint"
-                              className="flex-1 px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+              <WorkflowCanvas
+                initialNodes={graphNodes}
+                initialEdges={graphEdges}
+                onGraphChange={handleGraphChange}
+              />
             </div>
           )}
         </div>
 
         {/* Footer Actions */}
         <div className="px-6 py-4 border-t border-slate-800 bg-slate-900/90 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {activeStep > 1 && (
-              <button
-                type="button"
-                onClick={() => setActiveStep((prev) => (prev - 1) as any)}
-                className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
-              >
-                Previous Step
-              </button>
-            )}
-            {activeStep < 3 && (
-              <button
-                type="button"
-                onClick={() => setActiveStep((prev) => (prev + 1) as any)}
-                className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 text-xs font-bold transition-all"
-              >
-                Next Step
-              </button>
-            )}
+          <div className="text-xs text-slate-400">
+            {graphNodes.length} Canvas Nodes • {graphEdges.length} Connections
           </div>
 
           <div className="flex items-center gap-3">
@@ -672,7 +304,7 @@ export const WorkflowBuilderModal: React.FC<WorkflowBuilderModalProps> = ({
               className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-all shadow-lg shadow-amber-600/20 flex items-center gap-1.5"
             >
               <Save className="w-3.5 h-3.5" />
-              <span>{saving ? 'Saving...' : 'Deploy Workflow Rule'}</span>
+              <span>{saving ? 'Deploying...' : 'Deploy Workflow Graph (IR)'}</span>
             </button>
           </div>
         </div>

@@ -15,6 +15,8 @@ import { ppmRouter } from './routes/ppmRoutes.js';
 import { cronRouter } from './routes/cronRoutes.js';
 import { settingsRouter } from './routes/settingsRoutes.js';
 import { mcpRouter } from './routes/mcpRoutes.js';
+import { projectManagementRouter } from './routes/projectManagementRoutes.js';
+import { hierarchyRouter } from './routes/hierarchyRoutes.js';
 
 dotenv.config();
 
@@ -34,7 +36,7 @@ app.use(
       if (!origin || allowedOrigins.includes(origin) || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
         callback(null, true);
       } else {
-        callback(null, true);
+        callback(new Error('Not allowed by CORS'));
       }
     },
     credentials: true,
@@ -70,7 +72,7 @@ app.get('/api/health', async (_req: Request, res: Response) => {
       status: 'degraded',
       service: 'shogun-server',
       database: 'disconnected',
-      error: err.message,
+      ...(process.env.NODE_ENV === 'development' ? { error: err.message } : {}),
       timestamp: new Date().toISOString(),
     });
   }
@@ -87,8 +89,10 @@ app.use('/api/crm', authenticateTenant, crmRouter);
 app.use('/api/projects', authenticateTenant, projectRouter);
 app.use('/api/catalog', authenticateTenant, catalogRouter);
 app.use('/api/ppm', authenticateTenant, ppmRouter);
+app.use('/api/pm', authenticateTenant, projectManagementRouter);
 app.use('/api/settings', authenticateTenant, settingsRouter);
 app.use('/api/mcp', authenticateTenant, mcpRouter);
+app.use('/api/hierarchy', authenticateTenant, hierarchyRouter);
 
 // 404 Route Catch-All
 app.use((_req: Request, res: Response) => {
@@ -98,8 +102,11 @@ app.use((_req: Request, res: Response) => {
 // Global Error Handler
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   console.error('[Unhandled Server Error]:', err);
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal Server Error',
+  const status = err.status || 500;
+  res.status(status).json({
+    error: status === 500 && process.env.NODE_ENV === 'production'
+      ? 'Internal Server Error'
+      : err.message || 'Internal Server Error',
     ...(process.env.NODE_ENV === 'development' ? { stack: err.stack } : {}),
   });
 });

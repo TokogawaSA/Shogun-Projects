@@ -29,7 +29,7 @@ export const EntityEditView: React.FC = () => {
   const { module: routeModule, id: recordId } = useParams<{ module: string; id?: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const tenantId = user?.tenantId || 'tenant-default';
+  const tenantId = user?.tenantId || 'tenant-enterprise-root';
 
   const isCreate = !recordId || recordId === 'new';
 
@@ -57,7 +57,7 @@ export const EntityEditView: React.FC = () => {
       // Set defaults for Create Mode
       const defaults: Record<string, any> = {
         tenantId,
-        assignedUserId: user?.uid || 'usr-admin-master',
+        assignedUserId: user?.uid || undefined,
         assignedUserName: user?.displayName || user?.email?.split('@')[0] || 'CRM Admin',
         currency: 'USD',
       };
@@ -145,40 +145,28 @@ export const EntityEditView: React.FC = () => {
 
     try {
       if (isCreate) {
-        // Generate Sequential Record ID
-        const timestampSuffix = Date.now().toString().slice(-6);
+        // Validate required relational links
+        if (currentModule === 'contacts' && !formData.accountId) {
+          throw new Error('Please select an Account for this contact using the lookup field.');
+        }
+        if (currentModule === 'deals' && !formData.accountId) {
+          throw new Error('Please select an Account for this deal using the lookup field.');
+        }
 
-        const prefix =
-          currentModule === 'leads'
-            ? 'LEA'
-            : currentModule === 'accounts'
-            ? 'ACC'
-            : currentModule === 'contacts'
-            ? 'CON'
-            : 'POT';
-
-        const recordNumber = `${prefix}-${timestampSuffix}`;
-        const numberField = `${currentModule.slice(0, -1)}Number`;
-        const newEntityId = `${currentModule.slice(0, 3)}-${Date.now().toString(36)}`;
-
-        const newEntity = {
+        const newEntity: Record<string, any> = {
           ...formData,
-          id: newEntityId,
           tenantId,
-          [numberField]: recordNumber,
-          createdById: user?.uid || 'usr-admin',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          assignedUserId: formData.assignedUserId || user?.uid || undefined,
         };
 
         if (currentModule === 'leads') {
           newEntity.isConverted = false;
         }
 
-        const created = await apiClient.post<any>(`/crm/${currentModule}`, newEntity).catch(() => newEntity);
+        const created = await apiClient.post<any>(`/crm/${currentModule}`, newEntity);
 
         setIsSaving(false);
-        navigate(`/crm/${currentModule}/${created?.id || newEntityId}`);
+        navigate(`/crm/${currentModule}/${created?.id}`);
       } else {
         // Update Existing Record
         const updatePayload = {
@@ -186,7 +174,7 @@ export const EntityEditView: React.FC = () => {
           updatedAt: new Date().toISOString(),
         };
 
-        await apiClient.put(`/crm/${currentModule}/${recordId}`, updatePayload).catch(() => {});
+        await apiClient.put(`/crm/${currentModule}/${recordId}`, updatePayload);
 
         setIsSaving(false);
         navigate(`/crm/${currentModule}/${recordId}`);
@@ -194,7 +182,12 @@ export const EntityEditView: React.FC = () => {
     } catch (err: any) {
       console.error('[EntityEditView Save Error]:', err);
       setIsSaving(false);
-      setError(err?.message || 'Failed to save entity record.');
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.details ||
+        err?.message ||
+        'Failed to save entity record to database.';
+      setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
     }
   };
 

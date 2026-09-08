@@ -1,6 +1,10 @@
 import { Request, Response } from 'express';
 import { prisma } from '../config/db.js';
 
+if (process.env.NODE_ENV === 'production' && !process.env.CRON_SECRET) {
+  throw new Error('[FATAL SECURITY EXCEPTION] CRON_SECRET must be explicitly defined in environment variables for production execution.');
+}
+
 const CRON_SECRET = process.env.CRON_SECRET || 'shogun_cron_secret_key_change_in_production';
 
 /**
@@ -9,11 +13,11 @@ const CRON_SECRET = process.env.CRON_SECRET || 'shogun_cron_secret_key_change_in
  */
 export async function runRecurringTasksCron(req: Request, res: Response): Promise<void> {
   try {
-    const headerSecret = req.headers['x-cron-secret'] || req.query.secret;
+    const headerSecret = req.headers['x-cron-secret'];
 
     if (!headerSecret || headerSecret !== CRON_SECRET) {
       res.status(403).json({
-        error: 'Forbidden: Invalid or missing X-Cron-Secret.',
+        error: 'Forbidden: Invalid or missing X-Cron-Secret header.',
       });
       return;
     }
@@ -70,18 +74,16 @@ export async function runRecurringTasksCron(req: Request, res: Response): Promis
           },
         });
 
-        // Replicate checklist subtasks with reset status
+        // Replicate checklist subtasks with batch createMany
         if (template.checklistSubtasks && template.checklistSubtasks.length > 0) {
-          for (const sub of template.checklistSubtasks) {
-            await tx.subTask.create({
-              data: {
-                taskId: newTask.id,
-                title: sub.title,
-                completed: false,
-                assigneeId: sub.assigneeId,
-              },
-            });
-          }
+          await tx.subTask.createMany({
+            data: template.checklistSubtasks.map((sub) => ({
+              taskId: newTask.id,
+              title: sub.title,
+              completed: false,
+              assigneeId: sub.assigneeId,
+            })),
+          });
         }
       });
 
@@ -97,6 +99,9 @@ export async function runRecurringTasksCron(req: Request, res: Response): Promis
     });
   } catch (err: any) {
     console.error('[Cron Recurring Tasks Error]:', err);
-    res.status(500).json({ error: 'Cron execution failed.', details: err.message });
+    res.status(500).json({
+      error: 'Cron execution failed.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }

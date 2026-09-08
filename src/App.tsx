@@ -5,14 +5,15 @@ import { Header } from './components/Header';
 import { DashboardPage } from './pages/DashboardPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { TaskBoardPage } from './pages/TaskBoardPage';
-import { GanttChart } from './modules/projects/gantt/GanttChart';
+import { GanttChart, ProjectCosting, MilestoneTracker } from './modules/projects';
 import { McpServersPage } from './pages/McpServersPage';
 import { renderSettingsRoutes } from './routes/settingsRoutes';
 import { renderCrmRoutes } from './routes/crmRoutes';
 import { renderPpmRoutes } from './routes/ppmRoutes';
 import { renderCatalogRoutes } from './routes/catalogRoutes';
-import { ProjectCosting } from './modules/projects/ProjectCosting';
-import { MilestoneTracker } from './modules/projects/gantt/MilestoneTracker';
+import { renderPmRoutes } from './routes/projectManagementRoutes';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
 import { useAuth } from './context/AuthContext';
 import { Loader2 } from 'lucide-react';
 
@@ -20,6 +21,7 @@ const AppLayout: React.FC = () => {
   const location = useLocation();
   const { loading: authLoading } = useAuth();
   const isSettingsActive = location.pathname.startsWith('/settings');
+  const isAuthRoute = location.pathname === '/login' || location.pathname === '/register';
 
   const getPageInfo = () => {
     const path = location.pathname;
@@ -167,6 +169,12 @@ const AppLayout: React.FC = () => {
         subtitle: 'Multi-tier PriceBook pricing, taxes, line item discounts & project scope conversion',
       };
     }
+    if (path.startsWith('/pm')) {
+      return {
+        title: 'Project Management (PM 360) Hub',
+        subtitle: 'Unified WBS, Gantt timelines, capacity, timesheets, invoicing, risk & client portal',
+      };
+    }
     if (path.startsWith('/catalog/price-books')) {
       return {
         title: 'Price Books & Tiers',
@@ -202,6 +210,15 @@ const AppLayout: React.FC = () => {
     );
   }
 
+  if (isAuthRoute) {
+    return (
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+      </Routes>
+    );
+  }
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-950 text-slate-100">
       <Sidebar />
@@ -210,6 +227,8 @@ const AppLayout: React.FC = () => {
         <main className={isSettingsActive ? 'flex-1 overflow-hidden p-0' : 'flex-1 overflow-y-auto p-8'}>
           <Routes>
             <Route path="/" element={<DashboardPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/projects/:id/costing" element={<ProjectCosting />} />
             <Route path="/projects/costing" element={<ProjectCosting />} />
@@ -220,6 +239,9 @@ const AppLayout: React.FC = () => {
             <Route path="/board" element={<TaskBoardPage />} />
             <Route path="/tasks" element={<TaskBoardPage />} />
             
+            {/* General Project Management Routes */}
+            {renderPmRoutes()}
+
             {/* Enterprise PPM Routes */}
             {renderPpmRoutes()}
 

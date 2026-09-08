@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ==========================================
@@ -49,6 +50,11 @@ model Tenant {
   workflowRules     WorkflowRule[]
   emailConfig       EmailConfig?
   emailTemplates    EmailTemplate[]
+  timesheets        Timesheet[]
+  invoices          ProjectInvoice[]
+  documents         ProjectDocument[]
+  wikiPages         ProjectWikiPage[]
+  changeRequests    ClientChangeRequest[]
 
   @@map("tenants")
 }
@@ -88,6 +94,10 @@ model User {
   createdDeals      Deal[]             @relation("DealCreator")
   ownedRisks        RiskItem[]         @relation("RiskOwner")
   ownedPortfolios   Portfolio[]        @relation("PortfolioOwner")
+  timesheets        Timesheet[]        @relation("TimesheetUser")
+  approvedTimesheets Timesheet[]       @relation("TimesheetApprover")
+  uploadedDocuments ProjectDocument[]  @relation("DocumentUploader")
+  authoredWikiPages ProjectWikiPage[]  @relation("WikiAuthor")
 
   @@index([tenantId])
   @@index([email])
@@ -165,6 +175,10 @@ model Project {
   expenses         ExpenseEntry[]
   risks            RiskItem[]
   quotes           Quote[]
+  invoices         ProjectInvoice[]
+  documents        ProjectDocument[]
+  wikiPages        ProjectWikiPage[]
+  changeRequests   ClientChangeRequest[]
 
   @@index([tenantId])
   @@index([ownerId])
@@ -219,6 +233,8 @@ model Task {
   predecessorTaskIds Json?     // string[]
   relatedEntityType  String?   // project | deal | account | contact
   relatedEntityId    String?
+  customFields       Json?
+  attachments        Json?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
@@ -243,15 +259,20 @@ model Task {
 }
 
 model SubTask {
-  id         String   @id @default(cuid())
-  taskId     String
-  title      String
-  completed  Boolean  @default(false)
-  assigneeId String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id           String    @id @default(cuid())
+  taskId       String
+  title        String
+  description  String?   @db.Text
+  completed    Boolean   @default(false)
+  assigneeId   String?
+  dueDate      DateTime?
+  priority     String?   @default("medium")
+  attachments  Json?
+  customFields Json?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task         Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
   @@map("subtasks")
@@ -270,8 +291,10 @@ model TimeLog {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task        Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timesheetId String?
+  timesheet   Timesheet? @relation(fields: [timesheetId], references: [id], onDelete: SetNull)
 
   @@index([taskId])
   @@index([userId])
@@ -829,6 +852,7 @@ model WorkflowRule {
   triggerType  String   // on_create | on_update | on_stage_change | time_based_cron
   conditions   Json     // WorkflowCondition[]
   actions      Json     // WorkflowAction[]
+  graphData    Json?    // IR Graph structure: { trigger, nodes, edges }
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -876,3 +900,119 @@ model EmailTemplate {
   @@index([tenantId])
   @@map("settings_email_templates")
 }
+
+// ==========================================
+// 7. General Project Management Extensions
+// ==========================================
+
+model Timesheet {
+  id            String    @id @default(cuid())
+  tenantId      String
+  userId        String
+  weekStartDate DateTime
+  totalHours    Float     @default(0)
+  billableHours Float     @default(0)
+  status        String    @default("draft") // draft | submitted | approved | rejected
+  approverId    String?
+  rejectionNote String?   @db.Text
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user          User      @relation("TimesheetUser", fields: [userId], references: [id], onDelete: Cascade)
+  approver      User?     @relation("TimesheetApprover", fields: [approverId], references: [id], onDelete: SetNull)
+  timeLogs      TimeLog[]
+
+  @@index([tenantId])
+  @@index([userId])
+  @@map("pm_timesheets")
+}
+
+model ProjectInvoice {
+  id            String    @id @default(cuid())
+  projectId     String
+  tenantId      String
+  invoiceNumber String
+  issueDate     DateTime  @default(now())
+  dueDate       DateTime
+  status        String    @default("requested") // requested | accepted | paid
+  subtotal      Float     @default(0)
+  taxTotal      Float     @default(0)
+  totalAmount   Float     @default(0)
+  lineItems     Json?     // Array of invoice items
+  notes         String?   @db.Text
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([tenantId])
+  @@map("pm_project_invoices")
+}
+
+model ProjectDocument {
+  id           String   @id @default(cuid())
+  projectId    String
+  tenantId     String
+  fileName     String
+  fileUrl      String
+  fileCategory String   @default("general") // spec | design | contract | report | general
+  fileSize     Int      @default(0)
+  version      String   @default("1.0")
+  uploadedById String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  uploadedBy   User     @relation("DocumentUploader", fields: [uploadedById], references: [id])
+
+  @@index([projectId])
+  @@index([tenantId])
+  @@map("pm_project_documents")
+}
+
+model ProjectWikiPage {
+  id              String   @id @default(cuid())
+  projectId       String
+  tenantId        String
+  title           String
+  slug            String
+  contentMarkdown String   @db.Text
+  authorId        String
+  tags            Json?    // string[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  author          User     @relation("WikiAuthor", fields: [authorId], references: [id])
+
+  @@index([projectId])
+  @@index([tenantId])
+  @@map("pm_project_wiki_pages")
+}
+
+model ClientChangeRequest {
+  id          String   @id @default(cuid())
+  projectId   String
+  tenantId    String
+  title       String
+  description String   @db.Text
+  costImpact  Float    @default(0)
+  scheduleDaysImpact Int @default(0)
+  status      String   @default("pending") // pending | approved | rejected
+  clientNotes String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([tenantId])
+  @@map("pm_client_change_requests")
+}
+

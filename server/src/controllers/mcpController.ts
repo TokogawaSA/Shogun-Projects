@@ -3,7 +3,11 @@ import { summarizeAccountContext, generateTasksFromMeetingNotes } from '../mcp/c
 
 export async function handleSummarizeAccount(req: Request, res: Response): Promise<void> {
   try {
-    const tenantId = req.tenantContext!.tenantId;
+    const tenantId = (req.user || req.tenantContext)?.tenantId;
+    if (!tenantId) {
+      res.status(401).json({ error: 'Unauthorized: Missing tenant context.' });
+      return;
+    }
     const { accountId } = req.body;
 
     if (!accountId) {
@@ -18,14 +22,21 @@ export async function handleSummarizeAccount(req: Request, res: Response): Promi
       res.status(404).json({ error: err.message });
       return;
     }
-    res.status(500).json({ error: 'Failed to summarize account context.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to summarize account context.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
 export async function handleGenerateTasks(req: Request, res: Response): Promise<void> {
   try {
-    const tenantId = req.tenantContext!.tenantId;
-    const userId = req.tenantContext!.userId;
+    const tenantId = (req.user || req.tenantContext)?.tenantId;
+    const userId = (req.user || req.tenantContext)?.userId;
+    if (!tenantId) {
+      res.status(401).json({ error: 'Unauthorized: Missing tenant context.' });
+      return;
+    }
     const { accountId, meetingNotes, targetProjectId } = req.body;
 
     if (!accountId || !meetingNotes) {
@@ -43,6 +54,9 @@ export async function handleGenerateTasks(req: Request, res: Response): Promise<
 
     res.status(201).json(result);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to generate tasks from meeting notes.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to generate tasks from meeting notes.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }

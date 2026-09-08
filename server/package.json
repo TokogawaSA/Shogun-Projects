@@ -13,7 +13,9 @@
     "verify:data": "tsx scripts/verifyMigration.ts",
     "typecheck": "tsc --noEmit",
     "prisma:validate": "prisma validate",
-    "prisma:generate": "prisma generate"
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "seed": "tsx scripts/migrateData.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",

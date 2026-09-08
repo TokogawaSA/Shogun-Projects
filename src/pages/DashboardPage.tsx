@@ -1,10 +1,10 @@
 import React from 'react';
-import { 
-  Server, 
-  Database, 
-  Workflow, 
-  CheckCircle2, 
-  Clock, 
+import {
+  Server,
+  Database,
+  Workflow,
+  CheckCircle2,
+  Clock,
   Bot
 } from 'lucide-react';
 

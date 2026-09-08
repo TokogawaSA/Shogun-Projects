@@ -3,7 +3,7 @@
  * Express REST API Multi-Tenant Integration
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiClient } from '../../../services/api';
 import { ProductOrService, PriceBook } from '../../../types';
 
@@ -144,8 +144,8 @@ export function useCatalog(): UseCatalogReturn {
     fetchCatalogData();
   }, [fetchCatalogData]);
 
-  // Derived Stats
-  const stats: CatalogStats = (() => {
+  // Derived Stats memoized to prevent re-computation on unrelated renders
+  const stats: CatalogStats = useMemo(() => {
     let totalProducts = 0;
     let totalServices = 0;
     let lowStockCount = 0;
@@ -179,65 +179,64 @@ export function useCatalog(): UseCatalogReturn {
       totalInventoryValuation,
       averageMarginPercent,
     };
-  })();
+  }, [items]);
 
   // Item Operations
-  const createItem = async (
-    itemData: Omit<ProductOrService, 'id' | 'createdAt' | 'updatedAt'>
-  ): Promise<string> => {
-    const created = await apiClient.post<ProductOrService>('/catalog/products', itemData);
-    setItems((prev) => [created, ...prev]);
-    return created.id;
-  };
+  const createItem = useCallback(
+    async (itemData: Omit<ProductOrService, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
+      const created = await apiClient.post<ProductOrService>('/catalog/products', itemData);
+      setItems((prev) => [created, ...prev]);
+      return created.id;
+    },
+    []
+  );
 
-  const updateItem = async (id: string, updates: Partial<ProductOrService>): Promise<void> => {
+  const updateItem = useCallback(async (id: string, updates: Partial<ProductOrService>): Promise<void> => {
     await apiClient.put(`/catalog/products/${id}`, updates);
     setItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, ...updates, updatedAt: new Date().toISOString() } : item))
     );
-  };
+  }, []);
 
-  const deleteItem = async (id: string): Promise<void> => {
+  const deleteItem = useCallback(async (id: string): Promise<void> => {
     await apiClient.delete(`/catalog/products/${id}`);
     setItems((prev) => prev.filter((item) => item.id !== id));
-  };
+  }, []);
 
-  const bulkUpdateStatus = async (ids: string[], isActive: boolean): Promise<void> => {
-    for (const id of ids) {
-      await apiClient.put(`/catalog/products/${id}`, { isActive });
-    }
+  // Parallelized bulk operations via Promise.all
+  const bulkUpdateStatus = useCallback(async (ids: string[], isActive: boolean): Promise<void> => {
+    await Promise.all(ids.map((id) => apiClient.put(`/catalog/products/${id}`, { isActive })));
     setItems((prev) =>
       prev.map((item) => (ids.includes(item.id) ? { ...item, isActive, updatedAt: new Date().toISOString() } : item))
     );
-  };
+  }, []);
 
-  const bulkDelete = async (ids: string[]): Promise<void> => {
-    for (const id of ids) {
-      await apiClient.delete(`/catalog/products/${id}`);
-    }
+  const bulkDelete = useCallback(async (ids: string[]): Promise<void> => {
+    await Promise.all(ids.map((id) => apiClient.delete(`/catalog/products/${id}`)));
     setItems((prev) => prev.filter((item) => !ids.includes(item.id)));
-  };
+  }, []);
 
   // Price Book Operations
-  const createPriceBook = async (
-    pbData: Omit<PriceBook, 'id' | 'createdAt' | 'updatedAt'>
-  ): Promise<string> => {
-    const created = await apiClient.post<PriceBook>('/catalog/price-books', pbData);
-    setPriceBooks((prev) => [...prev, created]);
-    return created.id;
-  };
+  const createPriceBook = useCallback(
+    async (pbData: Omit<PriceBook, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
+      const created = await apiClient.post<PriceBook>('/catalog/price-books', pbData);
+      setPriceBooks((prev) => [...prev, created]);
+      return created.id;
+    },
+    []
+  );
 
-  const updatePriceBook = async (id: string, updates: Partial<PriceBook>): Promise<void> => {
+  const updatePriceBook = useCallback(async (id: string, updates: Partial<PriceBook>): Promise<void> => {
     setPriceBooks((prev) =>
       prev.map((pb) => (pb.id === id ? { ...pb, ...updates, updatedAt: new Date().toISOString() } : pb))
     );
-  };
+  }, []);
 
-  const deletePriceBook = async (id: string): Promise<void> => {
+  const deletePriceBook = useCallback(async (id: string): Promise<void> => {
     setPriceBooks((prev) => prev.filter((pb) => pb.id !== id));
-  };
+  }, []);
 
-  const setDefaultPriceBook = async (id: string): Promise<void> => {
+  const setDefaultPriceBook = useCallback(async (id: string): Promise<void> => {
     setPriceBooks((prev) =>
       prev.map((pb) => ({
         ...pb,
@@ -245,15 +244,18 @@ export function useCatalog(): UseCatalogReturn {
         updatedAt: new Date().toISOString(),
       }))
     );
-  };
+  }, []);
 
-  const fulfillDeliverable = async (deliverableId: string, quantity?: number): Promise<any> => {
-    const res = await apiClient.post(`/catalog/deliverables/${deliverableId}/fulfill`, {
-      quantityFulfilled: quantity,
-    });
-    await fetchCatalogData();
-    return res;
-  };
+  const fulfillDeliverable = useCallback(
+    async (deliverableId: string, quantity?: number): Promise<any> => {
+      const res = await apiClient.post(`/catalog/deliverables/${deliverableId}/fulfill`, {
+        quantityFulfilled: quantity,
+      });
+      await fetchCatalogData();
+      return res;
+    },
+    [fetchCatalogData]
+  );
 
   return {
     items,

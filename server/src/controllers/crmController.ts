@@ -2,13 +2,29 @@ import { Request, Response } from 'express';
 import { prisma } from '../config/db.js';
 import { updateDealWithEvents } from '../services/dealService.js';
 
+async function resolveAssignedUserId(tenantId: string, assignedUserId: any, defaultUserId: string): Promise<string> {
+  if (typeof assignedUserId === 'string' && assignedUserId && !assignedUserId.startsWith('usr-')) {
+    try {
+      const user = await prisma.user.findFirst({ where: { id: assignedUserId, tenantId } });
+      if (user) return user.id;
+    } catch {
+      // Fallback to default user
+    }
+  }
+  return defaultUserId;
+}
+
 // ============================================================================
 // 1. LEADS CRUD & CONVERSION
 // ============================================================================
 
 export async function getLeads(req: Request, res: Response): Promise<void> {
   try {
-    const tenantId = req.user!.tenantId;
+    const tenantId = (req.user || req.tenantContext)?.tenantId;
+    if (!tenantId) {
+      res.status(401).json({ error: 'Unauthorized: Missing tenant context.' });
+      return;
+    }
     const leads = await prisma.lead.findMany({
       where: { tenantId },
       orderBy: { createdAt: 'desc' },
@@ -18,13 +34,20 @@ export async function getLeads(req: Request, res: Response): Promise<void> {
     });
     res.json(leads);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch leads.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to fetch leads.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
 export async function getLeadById(req: Request, res: Response): Promise<void> {
   try {
-    const tenantId = req.user!.tenantId;
+    const tenantId = (req.user || req.tenantContext)?.tenantId;
+    if (!tenantId) {
+      res.status(401).json({ error: 'Unauthorized: Missing tenant context.' });
+      return;
+    }
     const { id } = req.params;
 
     const lead = await prisma.lead.findFirst({
@@ -42,18 +65,26 @@ export async function getLeadById(req: Request, res: Response): Promise<void> {
 
     res.json(lead);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch lead.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to fetch lead.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
 export async function createLead(req: Request, res: Response): Promise<void> {
   try {
-    const tenantId = req.user!.tenantId;
-    const userId = req.user!.userId;
+    const tenantId = (req.user || req.tenantContext)?.tenantId;
+    const userId = (req.user || req.tenantContext)?.userId;
+    if (!tenantId || !userId) {
+      res.status(401).json({ error: 'Unauthorized: Missing tenant or user context.' });
+      return;
+    }
     const data = req.body;
 
     const leadCount = await prisma.lead.count({ where: { tenantId } });
     const leadNumber = `LEA-${String(leadCount + 1001).padStart(5, '0')}`;
+    const assignedUserId = await resolveAssignedUserId(tenantId, data.assignedUserId, userId);
 
     const lead = await prisma.lead.create({
       data: {
@@ -80,7 +111,7 @@ export async function createLead(req: Request, res: Response): Promise<void> {
         postalCode: data.postalCode,
         country: data.country,
         description: data.description,
-        assignedUserId: data.assignedUserId || userId,
+        assignedUserId,
         createdById: userId,
         customFields: data.customFields || {},
       },
@@ -88,7 +119,10 @@ export async function createLead(req: Request, res: Response): Promise<void> {
 
     res.status(201).json(lead);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to create lead.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to create lead.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -135,7 +169,10 @@ export async function updateLead(req: Request, res: Response): Promise<void> {
 
     res.json(updated);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to update lead.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to update lead.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -150,10 +187,13 @@ export async function deleteLead(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    await prisma.lead.delete({ where: { id } });
+    await prisma.lead.delete({ where: { id: existing.id } });
     res.json({ message: 'Lead deleted successfully.', id });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to delete lead.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to delete lead.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -340,7 +380,10 @@ export async function convertLead(req: Request, res: Response): Promise<void> {
     });
   } catch (err: any) {
     console.error('[Lead Convert Error]:', err);
-    res.status(500).json({ error: 'Lead conversion failed.', details: err.message });
+    res.status(500).json({
+      error: 'Lead conversion failed.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -361,7 +404,10 @@ export async function getAccounts(req: Request, res: Response): Promise<void> {
     });
     res.json(accounts);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch accounts.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to fetch accounts.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -387,18 +433,26 @@ export async function getAccountById(req: Request, res: Response): Promise<void>
 
     res.json(account);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch account.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to fetch account.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
 export async function createAccount(req: Request, res: Response): Promise<void> {
   try {
-    const tenantId = req.user!.tenantId;
-    const userId = req.user!.userId;
+    const tenantId = (req.user || req.tenantContext)?.tenantId;
+    const userId = (req.user || req.tenantContext)?.userId;
+    if (!tenantId || !userId) {
+      res.status(401).json({ error: 'Unauthorized: Missing tenant or user context.' });
+      return;
+    }
     const data = req.body;
 
     const count = await prisma.account.count({ where: { tenantId } });
     const accountNumber = `ACC-${String(count + 1001).padStart(5, '0')}`;
+    const assignedUserId = await resolveAssignedUserId(tenantId, data.assignedUserId, userId);
 
     const account = await prisma.account.create({
       data: {
@@ -425,7 +479,7 @@ export async function createAccount(req: Request, res: Response): Promise<void> 
         shippingPostalCode: data.shippingPostalCode,
         shippingCountry: data.shippingCountry,
         description: data.description,
-        assignedUserId: data.assignedUserId || userId,
+        assignedUserId,
         createdById: userId,
         customFields: data.customFields || {},
       },
@@ -433,7 +487,10 @@ export async function createAccount(req: Request, res: Response): Promise<void> 
 
     res.status(201).json(account);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to create account.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to create account.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -480,7 +537,10 @@ export async function updateAccount(req: Request, res: Response): Promise<void> 
 
     res.json(updated);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to update account.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to update account.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -495,10 +555,13 @@ export async function deleteAccount(req: Request, res: Response): Promise<void> 
       return;
     }
 
-    await prisma.account.delete({ where: { id } });
+    await prisma.account.delete({ where: { id: existing.id } });
     res.json({ message: 'Account deleted successfully.', id });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to delete account.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to delete account.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -519,7 +582,10 @@ export async function getContacts(req: Request, res: Response): Promise<void> {
     });
     res.json(contacts);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch contacts.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to fetch contacts.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -544,18 +610,26 @@ export async function getContactById(req: Request, res: Response): Promise<void>
 
     res.json(contact);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch contact.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to fetch contact.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
 export async function createContact(req: Request, res: Response): Promise<void> {
   try {
-    const tenantId = req.user!.tenantId;
-    const userId = req.user!.userId;
+    const tenantId = (req.user || req.tenantContext)?.tenantId;
+    const userId = (req.user || req.tenantContext)?.userId;
+    if (!tenantId || !userId) {
+      res.status(401).json({ error: 'Unauthorized: Missing tenant or user context.' });
+      return;
+    }
     const data = req.body;
 
     const count = await prisma.contact.count({ where: { tenantId } });
     const contactNumber = `CON-${String(count + 1001).padStart(5, '0')}`;
+    const assignedUserId = await resolveAssignedUserId(tenantId, data.assignedUserId, userId);
 
     const contact = await prisma.contact.create({
       data: {
@@ -579,7 +653,7 @@ export async function createContact(req: Request, res: Response): Promise<void> 
         mailingCountry: data.mailingCountry,
         isPrimaryContact: Boolean(data.isPrimaryContact),
         description: data.description,
-        assignedUserId: data.assignedUserId || userId,
+        assignedUserId,
         createdById: userId,
         customFields: data.customFields || {},
       },
@@ -587,7 +661,10 @@ export async function createContact(req: Request, res: Response): Promise<void> 
 
     res.status(201).json(contact);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to create contact.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to create contact.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -631,7 +708,10 @@ export async function updateContact(req: Request, res: Response): Promise<void> 
 
     res.json(updated);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to update contact.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to update contact.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -646,10 +726,13 @@ export async function deleteContact(req: Request, res: Response): Promise<void> 
       return;
     }
 
-    await prisma.contact.delete({ where: { id } });
+    await prisma.contact.delete({ where: { id: existing.id } });
     res.json({ message: 'Contact deleted successfully.', id });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to delete contact.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to delete contact.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -671,7 +754,10 @@ export async function getDeals(req: Request, res: Response): Promise<void> {
     });
     res.json(deals);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch deals.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to fetch deals.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -698,18 +784,26 @@ export async function getDealById(req: Request, res: Response): Promise<void> {
 
     res.json(deal);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch deal.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to fetch deal.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
 export async function createDeal(req: Request, res: Response): Promise<void> {
   try {
-    const tenantId = req.user!.tenantId;
-    const userId = req.user!.userId;
+    const tenantId = (req.user || req.tenantContext)?.tenantId;
+    const userId = (req.user || req.tenantContext)?.userId;
+    if (!tenantId || !userId) {
+      res.status(401).json({ error: 'Unauthorized: Missing tenant or user context.' });
+      return;
+    }
     const data = req.body;
 
     const count = await prisma.deal.count({ where: { tenantId } });
     const dealNumber = `OPP-${String(count + 1001).padStart(5, '0')}`;
+    const assignedUserId = await resolveAssignedUserId(tenantId, data.assignedUserId, userId);
 
     const deal = await prisma.deal.create({
       data: {
@@ -728,7 +822,7 @@ export async function createDeal(req: Request, res: Response): Promise<void> {
         linkedProjectId: data.linkedProjectId,
         lostReason: data.lostReason,
         description: data.description,
-        assignedUserId: data.assignedUserId || userId,
+        assignedUserId,
         createdById: userId,
         customFields: data.customFields || {},
       },
@@ -736,7 +830,10 @@ export async function createDeal(req: Request, res: Response): Promise<void> {
 
     res.status(201).json(deal);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to create deal.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to create deal.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -776,7 +873,10 @@ export async function updateDeal(req: Request, res: Response): Promise<void> {
       res.status(404).json({ error: err.message });
       return;
     }
-    res.status(500).json({ error: 'Failed to update deal.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to update deal.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -791,9 +891,12 @@ export async function deleteDeal(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    await prisma.deal.delete({ where: { id } });
+    await prisma.deal.delete({ where: { id: existing.id } });
     res.json({ message: 'Deal deleted successfully.', id });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to delete deal.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to delete deal.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }

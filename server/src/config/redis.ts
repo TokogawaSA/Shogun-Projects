@@ -52,10 +52,17 @@ export const redisConnectionOptions: RedisOptions = getRedisOptions();
  */
 export function createRedisConnection(): Redis {
   const url = process.env.REDIS_URL;
-  if (url) {
-    return new Redis(url, redisConnectionOptions);
-  }
-  return new Redis(redisConnectionOptions);
+  const client = url ? new Redis(url, redisConnectionOptions) : new Redis(redisConnectionOptions);
+  
+  // Attach default error listener to prevent unhandled EventEmitter crash
+  client.on('error', (err) => {
+    // Suppress unhandled crash when Redis server is offline
+    if (process.env.NODE_ENV === 'development') {
+      // debug only if needed
+    }
+  });
+
+  return client;
 }
 
 // Default singleton Redis client

@@ -22,7 +22,10 @@ export async function getProjects(req: Request, res: Response): Promise<void> {
     });
     res.json(projects);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch projects.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to fetch projects.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -62,7 +65,10 @@ export async function getProjectById(req: Request, res: Response): Promise<void>
 
     res.json(project);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch project.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to fetch project.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -106,7 +112,10 @@ export async function createProject(req: Request, res: Response): Promise<void> 
 
     res.status(201).json(project);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to create project.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to create project.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -139,7 +148,10 @@ export async function updateProject(req: Request, res: Response): Promise<void> 
 
     res.json(updated);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to update project.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to update project.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -157,7 +169,10 @@ export async function deleteProject(req: Request, res: Response): Promise<void> 
     await prisma.project.delete({ where: { id } });
     res.json({ message: 'Project deleted successfully.', id });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to delete project.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to delete project.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -179,7 +194,10 @@ export async function getMilestones(req: Request, res: Response): Promise<void> 
     });
     res.json(milestones);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch milestones.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to fetch milestones.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -188,6 +206,12 @@ export async function createMilestone(req: Request, res: Response): Promise<void
     const tenantId = req.user!.tenantId;
     const { projectId } = req.params;
     const data = req.body;
+
+    const project = await prisma.project.findFirst({ where: { id: projectId, tenantId } });
+    if (!project) {
+      res.status(404).json({ error: 'Project not found in active tenant.' });
+      return;
+    }
 
     const milestone = await prisma.projectMilestone.create({
       data: {
@@ -203,7 +227,10 @@ export async function createMilestone(req: Request, res: Response): Promise<void
 
     res.status(201).json(milestone);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to create milestone.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to create milestone.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -220,7 +247,7 @@ export async function updateMilestone(req: Request, res: Response): Promise<void
     }
 
     const updated = await prisma.projectMilestone.update({
-      where: { id },
+      where: { id: existing.id },
       data: {
         title: data.title,
         dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
@@ -232,7 +259,10 @@ export async function updateMilestone(req: Request, res: Response): Promise<void
 
     res.json(updated);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to update milestone.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to update milestone.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -247,10 +277,13 @@ export async function deleteMilestone(req: Request, res: Response): Promise<void
       return;
     }
 
-    await prisma.projectMilestone.delete({ where: { id } });
+    await prisma.projectMilestone.delete({ where: { id: existing.id } });
     res.json({ message: 'Milestone deleted successfully.', id });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to delete milestone.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to delete milestone.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -263,21 +296,46 @@ export async function getTasks(req: Request, res: Response): Promise<void> {
     const tenantId = req.user!.tenantId;
     const { projectId } = req.query;
 
-    const tasks = await prisma.task.findMany({
+    const rawTasks = await prisma.task.findMany({
       where: {
         tenantId,
         ...(projectId ? { projectId: String(projectId) } : {}),
       },
       include: {
         assignee: { select: { id: true, displayName: true, email: true } },
-        checklistSubtasks: true,
+        checklistSubtasks: { orderBy: { createdAt: 'asc' } },
         subtasks: { select: { id: true, title: true, status: true, actualHours: true } },
       },
       orderBy: { createdAt: 'asc' },
     });
+
+    const tasks = rawTasks.map((t) => ({
+      ...t,
+      // Map checklistSubtasks to subtasks for frontend uniformity
+      subtasks: t.checklistSubtasks.length > 0
+        ? t.checklistSubtasks.map((st) => ({
+            id: st.id,
+            taskId: st.taskId,
+            title: st.title,
+            description: st.description || '',
+            completed: st.completed,
+            assigneeId: st.assigneeId,
+            dueDate: st.dueDate ? st.dueDate.toISOString() : undefined,
+            priority: st.priority || 'medium',
+            attachments: st.attachments || [],
+            customFields: st.customFields || {},
+            createdAt: st.createdAt.toISOString(),
+            updatedAt: st.updatedAt.toISOString(),
+          }))
+        : [],
+    }));
+
     res.json(tasks);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch tasks.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to fetch tasks.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -295,7 +353,7 @@ export async function getTaskById(req: Request, res: Response): Promise<void> {
         subtasks: true,
         milestone: true,
         lineItem: true,
-        checklistSubtasks: true,
+        checklistSubtasks: { orderBy: { createdAt: 'asc' } },
         timeLogs: { orderBy: { date: 'desc' } },
       },
     });
@@ -305,9 +363,32 @@ export async function getTaskById(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    res.json(task);
+    const formattedTask = {
+      ...task,
+      subtasks: task.checklistSubtasks.length > 0
+        ? task.checklistSubtasks.map((st) => ({
+            id: st.id,
+            taskId: st.taskId,
+            title: st.title,
+            description: st.description || '',
+            completed: st.completed,
+            assigneeId: st.assigneeId,
+            dueDate: st.dueDate ? st.dueDate.toISOString() : undefined,
+            priority: st.priority || 'medium',
+            attachments: st.attachments || [],
+            customFields: st.customFields || {},
+            createdAt: st.createdAt.toISOString(),
+            updatedAt: st.updatedAt.toISOString(),
+          }))
+        : [],
+    };
+
+    res.json(formattedTask);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch task.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to fetch task.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -317,12 +398,58 @@ export async function createTask(req: Request, res: Response): Promise<void> {
     const userId = req.user!.userId;
     const data = req.body;
 
+    let targetProjectId = data.projectId;
+
+    if (targetProjectId) {
+      const proj = await prisma.project.findFirst({ where: { id: targetProjectId, tenantId } });
+      if (!proj) {
+        // Look for any project in tenant, or provision default tenant project
+        const anyProj = await prisma.project.findFirst({ where: { tenantId } });
+        if (anyProj) {
+          targetProjectId = anyProj.id;
+        } else {
+          const newDefaultProj = await prisma.project.create({
+            data: {
+              id: targetProjectId,
+              tenantId,
+              title: 'Core Engineering',
+              description: 'Default project workspace for active tenant.',
+              ownerId: userId,
+              members: [userId],
+            },
+          });
+          targetProjectId = newDefaultProj.id;
+        }
+      }
+    } else {
+      const anyProj = await prisma.project.findFirst({ where: { tenantId } });
+      if (anyProj) {
+        targetProjectId = anyProj.id;
+      }
+    }
+
+    if (data.milestoneId) {
+      const ms = await prisma.projectMilestone.findFirst({ where: { id: data.milestoneId, tenantId } });
+      if (!ms) {
+        res.status(404).json({ error: 'Associated milestone not found in active tenant.' });
+        return;
+      }
+    }
+
+    if (data.parentTaskId) {
+      const parent = await prisma.task.findFirst({ where: { id: data.parentTaskId, tenantId } });
+      if (!parent) {
+        res.status(404).json({ error: 'Associated parent task not found in active tenant.' });
+        return;
+      }
+    }
+
     const task = await prisma.task.create({
       data: {
         tenantId,
-        projectId: data.projectId,
+        projectId: targetProjectId,
         title: data.title,
-        description: data.description,
+        description: data.description || '',
         status: data.status || 'todo',
         priority: data.priority || 'medium',
         category: data.category,
@@ -341,12 +468,42 @@ export async function createTask(req: Request, res: Response): Promise<void> {
         predecessorTaskIds: data.predecessorTaskIds || [],
         relatedEntityType: data.relatedEntityType || null,
         relatedEntityId: data.relatedEntityId || null,
+        customFields: data.customFields || {},
+        attachments: data.attachments || [],
       },
     });
 
-    res.status(201).json(task);
+    // If initial subtasks are provided, create them
+    if (Array.isArray(data.subtasks) && data.subtasks.length > 0) {
+      await prisma.subTask.createMany({
+        data: data.subtasks.map((st: any) => ({
+          taskId: task.id,
+          title: st.title || 'Untitled Subtask',
+          description: st.description || '',
+          completed: Boolean(st.completed),
+          assigneeId: st.assigneeId || null,
+          dueDate: st.dueDate ? new Date(st.dueDate) : null,
+          priority: st.priority || 'medium',
+          attachments: st.attachments || [],
+          customFields: st.customFields || {},
+        })),
+      });
+    }
+
+    const fetched = await prisma.task.findUnique({
+      where: { id: task.id },
+      include: { checklistSubtasks: true },
+    });
+
+    res.status(201).json({
+      ...fetched,
+      subtasks: fetched?.checklistSubtasks || [],
+    });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to create task.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to create task.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -380,17 +537,63 @@ export async function updateTask(req: Request, res: Response): Promise<void> {
         predecessorTaskIds: data.predecessorTaskIds,
         relatedEntityType: data.relatedEntityType,
         relatedEntityId: data.relatedEntityId,
+        customFields: data.customFields,
+        attachments: data.attachments,
       },
       userId
     );
 
-    res.json(updated);
+    // Sync subtasks if provided
+    if (Array.isArray(data.subtasks)) {
+      await prisma.subTask.deleteMany({ where: { taskId: id } });
+      if (data.subtasks.length > 0) {
+        await prisma.subTask.createMany({
+          data: data.subtasks.map((st: any) => ({
+            taskId: id,
+            title: st.title || 'Untitled Subtask',
+            description: st.description || '',
+            completed: Boolean(st.completed),
+            assigneeId: st.assigneeId || null,
+            dueDate: st.dueDate ? new Date(st.dueDate) : null,
+            priority: st.priority || 'medium',
+            attachments: st.attachments || [],
+            customFields: st.customFields || {},
+          })),
+        });
+      }
+    }
+
+    const refetchedSubtasks = await prisma.subTask.findMany({
+      where: { taskId: id },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    res.json({
+      ...updated,
+      subtasks: refetchedSubtasks.map((st) => ({
+        id: st.id,
+        taskId: st.taskId,
+        title: st.title,
+        description: st.description || '',
+        completed: st.completed,
+        assigneeId: st.assigneeId,
+        dueDate: st.dueDate ? st.dueDate.toISOString() : undefined,
+        priority: st.priority || 'medium',
+        attachments: st.attachments || [],
+        customFields: st.customFields || {},
+        createdAt: st.createdAt.toISOString(),
+        updatedAt: st.updatedAt.toISOString(),
+      })),
+    });
   } catch (err: any) {
     if (err.message?.includes('not found')) {
       res.status(404).json({ error: err.message });
       return;
     }
-    res.status(500).json({ error: 'Failed to update task.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to update task.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -408,7 +611,10 @@ export async function deleteTask(req: Request, res: Response): Promise<void> {
     await prisma.task.delete({ where: { id } });
     res.json({ message: 'Task deleted successfully.', id });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to delete task.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to delete task.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -566,6 +772,9 @@ export async function addTimeLog(req: Request, res: Response): Promise<void> {
     });
   } catch (err: any) {
     console.error('[Add Time Log Error]:', err);
-    res.status(500).json({ error: 'Failed to record time log.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to record time log.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }

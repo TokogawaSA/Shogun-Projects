@@ -366,7 +366,7 @@ export const EntityListView: React.FC = () => {
   const { module: routeModule } = useParams<{ module: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const tenantId = user?.tenantId || 'tenant-default';
+  const tenantId = user?.tenantId || 'tenant-enterprise-root';
 
   // Determine current active entity module
   const currentModule: EntityModuleName = (
@@ -447,14 +447,12 @@ export const EntityListView: React.FC = () => {
 
     const loadEntities = async () => {
       try {
-        const res = await apiClient.get<any[]>(`/crm/${currentModule}`).catch(() => []);
-        if (Array.isArray(res) && res.length > 0 && isMounted) {
+        const res = await apiClient.get<any[]>(`/crm/${currentModule}`);
+        if (Array.isArray(res) && isMounted) {
           setEntities(res);
-        } else if (isMounted) {
-          setEntities(FALLBACK_SEEDS[currentModule] || []);
         }
       } catch (err) {
-        console.warn(`[EntityListView] Query fallback for ${currentModule}:`, err);
+        console.warn(`[EntityListView] API fetch error for ${currentModule}:`, err);
         if (isMounted) setEntities(FALLBACK_SEEDS[currentModule] || []);
       } finally {
         if (isMounted) setLoading(false);
