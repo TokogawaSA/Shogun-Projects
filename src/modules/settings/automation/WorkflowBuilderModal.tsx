@@ -118,11 +118,30 @@ export const WorkflowBuilderModal: React.FC<WorkflowBuilderModalProps> = ({
     setErrorMessage(null);
 
     const workflowId = existingWorkflow?.id || `wf_${Date.now()}`;
+    let finalGraphNodes = graphNodes;
+    let finalGraphEdges = graphEdges;
+
+    if (paradigm === 'linear') {
+      const generatedIR = convertLinearToDAG(
+        workflowId,
+        'tenant-default',
+        name.trim(),
+        description.trim(),
+        targetModule,
+        triggerType,
+        isActive,
+        conditions,
+        actions
+      );
+      finalGraphNodes = generatedIR.nodes;
+      finalGraphEdges = generatedIR.edges;
+    }
+
     const graphDataPayload = {
       id: workflowId,
       trigger: { id: 'node_1', type: 'event_trigger', module: targetModule, event: triggerType },
-      nodes: graphNodes,
-      edges: graphEdges,
+      nodes: finalGraphNodes,
+      edges: finalGraphEdges,
     };
 
     const payload: WorkflowRule = {

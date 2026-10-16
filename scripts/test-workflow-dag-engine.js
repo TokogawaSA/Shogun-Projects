@@ -1,5 +1,6 @@
 import assert from 'assert';
 import { evaluateCondition, resolveMergeTags, getNestedProperty } from '../server/dist/workflows/evaluator.js';
+import { executeWorkflow } from '../server/dist/workflows/workflowRunner.js';
 
 console.log('🧪 [Test Suite] Starting Workflow Engine & DAG Traversal Unit Tests...\n');
 
@@ -136,12 +137,105 @@ runTest('Graph IR schema structure validation', () => {
   assert.strictEqual(irSample.trigger.module, 'deals');
 });
 
-console.log(`\n📊 [Test Results] ${passedTests}/${totalTests} unit tests passed successfully.`);
+// 5. Test Linear Workflow Auto-Synthesis & Sequential Execution
+async function runAsyncTests() {
+  await (async () => {
+    totalTests++;
+    try {
+      const linearWorkflow = {
+        id: 'wf_test_linear_001',
+        name: 'Linear Deal Automation',
+        targetModule: 'deals',
+        triggerType: 'on_stage_change',
+        isActive: true,
+        conditions: [
+          { field: 'amount', operator: 'greater_than', value: 10000 },
+          { field: 'stage', operator: 'equals', value: 'Closed Won' },
+        ],
+        actions: [
+          {
+            type: 'call_webhook',
+            config: {
+              url: 'https://webhook.site/test-1',
+              method: 'POST',
+              payloadTemplate: '{"deal": "{{deal.title}}", "amount": {{amount}}}',
+            },
+          },
+          {
+            type: 'call_webhook',
+            config: {
+              url: 'https://webhook.site/test-2',
+              method: 'POST',
+              payloadTemplate: '{"step": 2}',
+            },
+          },
+        ],
+      };
 
-if (passedTests === totalTests) {
-  console.log('🎉 Workflow engine & DAG IR serialization tests completed without errors.');
-  process.exit(0);
-} else {
-  console.error('❌ Some unit tests failed.');
-  process.exit(1);
+      const payload = {
+        amount: 25000,
+        stage: 'Closed Won',
+        deal: { title: 'Enterprise Modernization' },
+      };
+
+      const result = await executeWorkflow(linearWorkflow, payload);
+      assert.strictEqual(result.status, 'success');
+      assert.strictEqual(result.actionsPerformed.length, 2, 'Both linear actions should execute sequentially');
+      assert.strictEqual(result.actionsPerformed[0].type, 'action_call_webhook');
+      assert.strictEqual(result.actionsPerformed[1].type, 'action_call_webhook');
+
+      passedTests++;
+      console.log('  ✓ PASSED: Linear workflow auto-synthesis executes all sequential actions on true condition');
+    } catch (err) {
+      console.error('  ✗ FAILED: Linear workflow auto-synthesis execution');
+      console.error(`    ${err.message}`);
+    }
+  })();
+
+  // 6. Test Condition Fails Blocks Actions
+  await (async () => {
+    totalTests++;
+    try {
+      const linearWorkflow = {
+        id: 'wf_test_linear_fail',
+        name: 'High Value Gate',
+        targetModule: 'deals',
+        triggerType: 'on_stage_change',
+        isActive: true,
+        conditions: [
+          { field: 'amount', operator: 'greater_than', value: 50000 }, // Fails for 25000
+        ],
+        actions: [
+          {
+            type: 'call_webhook',
+            config: { url: 'https://webhook.site/test', method: 'POST' },
+          },
+        ],
+      };
+
+      const payload = { amount: 25000, stage: 'Closed Won' };
+      const result = await executeWorkflow(linearWorkflow, payload);
+      assert.strictEqual(result.status, 'success');
+      assert.strictEqual(result.actionsPerformed.length, 0, 'Actions should not execute when condition fails');
+
+      passedTests++;
+      console.log('  ✓ PASSED: Linear workflow condition stops execution when predicates do not match');
+    } catch (err) {
+      console.error('  ✗ FAILED: Linear workflow condition blocking test');
+      console.error(`    ${err.message}`);
+    }
+  })();
+
+  console.log(`\n📊 [Test Results] ${passedTests}/${totalTests} unit tests passed successfully.`);
+
+  if (passedTests === totalTests) {
+    console.log('🎉 Workflow engine & DAG IR serialization tests completed without errors.');
+    process.exit(0);
+  } else {
+    console.error('❌ Some unit tests failed.');
+    process.exit(1);
+  }
 }
+
+runAsyncTests();
+

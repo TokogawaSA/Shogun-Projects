@@ -1,0 +1,700 @@
+{
+  "version": "2.17",
+  "themes": {
+    "theme": [
+      "dark",
+      "light"
+    ]
+  },
+  "variables": {
+    "bg-main": {
+      "type": "color",
+      "value": "#0B0F19"
+    },
+    "bg-sidebar": {
+      "type": "color",
+      "value": "#0D1322"
+    },
+    "bg-card": {
+      "type": "color",
+      "value": "#131B2E"
+    },
+    "bg-card-subtle": {
+      "type": "color",
+      "value": "#1E293B"
+    },
+    "bg-input": {
+      "type": "color",
+      "value": "#080D1A"
+    },
+    "border-color": {
+      "type": "color",
+      "value": "#22304A"
+    },
+    "border-subtle": {
+      "type": "color",
+      "value": "#1A2438"
+    },
+    "border-focus": {
+      "type": "color",
+      "value": "#6366F1"
+    },
+    "text-main": {
+      "type": "color",
+      "value": "#F8FAFC"
+    },
+    "text-sub": {
+      "type": "color",
+      "value": "#94A3B8"
+    },
+    "text-muted": {
+      "type": "color",
+      "value": "#64748B"
+    },
+    "accent-primary": {
+      "type": "color",
+      "value": "#6366F1"
+    },
+    "accent-hover": {
+      "type": "color",
+      "value": "#4F46E5"
+    },
+    "accent-gradient-start": {
+      "type": "color",
+      "value": "#4F46E5"
+    },
+    "accent-gradient-end": {
+      "type": "color",
+      "value": "#7C3AED"
+    },
+    "status-success": {
+      "type": "color",
+      "value": "#10B981"
+    },
+    "status-warning": {
+      "type": "color",
+      "value": "#F59E0B"
+    },
+    "status-danger": {
+      "type": "color",
+      "value": "#EF4444"
+    },
+    "status-info": {
+      "type": "color",
+      "value": "#06B6D4"
+    },
+    "font-sans": {
+      "type": "string",
+      "value": "Inter"
+    },
+    "font-mono": {
+      "type": "string",
+      "value": "JetBrains Mono"
+    },
+    "radius-sm": {
+      "type": "number",
+      "value": 6
+    },
+    "radius-md": {
+      "type": "number",
+      "value": 8
+    },
+    "radius-lg": {
+      "type": "number",
+      "value": 12
+    },
+    "radius-xl": {
+      "type": "number",
+      "value": 16
+    }
+  },
+  "children": [
+    {
+      "id": "frame-1647",
+      "type": "frame",
+      "name": "Register Canvas",
+      "width": 1440,
+      "height": 900,
+      "layout": "horizontal",
+      "alignItems": "center",
+      "justifyContent": "center",
+      "fill": "$bg-main",
+      "gap": 40,
+      "children": [
+        {
+          "id": "frame-1619",
+          "type": "frame",
+          "name": "Benefits Feature Card",
+          "width": 440,
+          "layout": "vertical",
+          "padding": 36,
+          "gap": 20,
+          "cornerRadius": "$radius-xl",
+          "fill": "$bg-card",
+          "stroke": "$border-color",
+          "strokeWidth": 1,
+          "children": [
+            {
+              "id": "badge-1601",
+              "type": "frame",
+              "name": "Badge / ANTIGRAVITY 2.0 ECOSYSTEM",
+              "layout": "horizontal",
+              "padding": [
+                3,
+                8
+              ],
+              "cornerRadius": "$radius-sm",
+              "fill": "#6366F120",
+              "stroke": "#6366F140",
+              "strokeWidth": 1,
+              "alignItems": "center",
+              "children": [
+                {
+                  "id": "txt-1602",
+                  "type": "text",
+                  "name": "Text",
+                  "content": "ANTIGRAVITY 2.0 ECOSYSTEM",
+                  "fontFamily": "$font-mono",
+                  "fontSize": 11,
+                  "fontWeight": "bold",
+                  "lineHeight": 1.4,
+                  "fill": "#818CF8",
+                  "textAlign": "left",
+                  "textGrowth": "auto"
+                }
+              ]
+            },
+            {
+              "id": "txt-1603",
+              "type": "text",
+              "name": "Text",
+              "content": "Deploy Autonomous Multi-Agent Swarms with Total Architectural Governance",
+              "fontFamily": "$font-sans",
+              "fontSize": 22,
+              "fontWeight": "bold",
+              "lineHeight": 1.3,
+              "fill": "$text-main",
+              "textAlign": "left",
+              "textGrowth": "auto"
+            },
+            {
+              "id": "frame-1608",
+              "type": "frame",
+              "name": "Benefit / Subagent Matrix (Sentinel, Worker, Auditor)",
+              "layout": "vertical",
+              "gap": 4,
+              "children": [
+                {
+                  "id": "frame-1606",
+                  "type": "frame",
+                  "name": "Frame",
+                  "layout": "horizontal",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "icon-1604",
+                      "type": "icon",
+                      "name": "Icon / check-circle-2",
+                      "library": "lucide",
+                      "icon": "check-circle-2",
+                      "width": 16,
+                      "height": 16,
+                      "fill": "#10B981"
+                    },
+                    {
+                      "id": "txt-1605",
+                      "type": "text",
+                      "name": "Text",
+                      "content": "Subagent Matrix (Sentinel, Worker, Auditor)",
+                      "fontFamily": "$font-sans",
+                      "fontSize": 13,
+                      "fontWeight": "600",
+                      "lineHeight": 1.4,
+                      "fill": "$text-main",
+                      "textAlign": "left",
+                      "textGrowth": "auto"
+                    }
+                  ]
+                },
+                {
+                  "id": "txt-1607",
+                  "type": "text",
+                  "name": "Text",
+                  "content": "Automated policy enforcement & AST code evaluation.",
+                  "fontFamily": "$font-sans",
+                  "fontSize": 11,
+                  "fontWeight": "normal",
+                  "lineHeight": 1.4,
+                  "fill": "$text-muted",
+                  "textAlign": "left",
+                  "textGrowth": "auto"
+                }
+              ]
+            },
+            {
+              "id": "frame-1613",
+              "type": "frame",
+              "name": "Benefit / Full Enterprise PPM & VTiger CRM",
+              "layout": "vertical",
+              "gap": 4,
+              "children": [
+                {
+                  "id": "frame-1611",
+                  "type": "frame",
+                  "name": "Frame",
+                  "layout": "horizontal",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "icon-1609",
+                      "type": "icon",
+                      "name": "Icon / check-circle-2",
+                      "library": "lucide",
+                      "icon": "check-circle-2",
+                      "width": 16,
+                      "height": 16,
+                      "fill": "#10B981"
+                    },
+                    {
+                      "id": "txt-1610",
+                      "type": "text",
+                      "name": "Text",
+                      "content": "Full Enterprise PPM & VTiger CRM",
+                      "fontFamily": "$font-sans",
+                      "fontSize": 13,
+                      "fontWeight": "600",
+                      "lineHeight": 1.4,
+                      "fill": "$text-main",
+                      "textAlign": "left",
+                      "textGrowth": "auto"
+                    }
+                  ]
+                },
+                {
+                  "id": "txt-1612",
+                  "type": "text",
+                  "name": "Text",
+                  "content": "Multi-tier financials, 5x5 risk heatmaps & lead funnels.",
+                  "fontFamily": "$font-sans",
+                  "fontSize": 11,
+                  "fontWeight": "normal",
+                  "lineHeight": 1.4,
+                  "fill": "$text-muted",
+                  "textAlign": "left",
+                  "textGrowth": "auto"
+                }
+              ]
+            },
+            {
+              "id": "frame-1618",
+              "type": "frame",
+              "name": "Benefit / Model Context Protocol Registry",
+              "layout": "vertical",
+              "gap": 4,
+              "children": [
+                {
+                  "id": "frame-1616",
+                  "type": "frame",
+                  "name": "Frame",
+                  "layout": "horizontal",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "icon-1614",
+                      "type": "icon",
+                      "name": "Icon / check-circle-2",
+                      "library": "lucide",
+                      "icon": "check-circle-2",
+                      "width": 16,
+                      "height": 16,
+                      "fill": "#10B981"
+                    },
+                    {
+                      "id": "txt-1615",
+                      "type": "text",
+                      "name": "Text",
+                      "content": "Model Context Protocol Registry",
+                      "fontFamily": "$font-sans",
+                      "fontSize": 13,
+                      "fontWeight": "600",
+                      "lineHeight": 1.4,
+                      "fill": "$text-main",
+                      "textAlign": "left",
+                      "textGrowth": "auto"
+                    }
+                  ]
+                },
+                {
+                  "id": "txt-1617",
+                  "type": "text",
+                  "name": "Text",
+                  "content": "Secure MCP tools, local stdio and cloud remote SSE transports.",
+                  "fontFamily": "$font-sans",
+                  "fontSize": 11,
+                  "fontWeight": "normal",
+                  "lineHeight": 1.4,
+                  "fill": "$text-muted",
+                  "textAlign": "left",
+                  "textGrowth": "auto"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "frame-1646",
+          "type": "frame",
+          "name": "Register Form Box",
+          "width": 460,
+          "layout": "vertical",
+          "padding": 36,
+          "gap": 20,
+          "cornerRadius": "$radius-xl",
+          "fill": "$bg-card",
+          "stroke": "$border-color",
+          "strokeWidth": 1,
+          "children": [
+            {
+              "id": "frame-1622",
+              "type": "frame",
+              "name": "Header",
+              "layout": "vertical",
+              "gap": 4,
+              "children": [
+                {
+                  "id": "txt-1620",
+                  "type": "text",
+                  "name": "Text",
+                  "content": "Create Tenant Workspace",
+                  "fontFamily": "$font-sans",
+                  "fontSize": 20,
+                  "fontWeight": "bold",
+                  "lineHeight": 1.4,
+                  "fill": "$text-main",
+                  "textAlign": "left",
+                  "textGrowth": "auto"
+                },
+                {
+                  "id": "txt-1621",
+                  "type": "text",
+                  "name": "Text",
+                  "content": "Get started with your dedicated enterprise sandbox.",
+                  "fontFamily": "$font-sans",
+                  "fontSize": 12,
+                  "fontWeight": "normal",
+                  "lineHeight": 1.4,
+                  "fill": "$text-muted",
+                  "textAlign": "left",
+                  "textGrowth": "auto"
+                }
+              ]
+            },
+            {
+              "id": "frame-1627",
+              "type": "frame",
+              "name": "Input / YOUR FULL NAME",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 6,
+              "children": [
+                {
+                  "id": "txt-1623",
+                  "type": "text",
+                  "name": "Text",
+                  "content": "YOUR FULL NAME",
+                  "fontFamily": "$font-mono",
+                  "fontSize": 10,
+                  "fontWeight": "bold",
+                  "lineHeight": 1.4,
+                  "fill": "$text-sub",
+                  "textAlign": "left",
+                  "textGrowth": "auto"
+                },
+                {
+                  "id": "frame-1626",
+                  "type": "frame",
+                  "name": "Frame",
+                  "width": "fill_container",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "gap": 10,
+                  "padding": [
+                    10,
+                    14
+                  ],
+                  "cornerRadius": "$radius-md",
+                  "fill": "$bg-input",
+                  "stroke": "$border-color",
+                  "strokeWidth": 1,
+                  "children": [
+                    {
+                      "id": "icon-1624",
+                      "type": "icon",
+                      "name": "Icon / user",
+                      "library": "lucide",
+                      "icon": "user",
+                      "width": 14,
+                      "height": 14,
+                      "fill": "$text-muted"
+                    },
+                    {
+                      "id": "txt-1625",
+                      "type": "text",
+                      "name": "Text",
+                      "content": "Lord Tokugawa",
+                      "fontFamily": "$font-sans",
+                      "fontSize": 12,
+                      "fontWeight": "normal",
+                      "lineHeight": 1.4,
+                      "fill": "$text-sub",
+                      "textAlign": "left",
+                      "textGrowth": "auto"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "frame-1632",
+              "type": "frame",
+              "name": "Input / WORK EMAIL",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 6,
+              "children": [
+                {
+                  "id": "txt-1628",
+                  "type": "text",
+                  "name": "Text",
+                  "content": "WORK EMAIL",
+                  "fontFamily": "$font-mono",
+                  "fontSize": 10,
+                  "fontWeight": "bold",
+                  "lineHeight": 1.4,
+                  "fill": "$text-sub",
+                  "textAlign": "left",
+                  "textGrowth": "auto"
+                },
+                {
+                  "id": "frame-1631",
+                  "type": "frame",
+                  "name": "Frame",
+                  "width": "fill_container",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "gap": 10,
+                  "padding": [
+                    10,
+                    14
+                  ],
+                  "cornerRadius": "$radius-md",
+                  "fill": "$bg-input",
+                  "stroke": "$border-color",
+                  "strokeWidth": 1,
+                  "children": [
+                    {
+                      "id": "icon-1629",
+                      "type": "icon",
+                      "name": "Icon / mail",
+                      "library": "lucide",
+                      "icon": "mail",
+                      "width": 14,
+                      "height": 14,
+                      "fill": "$text-muted"
+                    },
+                    {
+                      "id": "txt-1630",
+                      "type": "text",
+                      "name": "Text",
+                      "content": "tokugawa@shogunate.solutions",
+                      "fontFamily": "$font-sans",
+                      "fontSize": 12,
+                      "fontWeight": "normal",
+                      "lineHeight": 1.4,
+                      "fill": "$text-sub",
+                      "textAlign": "left",
+                      "textGrowth": "auto"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "frame-1637",
+              "type": "frame",
+              "name": "Input / ORGANIZATION / TENANT SLUG",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 6,
+              "children": [
+                {
+                  "id": "txt-1633",
+                  "type": "text",
+                  "name": "Text",
+                  "content": "ORGANIZATION / TENANT SLUG",
+                  "fontFamily": "$font-mono",
+                  "fontSize": 10,
+                  "fontWeight": "bold",
+                  "lineHeight": 1.4,
+                  "fill": "$text-sub",
+                  "textAlign": "left",
+                  "textGrowth": "auto"
+                },
+                {
+                  "id": "frame-1636",
+                  "type": "frame",
+                  "name": "Frame",
+                  "width": "fill_container",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "gap": 10,
+                  "padding": [
+                    10,
+                    14
+                  ],
+                  "cornerRadius": "$radius-md",
+                  "fill": "$bg-input",
+                  "stroke": "$border-color",
+                  "strokeWidth": 1,
+                  "children": [
+                    {
+                      "id": "icon-1634",
+                      "type": "icon",
+                      "name": "Icon / building-2",
+                      "library": "lucide",
+                      "icon": "building-2",
+                      "width": 14,
+                      "height": 14,
+                      "fill": "$text-muted"
+                    },
+                    {
+                      "id": "txt-1635",
+                      "type": "text",
+                      "name": "Text",
+                      "content": "TokogawaSA",
+                      "fontFamily": "$font-sans",
+                      "fontSize": 12,
+                      "fontWeight": "normal",
+                      "lineHeight": 1.4,
+                      "fill": "$text-sub",
+                      "textAlign": "left",
+                      "textGrowth": "auto"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "frame-1642",
+              "type": "frame",
+              "name": "Input / MASTER PASSWORD",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 6,
+              "children": [
+                {
+                  "id": "txt-1638",
+                  "type": "text",
+                  "name": "Text",
+                  "content": "MASTER PASSWORD",
+                  "fontFamily": "$font-mono",
+                  "fontSize": 10,
+                  "fontWeight": "bold",
+                  "lineHeight": 1.4,
+                  "fill": "$text-sub",
+                  "textAlign": "left",
+                  "textGrowth": "auto"
+                },
+                {
+                  "id": "frame-1641",
+                  "type": "frame",
+                  "name": "Frame",
+                  "width": "fill_container",
+                  "layout": "horizontal",
+                  "alignItems": "center",
+                  "gap": 10,
+                  "padding": [
+                    10,
+                    14
+                  ],
+                  "cornerRadius": "$radius-md",
+                  "fill": "$bg-input",
+                  "stroke": "$border-color",
+                  "strokeWidth": 1,
+                  "children": [
+                    {
+                      "id": "icon-1639",
+                      "type": "icon",
+                      "name": "Icon / lock",
+                      "library": "lucide",
+                      "icon": "lock",
+                      "width": 14,
+                      "height": 14,
+                      "fill": "$text-muted"
+                    },
+                    {
+                      "id": "txt-1640",
+                      "type": "text",
+                      "name": "Text",
+                      "content": "••••••••••••••••",
+                      "fontFamily": "$font-sans",
+                      "fontSize": 12,
+                      "fontWeight": "normal",
+                      "lineHeight": 1.4,
+                      "fill": "$text-sub",
+                      "textAlign": "left",
+                      "textGrowth": "auto"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "btn-1645",
+              "type": "frame",
+              "name": "Button / Initialize Organization Workspace",
+              "layout": "horizontal",
+              "gap": 6,
+              "padding": [
+                8,
+                14
+              ],
+              "cornerRadius": "$radius-md",
+              "fill": "$accent-primary",
+              "alignItems": "center",
+              "justifyContent": "center",
+              "children": [
+                {
+                  "id": "icon-1643",
+                  "type": "icon",
+                  "name": "Icon / arrow-right",
+                  "library": "lucide",
+                  "icon": "arrow-right",
+                  "width": 14,
+                  "height": 14,
+                  "fill": "#FFFFFF"
+                },
+                {
+                  "id": "txt-1644",
+                  "type": "text",
+                  "name": "Text",
+                  "content": "Initialize Organization Workspace",
+                  "fontFamily": "$font-sans",
+                  "fontSize": 13,
+                  "fontWeight": "600",
+                  "lineHeight": 1.4,
+                  "fill": "#FFFFFF",
+                  "textAlign": "left",
+                  "textGrowth": "auto"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

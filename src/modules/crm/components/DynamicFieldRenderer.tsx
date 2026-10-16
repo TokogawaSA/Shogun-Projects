@@ -270,7 +270,7 @@ export const DynamicFieldRenderer: React.FC<DynamicFieldRendererProps> = ({
               return (
                 <div className="relative flex items-center">
                   <span className="absolute left-2 text-xs text-slate-400 pointer-events-none">
-                    {record.currency === 'EUR' ? '€' : record.currency === 'GBP' ? '£' : '$'}
+                    {record.currency === 'EUR' ? '€' : record.currency === 'GBP' ? '£' : record.currency === 'ZAR' ? 'R' : '$'}
                   </span>
                   <input
                     type="number"

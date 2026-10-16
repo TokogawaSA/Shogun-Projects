@@ -1,11 +1,11 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { 
-  Terminal, 
-  Bell, 
-  FolderKanban, 
-  Kanban, 
-  DollarSign, 
+import {
+  Terminal,
+  Bell,
+  FolderKanban,
+  Briefcase,
+  DollarSign,
   Users,
   Shield
 } from 'lucide-react';
@@ -40,18 +40,18 @@ export const Header: React.FC<{ title: string; subtitle?: string }> = ({ title, 
           </NavLink>
 
           <NavLink
-            to="/board"
+            to="/pm"
             className={({ isActive }) =>
               clsx(
                 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150',
-                isActive || location.pathname === '/tasks'
+                isActive
                   ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
               )
             }
           >
-            <Kanban className="w-3.5 h-3.5" />
-            <span>Kanban Board</span>
+            <Briefcase className="w-3.5 h-3.5" />
+            <span>Workspace</span>
           </NavLink>
 
           <NavLink

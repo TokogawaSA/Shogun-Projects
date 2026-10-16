@@ -1,0 +1,2934 @@
+{
+  "version": "2.17",
+  "themes": {
+    "theme": [
+      "dark",
+      "light"
+    ]
+  },
+  "variables": {
+    "bg-main": {
+      "type": "color",
+      "value": "#0B0F19"
+    },
+    "bg-sidebar": {
+      "type": "color",
+      "value": "#0D1322"
+    },
+    "bg-card": {
+      "type": "color",
+      "value": "#131B2E"
+    },
+    "bg-card-subtle": {
+      "type": "color",
+      "value": "#1E293B"
+    },
+    "bg-input": {
+      "type": "color",
+      "value": "#080D1A"
+    },
+    "border-color": {
+      "type": "color",
+      "value": "#22304A"
+    },
+    "border-subtle": {
+      "type": "color",
+      "value": "#1A2438"
+    },
+    "border-focus": {
+      "type": "color",
+      "value": "#6366F1"
+    },
+    "text-main": {
+      "type": "color",
+      "value": "#F8FAFC"
+    },
+    "text-sub": {
+      "type": "color",
+      "value": "#94A3B8"
+    },
+    "text-muted": {
+      "type": "color",
+      "value": "#64748B"
+    },
+    "accent-primary": {
+      "type": "color",
+      "value": "#6366F1"
+    },
+    "accent-hover": {
+      "type": "color",
+      "value": "#4F46E5"
+    },
+    "accent-gradient-start": {
+      "type": "color",
+      "value": "#4F46E5"
+    },
+    "accent-gradient-end": {
+      "type": "color",
+      "value": "#7C3AED"
+    },
+    "status-success": {
+      "type": "color",
+      "value": "#10B981"
+    },
+    "status-warning": {
+      "type": "color",
+      "value": "#F59E0B"
+    },
+    "status-danger": {
+      "type": "color",
+      "value": "#EF4444"
+    },
+    "status-info": {
+      "type": "color",
+      "value": "#06B6D4"
+    },
+    "font-sans": {
+      "type": "string",
+      "value": "Inter"
+    },
+    "font-mono": {
+      "type": "string",
+      "value": "JetBrains Mono"
+    },
+    "radius-sm": {
+      "type": "number",
+      "value": 6
+    },
+    "radius-md": {
+      "type": "number",
+      "value": 8
+    },
+    "radius-lg": {
+      "type": "number",
+      "value": 12
+    },
+    "radius-xl": {
+      "type": "number",
+      "value": 16
+    }
+  },
+  "children": [
+    {
+      "id": "frame-1569",
+      "type": "frame",
+      "name": "MCP Servers Canvas",
+      "width": 1440,
+      "height": 960,
+      "layout": "horizontal",
+      "fill": "$bg-main",
+      "children": [
+        {
+          "id": "sidebar-1356",
+          "type": "frame",
+          "name": "Sidebar / Main Navigation",
+          "width": 250,
+          "height": "fill_container",
+          "layout": "vertical",
+          "fill": "$bg-sidebar",
+          "stroke": "$border-color",
+          "strokeWidth": {
+            "right": 1
+          },
+          "children": [
+            {
+              "id": "frame-1365",
+              "type": "frame",
+              "name": "Brand Header",
+              "width": "fill_container",
+              "height": 64,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "padding": [
+                0,
+                16
+              ],
+              "gap": 12,
+              "stroke": "$border-color",
+              "strokeWidth": {
+                "bottom": 1
+              },
+              "children": [
+                {
+                  "id": "frame-1358",
+                  "type": "frame",
+                  "name": "Logo Icon Box",
+                  "width": 34,
+                  "height": 34,
+                  "cornerRadius": "$radius-md",
+                  "fill": "$accent-primary",
+                  "alignItems": "center",
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "id": "icon-1357",
+                      "type": "icon",
+                      "name": "Icon / layers",
+                      "library": "lucide",
+                      "icon": "layers",
+                      "width": 18,
+                      "height": 18,
+                      "fill": "#FFFFFF"
+                    }
+                  ]
+                },
+                {
+                  "id": "frame-1364",
+                  "type": "frame",
+                  "name": "Brand Text Box",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "frame-1362",
+                      "type": "frame",
+                      "name": "Frame",
+                      "layout": "horizontal",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "id": "txt-1359",
+                          "type": "text",
+                          "name": "Text",
+                          "content": "Shogun Projects",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 14,
+                          "fontWeight": "bold",
+                          "lineHeight": 1.4,
+                          "fill": "$text-main",
+                          "textAlign": "left",
+                          "textGrowth": "auto"
+                        },
+                        {
+                          "id": "badge-1360",
+                          "type": "frame",
+                          "name": "Badge / 2.0",
+                          "layout": "horizontal",
+                          "padding": [
+                            3,
+                            8
+                          ],
+                          "cornerRadius": "$radius-sm",
+                          "fill": "#6366F120",
+                          "stroke": "#6366F140",
+                          "strokeWidth": 1,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "id": "txt-1361",
+                              "type": "text",
+                              "name": "Text",
+                              "content": "2.0",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 11,
+                              "fontWeight": "bold",
+                              "lineHeight": 1.4,
+                              "fill": "#818CF8",
+                              "textAlign": "left",
+                              "textGrowth": "auto"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "txt-1363",
+                      "type": "text",
+                      "name": "Text",
+                      "content": "Antigravity Multi-Agent Hub",
+                      "fontFamily": "$font-sans",
+                      "fontSize": 10,
+                      "fontWeight": "normal",
+                      "lineHeight": 1.4,
+                      "fill": "$text-muted",
+                      "textAlign": "left",
+                      "textGrowth": "auto"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "frame-1407",
+              "type": "frame",
+              "name": "Nav Scroll Container",
+              "width": "fill_container",
+              "height": "fill_container",
+              "layout": "vertical",
+              "padding": [
+                16,
+                12
+              ],
+              "gap": 20,
+              "children": [
+                {
+                  "id": "frame-1376",
+                  "type": "frame",
+                  "name": "Section / WORKSPACE",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "id": "txt-1366",
+                      "type": "text",
+                      "name": "Text",
+                      "content": "WORKSPACE",
+                      "fontFamily": "$font-mono",
+                      "fontSize": 10,
+                      "fontWeight": "bold",
+                      "lineHeight": 1.4,
+                      "fill": "$text-muted",
+                      "textAlign": "left",
+                      "textGrowth": "auto",
+                      "padding": [
+                        4,
+                        8
+                      ]
+                    },
+                    {
+                      "id": "nav-item-1367",
+                      "type": "frame",
+                      "name": "Nav Item / Overview",
+                      "width": "fill_container",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "cornerRadius": "$radius-md",
+                      "fill": "#00000000",
+                      "children": [
+                        {
+                          "id": "icon-1368",
+                          "type": "icon",
+                          "name": "Icon / layout-dashboard",
+                          "library": "lucide",
+                          "icon": "layout-dashboard",
+                          "width": 16,
+                          "height": 16,
+                          "fill": "$text-sub"
+                        },
+                        {
+                          "id": "txt-1369",
+                          "type": "text",
+                          "name": "Text",
+                          "content": "Overview",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal",
+                          "lineHeight": 1.4,
+                          "fill": "$text-sub",
+                          "textAlign": "left",
+                          "textGrowth": "auto"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "nav-item-1370",
+                      "type": "frame",
+                      "name": "Nav Item / Task Hub",
+                      "width": "fill_container",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "cornerRadius": "$radius-md",
+                      "fill": "#00000000",
+                      "children": [
+                        {
+                          "id": "icon-1371",
+                          "type": "icon",
+                          "name": "Icon / layers",
+                          "library": "lucide",
+                          "icon": "layers",
+                          "width": 16,
+                          "height": 16,
+                          "fill": "$text-sub"
+                        },
+                        {
+                          "id": "txt-1372",
+                          "type": "text",
+                          "name": "Text",
+                          "content": "Task Hub",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal",
+                          "lineHeight": 1.4,
+                          "fill": "$text-sub",
+                          "textAlign": "left",
+                          "textGrowth": "auto"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "nav-item-1373",
+                      "type": "frame",
+                      "name": "Nav Item / Spaces & Projects",
+                      "width": "fill_container",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "cornerRadius": "$radius-md",
+                      "fill": "#00000000",
+                      "children": [
+                        {
+                          "id": "icon-1374",
+                          "type": "icon",
+                          "name": "Icon / folder-kanban",
+                          "library": "lucide",
+                          "icon": "folder-kanban",
+                          "width": 16,
+                          "height": 16,
+                          "fill": "$text-sub"
+                        },
+                        {
+                          "id": "txt-1375",
+                          "type": "text",
+                          "name": "Text",
+                          "content": "Spaces & Projects",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal",
+                          "lineHeight": 1.4,
+                          "fill": "$text-sub",
+                          "textAlign": "left",
+                          "textGrowth": "auto"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "frame-1390",
+                  "type": "frame",
+                  "name": "Section / ENTERPRISE PPM",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "id": "txt-1377",
+                      "type": "text",
+                      "name": "Text",
+                      "content": "ENTERPRISE PPM",
+                      "fontFamily": "$font-mono",
+                      "fontSize": 10,
+                      "fontWeight": "bold",
+                      "lineHeight": 1.4,
+                      "fill": "$text-muted",
+                      "textAlign": "left",
+                      "textGrowth": "auto",
+                      "padding": [
+                        4,
+                        8
+                      ]
+                    },
+                    {
+                      "id": "nav-item-1378",
+                      "type": "frame",
+                      "name": "Nav Item / Executive Portfolios",
+                      "width": "fill_container",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "cornerRadius": "$radius-md",
+                      "fill": "#00000000",
+                      "children": [
+                        {
+                          "id": "icon-1379",
+                          "type": "icon",
+                          "name": "Icon / briefcase",
+                          "library": "lucide",
+                          "icon": "briefcase",
+                          "width": 16,
+                          "height": 16,
+                          "fill": "$text-sub"
+                        },
+                        {
+                          "id": "txt-1380",
+                          "type": "text",
+                          "name": "Text",
+                          "content": "Executive Portfolios",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal",
+                          "lineHeight": 1.4,
+                          "fill": "$text-sub",
+                          "textAlign": "left",
+                          "textGrowth": "auto"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "nav-item-1381",
+                      "type": "frame",
+                      "name": "Nav Item / Financial Overview",
+                      "width": "fill_container",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "cornerRadius": "$radius-md",
+                      "fill": "#00000000",
+                      "children": [
+                        {
+                          "id": "icon-1382",
+                          "type": "icon",
+                          "name": "Icon / bar-chart-3",
+                          "library": "lucide",
+                          "icon": "bar-chart-3",
+                          "width": 16,
+                          "height": 16,
+                          "fill": "$text-sub"
+                        },
+                        {
+                          "id": "txt-1383",
+                          "type": "text",
+                          "name": "Text",
+                          "content": "Financial Overview",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal",
+                          "lineHeight": 1.4,
+                          "fill": "$text-sub",
+                          "textAlign": "left",
+                          "textGrowth": "auto"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "nav-item-1384",
+                      "type": "frame",
+                      "name": "Nav Item / Budget Controls",
+                      "width": "fill_container",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "cornerRadius": "$radius-md",
+                      "fill": "#00000000",
+                      "children": [
+                        {
+                          "id": "icon-1385",
+                          "type": "icon",
+                          "name": "Icon / calculator",
+                          "library": "lucide",
+                          "icon": "calculator",
+                          "width": 16,
+                          "height": 16,
+                          "fill": "$text-sub"
+                        },
+                        {
+                          "id": "txt-1386",
+                          "type": "text",
+                          "name": "Text",
+                          "content": "Budget Controls",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal",
+                          "lineHeight": 1.4,
+                          "fill": "$text-sub",
+                          "textAlign": "left",
+                          "textGrowth": "auto"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "nav-item-1387",
+                      "type": "frame",
+                      "name": "Nav Item / Risk Matrix & Register",
+                      "width": "fill_container",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "cornerRadius": "$radius-md",
+                      "fill": "#00000000",
+                      "children": [
+                        {
+                          "id": "icon-1388",
+                          "type": "icon",
+                          "name": "Icon / shield-alert",
+                          "library": "lucide",
+                          "icon": "shield-alert",
+                          "width": 16,
+                          "height": 16,
+                          "fill": "$text-sub"
+                        },
+                        {
+                          "id": "txt-1389",
+                          "type": "text",
+                          "name": "Text",
+                          "content": "Risk Matrix & Register",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal",
+                          "lineHeight": 1.4,
+                          "fill": "$text-sub",
+                          "textAlign": "left",
+                          "textGrowth": "auto"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "frame-1398",
+                  "type": "frame",
+                  "name": "Section / CRM MODULE",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "id": "txt-1391",
+                      "type": "text",
+                      "name": "Text",
+                      "content": "CRM MODULE",
+                      "fontFamily": "$font-mono",
+                      "fontSize": 10,
+                      "fontWeight": "bold",
+                      "lineHeight": 1.4,
+                      "fill": "$text-muted",
+                      "textAlign": "left",
+                      "textGrowth": "auto",
+                      "padding": [
+                        4,
+                        8
+                      ]
+                    },
+                    {
+                      "id": "nav-item-1392",
+                      "type": "frame",
+                      "name": "Nav Item / Leads & Prospects",
+                      "width": "fill_container",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "cornerRadius": "$radius-md",
+                      "fill": "#00000000",
+                      "children": [
+                        {
+                          "id": "icon-1393",
+                          "type": "icon",
+                          "name": "Icon / target",
+                          "library": "lucide",
+                          "icon": "target",
+                          "width": 16,
+                          "height": 16,
+                          "fill": "$text-sub"
+                        },
+                        {
+                          "id": "txt-1394",
+                          "type": "text",
+                          "name": "Text",
+                          "content": "Leads & Prospects",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal",
+                          "lineHeight": 1.4,
+                          "fill": "$text-sub",
+                          "textAlign": "left",
+                          "textGrowth": "auto"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "nav-item-1395",
+                      "type": "frame",
+                      "name": "Nav Item / Client Accounts",
+                      "width": "fill_container",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "cornerRadius": "$radius-md",
+                      "fill": "#00000000",
+                      "children": [
+                        {
+                          "id": "icon-1396",
+                          "type": "icon",
+                          "name": "Icon / building-2",
+                          "library": "lucide",
+                          "icon": "building-2",
+                          "width": 16,
+                          "height": 16,
+                          "fill": "$text-sub"
+                        },
+                        {
+                          "id": "txt-1397",
+                          "type": "text",
+                          "name": "Text",
+                          "content": "Client Accounts",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal",
+                          "lineHeight": 1.4,
+                          "fill": "$text-sub",
+                          "textAlign": "left",
+                          "textGrowth": "auto"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "frame-1406",
+                  "type": "frame",
+                  "name": "Section / SYSTEM & MCP",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "id": "txt-1399",
+                      "type": "text",
+                      "name": "Text",
+                      "content": "SYSTEM & MCP",
+                      "fontFamily": "$font-mono",
+                      "fontSize": 10,
+                      "fontWeight": "bold",
+                      "lineHeight": 1.4,
+                      "fill": "$text-muted",
+                      "textAlign": "left",
+                      "textGrowth": "auto",
+                      "padding": [
+                        4,
+                        8
+                      ]
+                    },
+                    {
+                      "id": "nav-item-1400",
+                      "type": "frame",
+                      "name": "Nav Item / MCP & Agents",
+                      "width": "fill_container",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "cornerRadius": "$radius-md",
+                      "fill": "#6366F118",
+                      "stroke": "#6366F130",
+                      "strokeWidth": 1,
+                      "children": [
+                        {
+                          "id": "icon-1401",
+                          "type": "icon",
+                          "name": "Icon / cpu",
+                          "library": "lucide",
+                          "icon": "cpu",
+                          "width": 16,
+                          "height": 16,
+                          "fill": "$accent-primary"
+                        },
+                        {
+                          "id": "txt-1402",
+                          "type": "text",
+                          "name": "Text",
+                          "content": "MCP & Agents",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "600",
+                          "lineHeight": 1.4,
+                          "fill": "$text-main",
+                          "textAlign": "left",
+                          "textGrowth": "auto"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "nav-item-1403",
+                      "type": "frame",
+                      "name": "Nav Item / Settings",
+                      "width": "fill_container",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "cornerRadius": "$radius-md",
+                      "fill": "#00000000",
+                      "children": [
+                        {
+                          "id": "icon-1404",
+                          "type": "icon",
+                          "name": "Icon / settings",
+                          "library": "lucide",
+                          "icon": "settings",
+                          "width": 16,
+                          "height": 16,
+                          "fill": "$text-sub"
+                        },
+                        {
+                          "id": "txt-1405",
+                          "type": "text",
+                          "name": "Text",
+                          "content": "Settings",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal",
+                          "lineHeight": 1.4,
+                          "fill": "$text-sub",
+                          "textAlign": "left",
+                          "textGrowth": "auto"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "frame-1414",
+              "type": "frame",
+              "name": "Sidebar Footer / User Profile",
+              "width": "fill_container",
+              "height": 60,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "padding": [
+                0,
+                16
+              ],
+              "gap": 10,
+              "stroke": "$border-color",
+              "strokeWidth": {
+                "top": 1
+              },
+              "children": [
+                {
+                  "id": "frame-1409",
+                  "type": "frame",
+                  "name": "Avatar",
+                  "width": 32,
+                  "height": 32,
+                  "cornerRadius": 16,
+                  "fill": "#4F46E5",
+                  "alignItems": "center",
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "id": "txt-1408",
+                      "type": "text",
+                      "name": "Text",
+                      "content": "AD",
+                      "fontFamily": "$font-sans",
+                      "fontSize": 11,
+                      "fontWeight": "bold",
+                      "lineHeight": 1.4,
+                      "fill": "#FFFFFF",
+                      "textAlign": "left",
+                      "textGrowth": "auto"
+                    }
+                  ]
+                },
+                {
+                  "id": "frame-1412",
+                  "type": "frame",
+                  "name": "User Details",
+                  "layout": "vertical",
+                  "width": "fill_container",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "txt-1410",
+                      "type": "text",
+                      "name": "Text",
+                      "content": "Tokugawa Admin",
+                      "fontFamily": "$font-sans",
+                      "fontSize": 12,
+                      "fontWeight": "600",
+                      "lineHeight": 1.4,
+                      "fill": "$text-main",
+                      "textAlign": "left",
+                      "textGrowth": "auto"
+                    },
+                    {
+                      "id": "txt-1411",
+                      "type": "text",
+                      "name": "Text",
+                      "content": "TokogawaSA (Enterprise)",
+                      "fontFamily": "$font-sans",
+                      "fontSize": 10,
+                      "fontWeight": "normal",
+                      "lineHeight": 1.4,
+                      "fill": "$text-muted",
+                      "textAlign": "left",
+                      "textGrowth": "auto"
+                    }
+                  ]
+                },
+                {
+                  "id": "icon-1413",
+                  "type": "icon",
+                  "name": "Icon / log-out",
+                  "library": "lucide",
+                  "icon": "log-out",
+                  "width": 14,
+                  "height": 14,
+                  "fill": "$text-muted"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "frame-1568",
+          "type": "frame",
+          "name": "Main Content Area",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "id": "header-1415",
+              "type": "frame",
+              "name": "Top Header Bar",
+              "width": "fill_container",
+              "height": 64,
+              "layout": "horizontal",
+              "alignItems": "center",
+              "justifyContent": "space_between",
+              "padding": [
+                0,
+                24
+              ],
+              "fill": "$bg-main",
+              "stroke": "$border-color",
+              "strokeWidth": {
+                "bottom": 1
+              },
+              "children": [
+                {
+                  "id": "frame-1418",
+                  "type": "frame",
+                  "name": "Title & Subtitle",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "id": "txt-1416",
+                      "type": "text",
+                      "name": "Text",
+                      "content": "Model Context Protocol Hub",
+                      "fontFamily": "$font-sans",
+                      "fontSize": 18,
+                      "fontWeight": "bold",
+                      "lineHeight": 1.4,
+                      "fill": "$text-main",
+                      "textAlign": "left",
+                      "textGrowth": "auto"
+                    },
+                    {
+                      "id": "txt-1417",
+                      "type": "text",
+                      "name": "Text",
+                      "content": "Registered MCP servers, local transports, exposed tools & telemetry",
+                      "fontFamily": "$font-sans",
+                      "fontSize": 11,
+                      "fontWeight": "normal",
+                      "lineHeight": 1.4,
+                      "fill": "$text-muted",
+                      "textAlign": "left",
+                      "textGrowth": "auto"
+                    }
+                  ]
+                },
+                {
+                  "id": "frame-1428",
+                  "type": "frame",
+                  "name": "Header Actions & Controls",
+                  "layout": "horizontal",
+                  "gap": 12,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "frame-1421",
+                      "type": "frame",
+                      "name": "Search Bar",
+                      "width": 240,
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "gap": 8,
+                      "padding": [
+                        7,
+                        12
+                      ],
+                      "cornerRadius": "$radius-md",
+                      "fill": "$bg-input",
+                      "stroke": "$border-color",
+                      "strokeWidth": 1,
+                      "children": [
+                        {
+                          "id": "icon-1419",
+                          "type": "icon",
+                          "name": "Icon / search",
+                          "library": "lucide",
+                          "icon": "search",
+                          "width": 14,
+                          "height": 14,
+                          "fill": "$text-muted"
+                        },
+                        {
+                          "id": "txt-1420",
+                          "type": "text",
+                          "name": "Text",
+                          "content": "Search resources, tools...",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 12,
+                          "fontWeight": "normal",
+                          "lineHeight": 1.4,
+                          "fill": "$text-muted",
+                          "textAlign": "left",
+                          "textGrowth": "auto"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "btn-1424",
+                      "type": "frame",
+                      "name": "Button / New Action",
+                      "layout": "horizontal",
+                      "gap": 6,
+                      "padding": [
+                        8,
+                        14
+                      ],
+                      "cornerRadius": "$radius-md",
+                      "fill": "$bg-card-subtle",
+                      "stroke": "$border-color",
+                      "strokeWidth": 1,
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "icon-1422",
+                          "type": "icon",
+                          "name": "Icon / plus",
+                          "library": "lucide",
+                          "icon": "plus",
+                          "width": 14,
+                          "height": 14,
+                          "fill": "$text-main"
+                        },
+                        {
+                          "id": "txt-1423",
+                          "type": "text",
+                          "name": "Text",
+                          "content": "New Action",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "600",
+                          "lineHeight": 1.4,
+                          "fill": "$text-main",
+                          "textAlign": "left",
+                          "textGrowth": "auto"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "btn-1427",
+                      "type": "frame",
+                      "name": "Button / Agent Swarm",
+                      "layout": "horizontal",
+                      "gap": 6,
+                      "padding": [
+                        8,
+                        14
+                      ],
+                      "cornerRadius": "$radius-md",
+                      "fill": "$accent-primary",
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "id": "icon-1425",
+                          "type": "icon",
+                          "name": "Icon / bot",
+                          "library": "lucide",
+                          "icon": "bot",
+                          "width": 14,
+                          "height": 14,
+                          "fill": "#FFFFFF"
+                        },
+                        {
+                          "id": "txt-1426",
+                          "type": "text",
+                          "name": "Text",
+                          "content": "Agent Swarm",
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "600",
+                          "lineHeight": 1.4,
+                          "fill": "#FFFFFF",
+                          "textAlign": "left",
+                          "textGrowth": "auto"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "frame-1567",
+              "type": "frame",
+              "name": "MCP Content",
+              "width": "fill_container",
+              "height": "fill_container",
+              "layout": "vertical",
+              "padding": 24,
+              "gap": 20,
+              "children": [
+                {
+                  "id": "frame-1469",
+                  "type": "frame",
+                  "name": "MCP Stats Grid",
+                  "width": "fill_container",
+                  "layout": "horizontal",
+                  "gap": 16,
+                  "children": [
+                    {
+                      "id": "metric-card-1429",
+                      "type": "frame",
+                      "name": "Metric Card / Connected MCP Servers",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "padding": 18,
+                      "gap": 12,
+                      "cornerRadius": "$radius-lg",
+                      "fill": "$bg-card",
+                      "stroke": "$border-color",
+                      "strokeWidth": 1,
+                      "children": [
+                        {
+                          "id": "frame-1433",
+                          "type": "frame",
+                          "name": "Top Row",
+                          "width": "fill_container",
+                          "layout": "horizontal",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "id": "txt-1430",
+                              "type": "text",
+                              "name": "Text",
+                              "content": "CONNECTED MCP SERVERS",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 11,
+                              "fontWeight": "600",
+                              "lineHeight": 1.4,
+                              "fill": "$text-muted",
+                              "textAlign": "left",
+                              "textGrowth": "auto",
+                              "letterSpacing": 0.5
+                            },
+                            {
+                              "id": "frame-1432",
+                              "type": "frame",
+                              "name": "Icon Box",
+                              "width": 32,
+                              "height": 32,
+                              "cornerRadius": "$radius-md",
+                              "fill": "#6366F120",
+                              "stroke": "#6366F140",
+                              "strokeWidth": 1,
+                              "alignItems": "center",
+                              "justifyContent": "center",
+                              "children": [
+                                {
+                                  "id": "icon-1431",
+                                  "type": "icon",
+                                  "name": "Icon / cpu",
+                                  "library": "lucide",
+                                  "icon": "cpu",
+                                  "width": 16,
+                                  "height": 16,
+                                  "fill": "#6366F1"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "id": "frame-1438",
+                          "type": "frame",
+                          "name": "Bottom Row",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "id": "txt-1434",
+                              "type": "text",
+                              "name": "Text",
+                              "content": "4 Online",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 22,
+                              "fontWeight": "bold",
+                              "lineHeight": 1.4,
+                              "fill": "$text-main",
+                              "textAlign": "left",
+                              "textGrowth": "auto"
+                            },
+                            {
+                              "id": "frame-1437",
+                              "type": "frame",
+                              "name": "Trend Indicator",
+                              "layout": "horizontal",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "id": "badge-1435",
+                                  "type": "frame",
+                                  "name": "Badge / All healthy",
+                                  "layout": "horizontal",
+                                  "padding": [
+                                    3,
+                                    8
+                                  ],
+                                  "cornerRadius": "$radius-sm",
+                                  "fill": "#10B98115",
+                                  "stroke": "#10B98130",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "id": "txt-1436",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "All healthy",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "bold",
+                                      "lineHeight": 1.4,
+                                      "fill": "#10B981",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "metric-card-1439",
+                      "type": "frame",
+                      "name": "Metric Card / Exposed Tool Functions",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "padding": 18,
+                      "gap": 12,
+                      "cornerRadius": "$radius-lg",
+                      "fill": "$bg-card",
+                      "stroke": "$border-color",
+                      "strokeWidth": 1,
+                      "children": [
+                        {
+                          "id": "frame-1443",
+                          "type": "frame",
+                          "name": "Top Row",
+                          "width": "fill_container",
+                          "layout": "horizontal",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "id": "txt-1440",
+                              "type": "text",
+                              "name": "Text",
+                              "content": "EXPOSED TOOL FUNCTIONS",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 11,
+                              "fontWeight": "600",
+                              "lineHeight": 1.4,
+                              "fill": "$text-muted",
+                              "textAlign": "left",
+                              "textGrowth": "auto",
+                              "letterSpacing": 0.5
+                            },
+                            {
+                              "id": "frame-1442",
+                              "type": "frame",
+                              "name": "Icon Box",
+                              "width": 32,
+                              "height": 32,
+                              "cornerRadius": "$radius-md",
+                              "fill": "#10B98120",
+                              "stroke": "#10B98140",
+                              "strokeWidth": 1,
+                              "alignItems": "center",
+                              "justifyContent": "center",
+                              "children": [
+                                {
+                                  "id": "icon-1441",
+                                  "type": "icon",
+                                  "name": "Icon / workflow",
+                                  "library": "lucide",
+                                  "icon": "workflow",
+                                  "width": 16,
+                                  "height": 16,
+                                  "fill": "#10B981"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "id": "frame-1448",
+                          "type": "frame",
+                          "name": "Bottom Row",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "id": "txt-1444",
+                              "type": "text",
+                              "name": "Text",
+                              "content": "53 Available",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 22,
+                              "fontWeight": "bold",
+                              "lineHeight": 1.4,
+                              "fill": "$text-main",
+                              "textAlign": "left",
+                              "textGrowth": "auto"
+                            },
+                            {
+                              "id": "frame-1447",
+                              "type": "frame",
+                              "name": "Trend Indicator",
+                              "layout": "horizontal",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "id": "badge-1445",
+                                  "type": "frame",
+                                  "name": "Badge / Ready for Subagents",
+                                  "layout": "horizontal",
+                                  "padding": [
+                                    3,
+                                    8
+                                  ],
+                                  "cornerRadius": "$radius-sm",
+                                  "fill": "#10B98115",
+                                  "stroke": "#10B98130",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "id": "txt-1446",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Ready for Subagents",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "bold",
+                                      "lineHeight": 1.4,
+                                      "fill": "#10B981",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "metric-card-1449",
+                      "type": "frame",
+                      "name": "Metric Card / Avg Roundtrip Latency",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "padding": 18,
+                      "gap": 12,
+                      "cornerRadius": "$radius-lg",
+                      "fill": "$bg-card",
+                      "stroke": "$border-color",
+                      "strokeWidth": 1,
+                      "children": [
+                        {
+                          "id": "frame-1453",
+                          "type": "frame",
+                          "name": "Top Row",
+                          "width": "fill_container",
+                          "layout": "horizontal",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "id": "txt-1450",
+                              "type": "text",
+                              "name": "Text",
+                              "content": "AVG ROUNDTRIP LATENCY",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 11,
+                              "fontWeight": "600",
+                              "lineHeight": 1.4,
+                              "fill": "$text-muted",
+                              "textAlign": "left",
+                              "textGrowth": "auto",
+                              "letterSpacing": 0.5
+                            },
+                            {
+                              "id": "frame-1452",
+                              "type": "frame",
+                              "name": "Icon Box",
+                              "width": 32,
+                              "height": 32,
+                              "cornerRadius": "$radius-md",
+                              "fill": "#F59E0B20",
+                              "stroke": "#F59E0B40",
+                              "strokeWidth": 1,
+                              "alignItems": "center",
+                              "justifyContent": "center",
+                              "children": [
+                                {
+                                  "id": "icon-1451",
+                                  "type": "icon",
+                                  "name": "Icon / clock",
+                                  "library": "lucide",
+                                  "icon": "clock",
+                                  "width": 16,
+                                  "height": 16,
+                                  "fill": "#F59E0B"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "id": "frame-1458",
+                          "type": "frame",
+                          "name": "Bottom Row",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "id": "txt-1454",
+                              "type": "text",
+                              "name": "Text",
+                              "content": "17.2ms",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 22,
+                              "fontWeight": "bold",
+                              "lineHeight": 1.4,
+                              "fill": "$text-main",
+                              "textAlign": "left",
+                              "textGrowth": "auto"
+                            },
+                            {
+                              "id": "frame-1457",
+                              "type": "frame",
+                              "name": "Trend Indicator",
+                              "layout": "horizontal",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "id": "badge-1455",
+                                  "type": "frame",
+                                  "name": "Badge / Real-time IPC",
+                                  "layout": "horizontal",
+                                  "padding": [
+                                    3,
+                                    8
+                                  ],
+                                  "cornerRadius": "$radius-sm",
+                                  "fill": "#10B98115",
+                                  "stroke": "#10B98130",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "id": "txt-1456",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Real-time IPC",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "bold",
+                                      "lineHeight": 1.4,
+                                      "fill": "#10B981",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "metric-card-1459",
+                      "type": "frame",
+                      "name": "Metric Card / Token Auth Status",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "padding": 18,
+                      "gap": 12,
+                      "cornerRadius": "$radius-lg",
+                      "fill": "$bg-card",
+                      "stroke": "$border-color",
+                      "strokeWidth": 1,
+                      "children": [
+                        {
+                          "id": "frame-1463",
+                          "type": "frame",
+                          "name": "Top Row",
+                          "width": "fill_container",
+                          "layout": "horizontal",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "id": "txt-1460",
+                              "type": "text",
+                              "name": "Text",
+                              "content": "TOKEN AUTH STATUS",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 11,
+                              "fontWeight": "600",
+                              "lineHeight": 1.4,
+                              "fill": "$text-muted",
+                              "textAlign": "left",
+                              "textGrowth": "auto",
+                              "letterSpacing": 0.5
+                            },
+                            {
+                              "id": "frame-1462",
+                              "type": "frame",
+                              "name": "Icon Box",
+                              "width": 32,
+                              "height": 32,
+                              "cornerRadius": "$radius-md",
+                              "fill": "#8B5CF620",
+                              "stroke": "#8B5CF640",
+                              "strokeWidth": 1,
+                              "alignItems": "center",
+                              "justifyContent": "center",
+                              "children": [
+                                {
+                                  "id": "icon-1461",
+                                  "type": "icon",
+                                  "name": "Icon / shield-check",
+                                  "library": "lucide",
+                                  "icon": "shield-check",
+                                  "width": 16,
+                                  "height": 16,
+                                  "fill": "#8B5CF6"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "id": "frame-1468",
+                          "type": "frame",
+                          "name": "Bottom Row",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "id": "txt-1464",
+                              "type": "text",
+                              "name": "Text",
+                              "content": "Valid",
+                              "fontFamily": "$font-sans",
+                              "fontSize": 22,
+                              "fontWeight": "bold",
+                              "lineHeight": 1.4,
+                              "fill": "$text-main",
+                              "textAlign": "left",
+                              "textGrowth": "auto"
+                            },
+                            {
+                              "id": "frame-1467",
+                              "type": "frame",
+                              "name": "Trend Indicator",
+                              "layout": "horizontal",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "id": "badge-1465",
+                                  "type": "frame",
+                                  "name": "Badge / mcp_oauth_tokens.json",
+                                  "layout": "horizontal",
+                                  "padding": [
+                                    3,
+                                    8
+                                  ],
+                                  "cornerRadius": "$radius-sm",
+                                  "fill": "#10B98115",
+                                  "stroke": "#10B98130",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "id": "txt-1466",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "mcp_oauth_tokens.json",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "bold",
+                                      "lineHeight": 1.4,
+                                      "fill": "#10B981",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "frame-1566",
+                  "type": "frame",
+                  "name": "Servers List",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 14,
+                  "children": [
+                    {
+                      "id": "frame-1493",
+                      "type": "frame",
+                      "name": "Server / StitchMCP (Google Cloud Remote)",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "padding": 18,
+                      "gap": 12,
+                      "cornerRadius": "$radius-lg",
+                      "fill": "$bg-card",
+                      "stroke": "$border-color",
+                      "strokeWidth": 1,
+                      "children": [
+                        {
+                          "id": "frame-1483",
+                          "type": "frame",
+                          "name": "Frame",
+                          "width": "fill_container",
+                          "layout": "horizontal",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "id": "frame-1475",
+                              "type": "frame",
+                              "name": "Frame",
+                              "layout": "horizontal",
+                              "gap": 10,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "id": "frame-1471",
+                                  "type": "frame",
+                                  "name": "Frame",
+                                  "width": 32,
+                                  "height": 32,
+                                  "cornerRadius": "$radius-md",
+                                  "fill": "$bg-card-subtle",
+                                  "alignItems": "center",
+                                  "justifyContent": "center",
+                                  "children": [
+                                    {
+                                      "id": "icon-1470",
+                                      "type": "icon",
+                                      "name": "Icon / cpu",
+                                      "library": "lucide",
+                                      "icon": "cpu",
+                                      "width": 16,
+                                      "height": 16,
+                                      "fill": "$accent-primary"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "frame-1474",
+                                  "type": "frame",
+                                  "name": "Frame",
+                                  "layout": "vertical",
+                                  "gap": 2,
+                                  "children": [
+                                    {
+                                      "id": "txt-1472",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "StitchMCP (Google Cloud Remote)",
+                                      "fontFamily": "$font-sans",
+                                      "fontSize": 14,
+                                      "fontWeight": "bold",
+                                      "lineHeight": 1.4,
+                                      "fill": "$text-main",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    },
+                                    {
+                                      "id": "txt-1473",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Remote enterprise stitch proxy for Google Cloud integrations.",
+                                      "fontFamily": "$font-sans",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal",
+                                      "lineHeight": 1.4,
+                                      "fill": "$text-muted",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "id": "frame-1482",
+                              "type": "frame",
+                              "name": "Frame",
+                              "layout": "horizontal",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "id": "badge-1476",
+                                  "type": "frame",
+                                  "name": "Badge / SSE / HTTP",
+                                  "layout": "horizontal",
+                                  "padding": [
+                                    3,
+                                    8
+                                  ],
+                                  "cornerRadius": "$radius-sm",
+                                  "fill": "$bg-card-subtle",
+                                  "stroke": "$border-color",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "id": "txt-1477",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "SSE / HTTP",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "bold",
+                                      "lineHeight": 1.4,
+                                      "fill": "$text-sub",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "badge-1478",
+                                  "type": "frame",
+                                  "name": "Badge / 6 Tools",
+                                  "layout": "horizontal",
+                                  "padding": [
+                                    3,
+                                    8
+                                  ],
+                                  "cornerRadius": "$radius-sm",
+                                  "fill": "#6366F120",
+                                  "stroke": "#6366F140",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "id": "txt-1479",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "6 Tools",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "bold",
+                                      "lineHeight": 1.4,
+                                      "fill": "#818CF8",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "badge-1480",
+                                  "type": "frame",
+                                  "name": "Badge / Connected",
+                                  "layout": "horizontal",
+                                  "padding": [
+                                    3,
+                                    8
+                                  ],
+                                  "cornerRadius": "$radius-sm",
+                                  "fill": "#10B98120",
+                                  "stroke": "#10B98140",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "id": "txt-1481",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Connected",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "bold",
+                                      "lineHeight": 1.4,
+                                      "fill": "#10B981",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "id": "frame-1492",
+                          "type": "frame",
+                          "name": "Frame",
+                          "width": "fill_container",
+                          "layout": "horizontal",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "stroke": "$border-subtle",
+                          "strokeWidth": {
+                            "top": 1
+                          },
+                          "padding": [
+                            10,
+                            0,
+                            0,
+                            0
+                          ],
+                          "children": [
+                            {
+                              "id": "txt-1484",
+                              "type": "text",
+                              "name": "Text",
+                              "content": "Roundtrip: 42ms | Auto-reconnect: Enabled",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 11,
+                              "fontWeight": "normal",
+                              "lineHeight": 1.4,
+                              "fill": "$text-muted",
+                              "textAlign": "left",
+                              "textGrowth": "auto"
+                            },
+                            {
+                              "id": "frame-1491",
+                              "type": "frame",
+                              "name": "Frame",
+                              "layout": "horizontal",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "id": "btn-1487",
+                                  "type": "frame",
+                                  "name": "Button / Inspect Tools",
+                                  "layout": "horizontal",
+                                  "gap": 6,
+                                  "padding": [
+                                    8,
+                                    14
+                                  ],
+                                  "cornerRadius": "$radius-md",
+                                  "fill": "$bg-card-subtle",
+                                  "stroke": "$border-color",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "justifyContent": "center",
+                                  "children": [
+                                    {
+                                      "id": "icon-1485",
+                                      "type": "icon",
+                                      "name": "Icon / search",
+                                      "library": "lucide",
+                                      "icon": "search",
+                                      "width": 14,
+                                      "height": 14,
+                                      "fill": "$text-main"
+                                    },
+                                    {
+                                      "id": "txt-1486",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Inspect Tools",
+                                      "fontFamily": "$font-sans",
+                                      "fontSize": 13,
+                                      "fontWeight": "600",
+                                      "lineHeight": 1.4,
+                                      "fill": "$text-main",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "btn-1490",
+                                  "type": "frame",
+                                  "name": "Button / Test Ping",
+                                  "layout": "horizontal",
+                                  "gap": 6,
+                                  "padding": [
+                                    8,
+                                    14
+                                  ],
+                                  "cornerRadius": "$radius-md",
+                                  "fill": "$bg-card-subtle",
+                                  "stroke": "$border-color",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "justifyContent": "center",
+                                  "children": [
+                                    {
+                                      "id": "icon-1488",
+                                      "type": "icon",
+                                      "name": "Icon / zap",
+                                      "library": "lucide",
+                                      "icon": "zap",
+                                      "width": 14,
+                                      "height": 14,
+                                      "fill": "$text-main"
+                                    },
+                                    {
+                                      "id": "txt-1489",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Test Ping",
+                                      "fontFamily": "$font-sans",
+                                      "fontSize": 13,
+                                      "fontWeight": "600",
+                                      "lineHeight": 1.4,
+                                      "fill": "$text-main",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "frame-1517",
+                      "type": "frame",
+                      "name": "Server / Firebase MCP Server",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "padding": 18,
+                      "gap": 12,
+                      "cornerRadius": "$radius-lg",
+                      "fill": "$bg-card",
+                      "stroke": "$border-color",
+                      "strokeWidth": 1,
+                      "children": [
+                        {
+                          "id": "frame-1507",
+                          "type": "frame",
+                          "name": "Frame",
+                          "width": "fill_container",
+                          "layout": "horizontal",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "id": "frame-1499",
+                              "type": "frame",
+                              "name": "Frame",
+                              "layout": "horizontal",
+                              "gap": 10,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "id": "frame-1495",
+                                  "type": "frame",
+                                  "name": "Frame",
+                                  "width": 32,
+                                  "height": 32,
+                                  "cornerRadius": "$radius-md",
+                                  "fill": "$bg-card-subtle",
+                                  "alignItems": "center",
+                                  "justifyContent": "center",
+                                  "children": [
+                                    {
+                                      "id": "icon-1494",
+                                      "type": "icon",
+                                      "name": "Icon / cpu",
+                                      "library": "lucide",
+                                      "icon": "cpu",
+                                      "width": 16,
+                                      "height": 16,
+                                      "fill": "$accent-primary"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "frame-1498",
+                                  "type": "frame",
+                                  "name": "Frame",
+                                  "layout": "vertical",
+                                  "gap": 2,
+                                  "children": [
+                                    {
+                                      "id": "txt-1496",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Firebase MCP Server",
+                                      "fontFamily": "$font-sans",
+                                      "fontSize": 14,
+                                      "fontWeight": "bold",
+                                      "lineHeight": 1.4,
+                                      "fill": "$text-main",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    },
+                                    {
+                                      "id": "txt-1497",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Firestore rules, auth state & cloud functions orchestrator.",
+                                      "fontFamily": "$font-sans",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal",
+                                      "lineHeight": 1.4,
+                                      "fill": "$text-muted",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "id": "frame-1506",
+                              "type": "frame",
+                              "name": "Frame",
+                              "layout": "horizontal",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "id": "badge-1500",
+                                  "type": "frame",
+                                  "name": "Badge / Local Stdio",
+                                  "layout": "horizontal",
+                                  "padding": [
+                                    3,
+                                    8
+                                  ],
+                                  "cornerRadius": "$radius-sm",
+                                  "fill": "$bg-card-subtle",
+                                  "stroke": "$border-color",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "id": "txt-1501",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Local Stdio",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "bold",
+                                      "lineHeight": 1.4,
+                                      "fill": "$text-sub",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "badge-1502",
+                                  "type": "frame",
+                                  "name": "Badge / 14 Tools",
+                                  "layout": "horizontal",
+                                  "padding": [
+                                    3,
+                                    8
+                                  ],
+                                  "cornerRadius": "$radius-sm",
+                                  "fill": "#6366F120",
+                                  "stroke": "#6366F140",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "id": "txt-1503",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "14 Tools",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "bold",
+                                      "lineHeight": 1.4,
+                                      "fill": "#818CF8",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "badge-1504",
+                                  "type": "frame",
+                                  "name": "Badge / Connected",
+                                  "layout": "horizontal",
+                                  "padding": [
+                                    3,
+                                    8
+                                  ],
+                                  "cornerRadius": "$radius-sm",
+                                  "fill": "#10B98120",
+                                  "stroke": "#10B98140",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "id": "txt-1505",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Connected",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "bold",
+                                      "lineHeight": 1.4,
+                                      "fill": "#10B981",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "id": "frame-1516",
+                          "type": "frame",
+                          "name": "Frame",
+                          "width": "fill_container",
+                          "layout": "horizontal",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "stroke": "$border-subtle",
+                          "strokeWidth": {
+                            "top": 1
+                          },
+                          "padding": [
+                            10,
+                            0,
+                            0,
+                            0
+                          ],
+                          "children": [
+                            {
+                              "id": "txt-1508",
+                              "type": "text",
+                              "name": "Text",
+                              "content": "Roundtrip: 8ms | Auto-reconnect: Enabled",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 11,
+                              "fontWeight": "normal",
+                              "lineHeight": 1.4,
+                              "fill": "$text-muted",
+                              "textAlign": "left",
+                              "textGrowth": "auto"
+                            },
+                            {
+                              "id": "frame-1515",
+                              "type": "frame",
+                              "name": "Frame",
+                              "layout": "horizontal",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "id": "btn-1511",
+                                  "type": "frame",
+                                  "name": "Button / Inspect Tools",
+                                  "layout": "horizontal",
+                                  "gap": 6,
+                                  "padding": [
+                                    8,
+                                    14
+                                  ],
+                                  "cornerRadius": "$radius-md",
+                                  "fill": "$bg-card-subtle",
+                                  "stroke": "$border-color",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "justifyContent": "center",
+                                  "children": [
+                                    {
+                                      "id": "icon-1509",
+                                      "type": "icon",
+                                      "name": "Icon / search",
+                                      "library": "lucide",
+                                      "icon": "search",
+                                      "width": 14,
+                                      "height": 14,
+                                      "fill": "$text-main"
+                                    },
+                                    {
+                                      "id": "txt-1510",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Inspect Tools",
+                                      "fontFamily": "$font-sans",
+                                      "fontSize": 13,
+                                      "fontWeight": "600",
+                                      "lineHeight": 1.4,
+                                      "fill": "$text-main",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "btn-1514",
+                                  "type": "frame",
+                                  "name": "Button / Test Ping",
+                                  "layout": "horizontal",
+                                  "gap": 6,
+                                  "padding": [
+                                    8,
+                                    14
+                                  ],
+                                  "cornerRadius": "$radius-md",
+                                  "fill": "$bg-card-subtle",
+                                  "stroke": "$border-color",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "justifyContent": "center",
+                                  "children": [
+                                    {
+                                      "id": "icon-1512",
+                                      "type": "icon",
+                                      "name": "Icon / zap",
+                                      "library": "lucide",
+                                      "icon": "zap",
+                                      "width": 14,
+                                      "height": 14,
+                                      "fill": "$text-main"
+                                    },
+                                    {
+                                      "id": "txt-1513",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Test Ping",
+                                      "fontFamily": "$font-sans",
+                                      "fontSize": 13,
+                                      "fontWeight": "600",
+                                      "lineHeight": 1.4,
+                                      "fill": "$text-main",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "frame-1541",
+                      "type": "frame",
+                      "name": "Server / GitHub MCP Server",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "padding": 18,
+                      "gap": 12,
+                      "cornerRadius": "$radius-lg",
+                      "fill": "$bg-card",
+                      "stroke": "$border-color",
+                      "strokeWidth": 1,
+                      "children": [
+                        {
+                          "id": "frame-1531",
+                          "type": "frame",
+                          "name": "Frame",
+                          "width": "fill_container",
+                          "layout": "horizontal",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "id": "frame-1523",
+                              "type": "frame",
+                              "name": "Frame",
+                              "layout": "horizontal",
+                              "gap": 10,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "id": "frame-1519",
+                                  "type": "frame",
+                                  "name": "Frame",
+                                  "width": 32,
+                                  "height": 32,
+                                  "cornerRadius": "$radius-md",
+                                  "fill": "$bg-card-subtle",
+                                  "alignItems": "center",
+                                  "justifyContent": "center",
+                                  "children": [
+                                    {
+                                      "id": "icon-1518",
+                                      "type": "icon",
+                                      "name": "Icon / cpu",
+                                      "library": "lucide",
+                                      "icon": "cpu",
+                                      "width": 16,
+                                      "height": 16,
+                                      "fill": "$accent-primary"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "frame-1522",
+                                  "type": "frame",
+                                  "name": "Frame",
+                                  "layout": "vertical",
+                                  "gap": 2,
+                                  "children": [
+                                    {
+                                      "id": "txt-1520",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "GitHub MCP Server",
+                                      "fontFamily": "$font-sans",
+                                      "fontSize": 14,
+                                      "fontWeight": "bold",
+                                      "lineHeight": 1.4,
+                                      "fill": "$text-main",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    },
+                                    {
+                                      "id": "txt-1521",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Repository checkpoints, branch creation & PR reviews.",
+                                      "fontFamily": "$font-sans",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal",
+                                      "lineHeight": 1.4,
+                                      "fill": "$text-muted",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "id": "frame-1530",
+                              "type": "frame",
+                              "name": "Frame",
+                              "layout": "horizontal",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "id": "badge-1524",
+                                  "type": "frame",
+                                  "name": "Badge / Docker Daemon",
+                                  "layout": "horizontal",
+                                  "padding": [
+                                    3,
+                                    8
+                                  ],
+                                  "cornerRadius": "$radius-sm",
+                                  "fill": "$bg-card-subtle",
+                                  "stroke": "$border-color",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "id": "txt-1525",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Docker Daemon",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "bold",
+                                      "lineHeight": 1.4,
+                                      "fill": "$text-sub",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "badge-1526",
+                                  "type": "frame",
+                                  "name": "Badge / 28 Tools",
+                                  "layout": "horizontal",
+                                  "padding": [
+                                    3,
+                                    8
+                                  ],
+                                  "cornerRadius": "$radius-sm",
+                                  "fill": "#6366F120",
+                                  "stroke": "#6366F140",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "id": "txt-1527",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "28 Tools",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "bold",
+                                      "lineHeight": 1.4,
+                                      "fill": "#818CF8",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "badge-1528",
+                                  "type": "frame",
+                                  "name": "Badge / Connected",
+                                  "layout": "horizontal",
+                                  "padding": [
+                                    3,
+                                    8
+                                  ],
+                                  "cornerRadius": "$radius-sm",
+                                  "fill": "#10B98120",
+                                  "stroke": "#10B98140",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "id": "txt-1529",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Connected",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "bold",
+                                      "lineHeight": 1.4,
+                                      "fill": "#10B981",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "id": "frame-1540",
+                          "type": "frame",
+                          "name": "Frame",
+                          "width": "fill_container",
+                          "layout": "horizontal",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "stroke": "$border-subtle",
+                          "strokeWidth": {
+                            "top": 1
+                          },
+                          "padding": [
+                            10,
+                            0,
+                            0,
+                            0
+                          ],
+                          "children": [
+                            {
+                              "id": "txt-1532",
+                              "type": "text",
+                              "name": "Text",
+                              "content": "Roundtrip: 15ms | Auto-reconnect: Enabled",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 11,
+                              "fontWeight": "normal",
+                              "lineHeight": 1.4,
+                              "fill": "$text-muted",
+                              "textAlign": "left",
+                              "textGrowth": "auto"
+                            },
+                            {
+                              "id": "frame-1539",
+                              "type": "frame",
+                              "name": "Frame",
+                              "layout": "horizontal",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "id": "btn-1535",
+                                  "type": "frame",
+                                  "name": "Button / Inspect Tools",
+                                  "layout": "horizontal",
+                                  "gap": 6,
+                                  "padding": [
+                                    8,
+                                    14
+                                  ],
+                                  "cornerRadius": "$radius-md",
+                                  "fill": "$bg-card-subtle",
+                                  "stroke": "$border-color",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "justifyContent": "center",
+                                  "children": [
+                                    {
+                                      "id": "icon-1533",
+                                      "type": "icon",
+                                      "name": "Icon / search",
+                                      "library": "lucide",
+                                      "icon": "search",
+                                      "width": 14,
+                                      "height": 14,
+                                      "fill": "$text-main"
+                                    },
+                                    {
+                                      "id": "txt-1534",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Inspect Tools",
+                                      "fontFamily": "$font-sans",
+                                      "fontSize": 13,
+                                      "fontWeight": "600",
+                                      "lineHeight": 1.4,
+                                      "fill": "$text-main",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "btn-1538",
+                                  "type": "frame",
+                                  "name": "Button / Test Ping",
+                                  "layout": "horizontal",
+                                  "gap": 6,
+                                  "padding": [
+                                    8,
+                                    14
+                                  ],
+                                  "cornerRadius": "$radius-md",
+                                  "fill": "$bg-card-subtle",
+                                  "stroke": "$border-color",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "justifyContent": "center",
+                                  "children": [
+                                    {
+                                      "id": "icon-1536",
+                                      "type": "icon",
+                                      "name": "Icon / zap",
+                                      "library": "lucide",
+                                      "icon": "zap",
+                                      "width": 14,
+                                      "height": 14,
+                                      "fill": "$text-main"
+                                    },
+                                    {
+                                      "id": "txt-1537",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Test Ping",
+                                      "fontFamily": "$font-sans",
+                                      "fontSize": 13,
+                                      "fontWeight": "600",
+                                      "lineHeight": 1.4,
+                                      "fill": "$text-main",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "frame-1565",
+                      "type": "frame",
+                      "name": "Server / Pencil Design System MCP",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "padding": 18,
+                      "gap": 12,
+                      "cornerRadius": "$radius-lg",
+                      "fill": "$bg-card",
+                      "stroke": "$border-color",
+                      "strokeWidth": 1,
+                      "children": [
+                        {
+                          "id": "frame-1555",
+                          "type": "frame",
+                          "name": "Frame",
+                          "width": "fill_container",
+                          "layout": "horizontal",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "id": "frame-1547",
+                              "type": "frame",
+                              "name": "Frame",
+                              "layout": "horizontal",
+                              "gap": 10,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "id": "frame-1543",
+                                  "type": "frame",
+                                  "name": "Frame",
+                                  "width": 32,
+                                  "height": 32,
+                                  "cornerRadius": "$radius-md",
+                                  "fill": "$bg-card-subtle",
+                                  "alignItems": "center",
+                                  "justifyContent": "center",
+                                  "children": [
+                                    {
+                                      "id": "icon-1542",
+                                      "type": "icon",
+                                      "name": "Icon / cpu",
+                                      "library": "lucide",
+                                      "icon": "cpu",
+                                      "width": 16,
+                                      "height": 16,
+                                      "fill": "$accent-primary"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "frame-1546",
+                                  "type": "frame",
+                                  "name": "Frame",
+                                  "layout": "vertical",
+                                  "gap": 2,
+                                  "children": [
+                                    {
+                                      "id": "txt-1544",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Pencil Design System MCP",
+                                      "fontFamily": "$font-sans",
+                                      "fontSize": 14,
+                                      "fontWeight": "bold",
+                                      "lineHeight": 1.4,
+                                      "fill": "$text-main",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    },
+                                    {
+                                      "id": "txt-1545",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Vector layout engine, auto-layout inspection & .pen file sync.",
+                                      "fontFamily": "$font-sans",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal",
+                                      "lineHeight": 1.4,
+                                      "fill": "$text-muted",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "id": "frame-1554",
+                              "type": "frame",
+                              "name": "Frame",
+                              "layout": "horizontal",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "id": "badge-1548",
+                                  "type": "frame",
+                                  "name": "Badge / pen.dev CLI / Stdio",
+                                  "layout": "horizontal",
+                                  "padding": [
+                                    3,
+                                    8
+                                  ],
+                                  "cornerRadius": "$radius-sm",
+                                  "fill": "$bg-card-subtle",
+                                  "stroke": "$border-color",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "id": "txt-1549",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "pen.dev CLI / Stdio",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "bold",
+                                      "lineHeight": 1.4,
+                                      "fill": "$text-sub",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "badge-1550",
+                                  "type": "frame",
+                                  "name": "Badge / 5 Tools",
+                                  "layout": "horizontal",
+                                  "padding": [
+                                    3,
+                                    8
+                                  ],
+                                  "cornerRadius": "$radius-sm",
+                                  "fill": "#6366F120",
+                                  "stroke": "#6366F140",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "id": "txt-1551",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "5 Tools",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "bold",
+                                      "lineHeight": 1.4,
+                                      "fill": "#818CF8",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "badge-1552",
+                                  "type": "frame",
+                                  "name": "Badge / Connected",
+                                  "layout": "horizontal",
+                                  "padding": [
+                                    3,
+                                    8
+                                  ],
+                                  "cornerRadius": "$radius-sm",
+                                  "fill": "#10B98120",
+                                  "stroke": "#10B98140",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "id": "txt-1553",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Connected",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "bold",
+                                      "lineHeight": 1.4,
+                                      "fill": "#10B981",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "id": "frame-1564",
+                          "type": "frame",
+                          "name": "Frame",
+                          "width": "fill_container",
+                          "layout": "horizontal",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "stroke": "$border-subtle",
+                          "strokeWidth": {
+                            "top": 1
+                          },
+                          "padding": [
+                            10,
+                            0,
+                            0,
+                            0
+                          ],
+                          "children": [
+                            {
+                              "id": "txt-1556",
+                              "type": "text",
+                              "name": "Text",
+                              "content": "Roundtrip: 4ms | Auto-reconnect: Enabled",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 11,
+                              "fontWeight": "normal",
+                              "lineHeight": 1.4,
+                              "fill": "$text-muted",
+                              "textAlign": "left",
+                              "textGrowth": "auto"
+                            },
+                            {
+                              "id": "frame-1563",
+                              "type": "frame",
+                              "name": "Frame",
+                              "layout": "horizontal",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "id": "btn-1559",
+                                  "type": "frame",
+                                  "name": "Button / Inspect Tools",
+                                  "layout": "horizontal",
+                                  "gap": 6,
+                                  "padding": [
+                                    8,
+                                    14
+                                  ],
+                                  "cornerRadius": "$radius-md",
+                                  "fill": "$bg-card-subtle",
+                                  "stroke": "$border-color",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "justifyContent": "center",
+                                  "children": [
+                                    {
+                                      "id": "icon-1557",
+                                      "type": "icon",
+                                      "name": "Icon / search",
+                                      "library": "lucide",
+                                      "icon": "search",
+                                      "width": 14,
+                                      "height": 14,
+                                      "fill": "$text-main"
+                                    },
+                                    {
+                                      "id": "txt-1558",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Inspect Tools",
+                                      "fontFamily": "$font-sans",
+                                      "fontSize": 13,
+                                      "fontWeight": "600",
+                                      "lineHeight": 1.4,
+                                      "fill": "$text-main",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "btn-1562",
+                                  "type": "frame",
+                                  "name": "Button / Test Ping",
+                                  "layout": "horizontal",
+                                  "gap": 6,
+                                  "padding": [
+                                    8,
+                                    14
+                                  ],
+                                  "cornerRadius": "$radius-md",
+                                  "fill": "$bg-card-subtle",
+                                  "stroke": "$border-color",
+                                  "strokeWidth": 1,
+                                  "alignItems": "center",
+                                  "justifyContent": "center",
+                                  "children": [
+                                    {
+                                      "id": "icon-1560",
+                                      "type": "icon",
+                                      "name": "Icon / zap",
+                                      "library": "lucide",
+                                      "icon": "zap",
+                                      "width": 14,
+                                      "height": 14,
+                                      "fill": "$text-main"
+                                    },
+                                    {
+                                      "id": "txt-1561",
+                                      "type": "text",
+                                      "name": "Text",
+                                      "content": "Test Ping",
+                                      "fontFamily": "$font-sans",
+                                      "fontSize": 13,
+                                      "fontWeight": "600",
+                                      "lineHeight": 1.4,
+                                      "fill": "$text-main",
+                                      "textAlign": "left",
+                                      "textGrowth": "auto"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

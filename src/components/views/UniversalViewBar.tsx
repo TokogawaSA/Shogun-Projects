@@ -11,6 +11,8 @@ import {
   Search,
   Plus,
   ArrowUpDown,
+  FolderTree,
+  GitBranch,
 } from 'lucide-react';
 import { ViewMode, ViewGroupBy, ViewFilterState, ViewSortState } from '../../types/views';
 
@@ -25,11 +27,14 @@ interface UniversalViewBarProps {
   onSortChange: (sort: ViewSortState) => void;
   onQuickAddTask: () => void;
   totalCount: number;
+  allowedViews?: ViewMode[];
 }
 
-const VIEW_TABS: { id: ViewMode; label: string; icon: React.FC<{ className?: string }> }[] = [
-  { id: 'list', label: 'List View', icon: List },
+const ALL_VIEW_TABS: { id: ViewMode; label: string; icon: React.FC<{ className?: string }> }[] = [
   { id: 'board', label: 'Kanban Board', icon: Kanban },
+  { id: 'list', label: 'List View', icon: List },
+  { id: 'tree', label: 'WBS Tree', icon: FolderTree },
+  { id: 'phase_gates', label: 'Phase Gates', icon: GitBranch },
   { id: 'gantt', label: 'Gantt Chart', icon: BarChart3 },
   { id: 'calendar', label: 'Calendar', icon: Calendar },
   { id: 'workload', label: 'Workload', icon: Users },
@@ -47,14 +52,20 @@ export const UniversalViewBar: React.FC<UniversalViewBarProps> = ({
   onSortChange,
   onQuickAddTask,
   totalCount,
+  allowedViews,
 }) => {
+  const visibleTabs = React.useMemo(() => {
+    if (!allowedViews) return ALL_VIEW_TABS;
+    return ALL_VIEW_TABS.filter((tab) => allowedViews.includes(tab.id));
+  }, [allowedViews]);
+
   return (
     <div className="flex flex-col gap-2.5 p-2 bg-slate-900/90 border border-slate-800 rounded-2xl shadow-md">
       {/* Top Row: View Switcher Tabs + Quick Add */}
       <div className="flex items-center justify-between gap-3 overflow-x-auto custom-scrollbar">
         {/* View Tabs */}
         <div className="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800/80 flex-shrink-0">
-          {VIEW_TABS.map((tab) => {
+          {visibleTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeView === tab.id;
 

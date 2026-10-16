@@ -48,33 +48,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const checkAuth = useCallback(async () => {
     const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
     if (!storedToken) {
-      // Auto-authenticate with seeded admin credentials in development for seamless local testing
-      try {
-        const loginRes = await apiClient.post<{ token: string; user: any; tenant: any }>('/auth/login', {
-          email: 'admin@shogunate.solutions',
-          password: 'AdminPassword@2026',
-        });
-        if (loginRes?.token) {
-          localStorage.setItem(TOKEN_STORAGE_KEY, loginRes.token);
-          setToken(loginRes.token);
-          setUser({
-            uid: loginRes.user.id,
-            email: loginRes.user.email,
-            displayName: loginRes.user.displayName,
-            photoURL: loginRes.user.photoURL,
-            role: loginRes.user.role,
-            createdAt: loginRes.user.createdAt || new Date().toISOString(),
-            tenantId: loginRes.user.tenantId,
-            isTenantAdmin: Boolean(loginRes.user.isTenantAdmin),
-            profileId: loginRes.user.profileId,
-          });
-          setTenant(loginRes.tenant || null);
-          setLoading(false);
-          return;
-        }
-      } catch (e) {
-        console.warn('[AuthContext] Initial auto-login not available:', e);
-      }
       setUser(null);
       setTenant(null);
       setLoading(false);

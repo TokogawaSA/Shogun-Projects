@@ -1,0 +1,30 @@
+# Testing Logins & Credentials Reference
+
+A complete set of role-based test logins has been provisioned directly into your local PostgreSQL database (`shogun_db`), along with a **1-click quick login selector** on the login screen.
+
+---
+
+## Testing Credentials Summary
+
+| Role | Email | Password | Display Name | Tenant Admin | Primary Scope & Access |
+| :--- | :--- | :--- | :--- | :---: | :--- |
+| **Administrator** | `admin@shogunate.solutions` | `AdminPassword@2026` | Alex Vance | **YES** | Full tenant admin control, Settings Hub, RBAC, Module Configuration |
+| **Project Manager** | `pm@shogunate.solutions` | `PmPassword@2026` | Sarah Connor | **NO** | PM 360, WBS, Gantt, Milestones, Project Budgets, CRM Deals |
+| **Developer / Engineer** | `dev@shogunate.solutions` | `DevPassword@2026` | David Chen | **NO** | Task execution, Kanban boards, subtasks, timesheet logging |
+| **Viewer / Stakeholder** | `viewer@shogunate.solutions` | `ViewerPassword@2026` | Victoria Sterling | **NO** | Read-only dashboards, client progress views, milestone reporting |
+
+All accounts are linked to the default tenant `tenant-enterprise-root` (**Shogun Enterprise Core**).
+
+---
+
+## UI Quick-Fill Integration
+
+Updated [LoginPage.tsx](file:///c:/Users/User/OneDrive/Desktop/Shogunate%20Solutions/Shogun%20Projects/src/pages/LoginPage.tsx) with a **1-Click Testing Logins** grid:
+
+- Click any of the 4 role buttons (**Admin**, **Project Manager**, **Developer**, **Viewer**) to instantly populate and authenticate into that role's workspace.
+- Re-run the provisioning script anytime via:
+
+  ```powershell
+  cd "server"
+  npx tsx scripts/seed-testing-logins.ts
+  ```

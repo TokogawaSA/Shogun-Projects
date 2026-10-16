@@ -16,6 +16,7 @@ import { AutoNumberingConfigView } from '../modules/settings/customization/AutoN
 
 // 3. Automation Engine Modules (Phase 6)
 import { WorkflowListView } from '../modules/settings/automation/WorkflowListView';
+import { WebFormsManagementView } from '../modules/settings/forms/WebFormsManagementView';
 import {
   ScheduledCronView,
   WebhooksGatewayView,
@@ -55,6 +56,7 @@ export const renderSettingsRoutes = () => (
 
     {/* 3. Automation Engine */}
     <Route path="automation/workflows" element={<WorkflowListView />} />
+    <Route path="automation/forms" element={<WebFormsManagementView />} />
     <Route path="automation/cron" element={<ScheduledCronView />} />
     <Route path="automation/webhooks" element={<WebhooksGatewayView />} />
     <Route path="automation" element={<WorkflowListView />} />

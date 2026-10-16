@@ -20,6 +20,7 @@ import {
   GitFork,
   Clock,
   Webhook,
+  FileText,
   Send,
   FileCode2,
   Bell,
@@ -76,6 +77,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     color: 'text-amber-400',
     items: [
       { to: '/settings/automation/workflows', label: 'Workflow Rules', icon: GitFork },
+      { to: '/settings/automation/forms', label: 'Web Forms & Routing', icon: FileText, badge: 'Logic' },
       { to: '/settings/automation/cron', label: 'Scheduled Triggers', icon: Clock },
       { to: '/settings/automation/webhooks', label: 'Webhooks Gateway', icon: Webhook },
     ],

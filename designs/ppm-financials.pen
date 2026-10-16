@@ -1,0 +1,2053 @@
+{
+  "version": "2.20",
+  "children": [
+    {
+      "type": "frame",
+      "id": "frame-1131",
+      "x": 0,
+      "y": 0,
+      "name": "PPM Financials Canvas",
+      "width": 1440,
+      "height": 960,
+      "fill": "$bg-main",
+      "children": [
+        {
+          "type": "frame",
+          "id": "sidebar-971",
+          "name": "Sidebar / Main Navigation",
+          "width": 250,
+          "height": "fill_container",
+          "fill": "$bg-sidebar",
+          "stroke": "$border-color",
+          "strokeWidth": {
+            "right": 1
+          },
+          "strokeLinejoin": "round",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "frame",
+              "id": "frame-980",
+              "name": "Brand Header",
+              "width": "fill_container",
+              "height": 64,
+              "stroke": "$border-color",
+              "strokeWidth": {
+                "bottom": 1
+              },
+              "gap": 12,
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "frame-973",
+                  "name": "Logo Icon Box",
+                  "width": 34,
+                  "height": 34,
+                  "fill": "$accent-primary",
+                  "cornerRadius": "$radius-md",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "icon-972",
+                      "name": "Icon / layers",
+                      "width": 18,
+                      "height": 18,
+                      "icon": "layers",
+                      "library": "lucide",
+                      "fill": "#FFFFFF"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "frame-979",
+                  "name": "Brand Text Box",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "frame-977",
+                      "name": "Frame",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "txt-974",
+                          "name": "Text",
+                          "fill": "$text-main",
+                          "content": "Shogun Projects",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 14,
+                          "fontWeight": "bold"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "badge-975",
+                          "name": "Badge / 2.0",
+                          "fill": "#6366F120",
+                          "cornerRadius": "$radius-sm",
+                          "stroke": "#6366F140",
+                          "strokeWidth": 1,
+                          "padding": [
+                            3,
+                            8
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "txt-976",
+                              "name": "Text",
+                              "fill": "#818CF8",
+                              "content": "2.0",
+                              "lineHeight": 1.4,
+                              "fontFamily": "$font-mono",
+                              "fontSize": 11,
+                              "fontWeight": "bold"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "txt-978",
+                      "name": "Text",
+                      "fill": "$text-muted",
+                      "content": "Antigravity Multi-Agent Hub",
+                      "lineHeight": 1.4,
+                      "fontFamily": "$font-sans",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "frame-1022",
+              "name": "Nav Scroll Container",
+              "width": "fill_container",
+              "height": "fill_container",
+              "layout": "vertical",
+              "gap": 20,
+              "padding": [
+                16,
+                12
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "frame-991",
+                  "name": "Section / WORKSPACE",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "txt-981",
+                      "name": "Text",
+                      "fill": "$text-muted",
+                      "content": "WORKSPACE",
+                      "lineHeight": 1.4,
+                      "fontFamily": "$font-mono",
+                      "fontSize": 10,
+                      "fontWeight": "bold"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "nav-item-982",
+                      "name": "Nav Item / Overview",
+                      "width": "fill_container",
+                      "fill": "#00000000",
+                      "cornerRadius": "$radius-md",
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "icon-983",
+                          "name": "Icon / layout-dashboard",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "layout-dashboard",
+                          "library": "lucide",
+                          "fill": "$text-sub"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-984",
+                          "name": "Text",
+                          "fill": "$text-sub",
+                          "content": "Overview",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "nav-item-985",
+                      "name": "Nav Item / Task Hub",
+                      "width": "fill_container",
+                      "fill": "#00000000",
+                      "cornerRadius": "$radius-md",
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "icon-986",
+                          "name": "Icon / layers",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "layers",
+                          "library": "lucide",
+                          "fill": "$text-sub"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-987",
+                          "name": "Text",
+                          "fill": "$text-sub",
+                          "content": "Task Hub",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "nav-item-988",
+                      "name": "Nav Item / Spaces & Projects",
+                      "width": "fill_container",
+                      "fill": "#00000000",
+                      "cornerRadius": "$radius-md",
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "icon-989",
+                          "name": "Icon / folder-kanban",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "folder-kanban",
+                          "library": "lucide",
+                          "fill": "$text-sub"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-990",
+                          "name": "Text",
+                          "fill": "$text-sub",
+                          "content": "Spaces & Projects",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "frame-1005",
+                  "name": "Section / ENTERPRISE PPM",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "txt-992",
+                      "name": "Text",
+                      "fill": "$text-muted",
+                      "content": "ENTERPRISE PPM",
+                      "lineHeight": 1.4,
+                      "fontFamily": "$font-mono",
+                      "fontSize": 10,
+                      "fontWeight": "bold"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "nav-item-993",
+                      "name": "Nav Item / Executive Portfolios",
+                      "width": "fill_container",
+                      "fill": "#00000000",
+                      "cornerRadius": "$radius-md",
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "icon-994",
+                          "name": "Icon / briefcase",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "briefcase",
+                          "library": "lucide",
+                          "fill": "$text-sub"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-995",
+                          "name": "Text",
+                          "fill": "$text-sub",
+                          "content": "Executive Portfolios",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "nav-item-996",
+                      "name": "Nav Item / Financial Overview",
+                      "width": "fill_container",
+                      "fill": "#6366F118",
+                      "cornerRadius": "$radius-md",
+                      "stroke": "#6366F130",
+                      "strokeWidth": 1,
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "icon-997",
+                          "name": "Icon / bar-chart-3",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "bar-chart-3",
+                          "library": "lucide",
+                          "fill": "$accent-primary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-998",
+                          "name": "Text",
+                          "fill": "$text-main",
+                          "content": "Financial Overview",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "nav-item-999",
+                      "name": "Nav Item / Budget Controls",
+                      "width": "fill_container",
+                      "fill": "#00000000",
+                      "cornerRadius": "$radius-md",
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "icon-1000",
+                          "name": "Icon / calculator",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "calculator",
+                          "library": "lucide",
+                          "fill": "$text-sub"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1001",
+                          "name": "Text",
+                          "fill": "$text-sub",
+                          "content": "Budget Controls",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "nav-item-1002",
+                      "name": "Nav Item / Risk Matrix & Register",
+                      "width": "fill_container",
+                      "fill": "#00000000",
+                      "cornerRadius": "$radius-md",
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "icon-1003",
+                          "name": "Icon / shield-alert",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "shield-alert",
+                          "library": "lucide",
+                          "fill": "$text-sub"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1004",
+                          "name": "Text",
+                          "fill": "$text-sub",
+                          "content": "Risk Matrix & Register",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "frame-1013",
+                  "name": "Section / CRM MODULE",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "txt-1006",
+                      "name": "Text",
+                      "fill": "$text-muted",
+                      "content": "CRM MODULE",
+                      "lineHeight": 1.4,
+                      "fontFamily": "$font-mono",
+                      "fontSize": 10,
+                      "fontWeight": "bold"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "nav-item-1007",
+                      "name": "Nav Item / Leads & Prospects",
+                      "width": "fill_container",
+                      "fill": "#00000000",
+                      "cornerRadius": "$radius-md",
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "icon-1008",
+                          "name": "Icon / target",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "target",
+                          "library": "lucide",
+                          "fill": "$text-sub"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1009",
+                          "name": "Text",
+                          "fill": "$text-sub",
+                          "content": "Leads & Prospects",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "nav-item-1010",
+                      "name": "Nav Item / Client Accounts",
+                      "width": "fill_container",
+                      "fill": "#00000000",
+                      "cornerRadius": "$radius-md",
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "icon-1011",
+                          "name": "Icon / building-2",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "building-2",
+                          "library": "lucide",
+                          "fill": "$text-sub"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1012",
+                          "name": "Text",
+                          "fill": "$text-sub",
+                          "content": "Client Accounts",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "frame-1021",
+                  "name": "Section / SYSTEM & MCP",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "txt-1014",
+                      "name": "Text",
+                      "fill": "$text-muted",
+                      "content": "SYSTEM & MCP",
+                      "lineHeight": 1.4,
+                      "fontFamily": "$font-mono",
+                      "fontSize": 10,
+                      "fontWeight": "bold"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "nav-item-1015",
+                      "name": "Nav Item / MCP & Agents",
+                      "width": "fill_container",
+                      "fill": "#00000000",
+                      "cornerRadius": "$radius-md",
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "icon-1016",
+                          "name": "Icon / cpu",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "cpu",
+                          "library": "lucide",
+                          "fill": "$text-sub"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1017",
+                          "name": "Text",
+                          "fill": "$text-sub",
+                          "content": "MCP & Agents",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "nav-item-1018",
+                      "name": "Nav Item / Settings",
+                      "width": "fill_container",
+                      "fill": "#00000000",
+                      "cornerRadius": "$radius-md",
+                      "gap": 10,
+                      "padding": [
+                        8,
+                        10
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "icon-1019",
+                          "name": "Icon / settings",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "settings",
+                          "library": "lucide",
+                          "fill": "$text-sub"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1020",
+                          "name": "Text",
+                          "fill": "$text-sub",
+                          "content": "Settings",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "frame-1029",
+              "name": "Sidebar Footer / User Profile",
+              "width": "fill_container",
+              "height": 60,
+              "stroke": "$border-color",
+              "strokeWidth": {
+                "top": 1
+              },
+              "gap": 10,
+              "padding": [
+                0,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "frame-1024",
+                  "name": "Avatar",
+                  "width": 32,
+                  "height": 32,
+                  "fill": "#4F46E5",
+                  "cornerRadius": 16,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "txt-1023",
+                      "name": "Text",
+                      "fill": "#FFFFFF",
+                      "content": "AD",
+                      "lineHeight": 1.4,
+                      "fontFamily": "$font-sans",
+                      "fontSize": 11,
+                      "fontWeight": "bold"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "frame-1027",
+                  "name": "User Details",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "txt-1025",
+                      "name": "Text",
+                      "fill": "$text-main",
+                      "content": "Tokugawa Admin",
+                      "lineHeight": 1.4,
+                      "fontFamily": "$font-sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "txt-1026",
+                      "name": "Text",
+                      "fill": "$text-muted",
+                      "content": "TokogawaSA (Enterprise)",
+                      "lineHeight": 1.4,
+                      "fontFamily": "$font-sans",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "icon",
+                  "id": "icon-1028",
+                  "name": "Icon / log-out",
+                  "width": 14,
+                  "height": 14,
+                  "icon": "log-out",
+                  "library": "lucide",
+                  "fill": "$text-muted"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "frame-1130",
+          "name": "Main Content Area",
+          "width": 1210,
+          "height": 924,
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "frame",
+              "id": "header-1030",
+              "name": "Top Header Bar",
+              "width": "fill_container",
+              "height": 64,
+              "fill": "$bg-main",
+              "stroke": "$border-color",
+              "strokeWidth": {
+                "bottom": 1
+              },
+              "padding": [
+                0,
+                24
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "frame-1033",
+                  "name": "Title & Subtitle",
+                  "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "txt-1031",
+                      "name": "Text",
+                      "fill": "$text-main",
+                      "content": "Portfolio Financial Intelligence",
+                      "lineHeight": 1.4,
+                      "fontFamily": "$font-sans",
+                      "fontSize": 18,
+                      "fontWeight": "bold"
+                    },
+                    {
+                      "type": "text",
+                      "id": "txt-1032",
+                      "name": "Text",
+                      "fill": "$text-muted",
+                      "content": "CapEx, OpEx & multi-tier cost variance monitoring and ceiling controls",
+                      "lineHeight": 1.4,
+                      "fontFamily": "$font-sans",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "frame-1043",
+                  "name": "Header Actions & Controls",
+                  "gap": 12,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "frame-1036",
+                      "name": "Search Bar",
+                      "width": 240,
+                      "fill": "$bg-input",
+                      "cornerRadius": "$radius-md",
+                      "stroke": "$border-color",
+                      "strokeWidth": 1,
+                      "gap": 8,
+                      "padding": [
+                        7,
+                        12
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "icon-1034",
+                          "name": "Icon / search",
+                          "width": 14,
+                          "height": 14,
+                          "icon": "search",
+                          "library": "lucide",
+                          "fill": "$text-muted"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1035",
+                          "name": "Text",
+                          "fill": "$text-muted",
+                          "content": "Search resources, tools...",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "btn-1039",
+                      "name": "Button / New Action",
+                      "fill": "$bg-card-subtle",
+                      "cornerRadius": "$radius-md",
+                      "stroke": "$border-color",
+                      "strokeWidth": 1,
+                      "gap": 6,
+                      "padding": [
+                        8,
+                        14
+                      ],
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "icon-1037",
+                          "name": "Icon / plus",
+                          "width": 14,
+                          "height": 14,
+                          "icon": "plus",
+                          "library": "lucide",
+                          "fill": "$text-main"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1038",
+                          "name": "Text",
+                          "fill": "$text-main",
+                          "content": "New Action",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "btn-1042",
+                      "name": "Button / Agent Swarm",
+                      "fill": "$accent-primary",
+                      "cornerRadius": "$radius-md",
+                      "gap": 6,
+                      "padding": [
+                        8,
+                        14
+                      ],
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "icon-1040",
+                          "name": "Icon / bot",
+                          "width": 14,
+                          "height": 14,
+                          "icon": "bot",
+                          "library": "lucide",
+                          "fill": "#FFFFFF"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1041",
+                          "name": "Text",
+                          "fill": "#FFFFFF",
+                          "content": "Agent Swarm",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "frame-1129",
+              "name": "Financial Content",
+              "width": "fill_container",
+              "height": "fill_container",
+              "layout": "vertical",
+              "gap": 20,
+              "padding": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "frame-1084",
+                  "name": "Financial Stats Grid",
+                  "width": "fill_container",
+                  "gap": 16,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "metric-card-1044",
+                      "name": "Metric Card / Total Budget Pool",
+                      "width": "fill_container",
+                      "fill": "$bg-card",
+                      "cornerRadius": "$radius-lg",
+                      "stroke": "$border-color",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 12,
+                      "padding": 18,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "frame-1048",
+                          "name": "Top Row",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "txt-1045",
+                              "name": "Text",
+                              "fill": "$text-muted",
+                              "content": "TOTAL BUDGET POOL",
+                              "lineHeight": 1.4,
+                              "fontFamily": "$font-sans",
+                              "fontSize": 11,
+                              "fontWeight": "600",
+                              "letterSpacing": 0.5
+                            },
+                            {
+                              "type": "frame",
+                              "id": "frame-1047",
+                              "name": "Icon Box",
+                              "width": 32,
+                              "height": 32,
+                              "fill": "#6366F120",
+                              "cornerRadius": "$radius-md",
+                              "stroke": "#6366F140",
+                              "strokeWidth": 1,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "icon-1046",
+                                  "name": "Icon / calculator",
+                                  "width": 16,
+                                  "height": 16,
+                                  "icon": "calculator",
+                                  "library": "lucide",
+                                  "fill": "#6366F1"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "frame-1053",
+                          "name": "Bottom Row",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "txt-1049",
+                              "name": "Text",
+                              "fill": "$text-main",
+                              "content": "$1,345,000",
+                              "lineHeight": 1.4,
+                              "fontFamily": "$font-sans",
+                              "fontSize": 22,
+                              "fontWeight": "bold"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "frame-1052",
+                              "name": "Trend Indicator",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "badge-1050",
+                                  "name": "Badge / Approved FY26",
+                                  "fill": "#10B98115",
+                                  "cornerRadius": "$radius-sm",
+                                  "stroke": "#10B98130",
+                                  "strokeWidth": 1,
+                                  "padding": [
+                                    3,
+                                    8
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "txt-1051",
+                                      "name": "Text",
+                                      "fill": "#10B981",
+                                      "content": "Approved FY26",
+                                      "lineHeight": 1.4,
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "bold"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "metric-card-1054",
+                      "name": "Metric Card / Cumulative Burn",
+                      "width": "fill_container",
+                      "fill": "$bg-card",
+                      "cornerRadius": "$radius-lg",
+                      "stroke": "$border-color",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 12,
+                      "padding": 18,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "frame-1058",
+                          "name": "Top Row",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "txt-1055",
+                              "name": "Text",
+                              "fill": "$text-muted",
+                              "content": "CUMULATIVE BURN",
+                              "lineHeight": 1.4,
+                              "fontFamily": "$font-sans",
+                              "fontSize": 11,
+                              "fontWeight": "600",
+                              "letterSpacing": 0.5
+                            },
+                            {
+                              "type": "frame",
+                              "id": "frame-1057",
+                              "name": "Icon Box",
+                              "width": 32,
+                              "height": 32,
+                              "fill": "#10B98120",
+                              "cornerRadius": "$radius-md",
+                              "stroke": "#10B98140",
+                              "strokeWidth": 1,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "icon-1056",
+                                  "name": "Icon / bar-chart-3",
+                                  "width": 16,
+                                  "height": 16,
+                                  "icon": "bar-chart-3",
+                                  "library": "lucide",
+                                  "fill": "#10B981"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "frame-1063",
+                          "name": "Bottom Row",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "txt-1059",
+                              "name": "Text",
+                              "fill": "$text-main",
+                              "content": "$1,087,000",
+                              "lineHeight": 1.4,
+                              "fontFamily": "$font-sans",
+                              "fontSize": 22,
+                              "fontWeight": "bold"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "frame-1062",
+                              "name": "Trend Indicator",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "badge-1060",
+                                  "name": "Badge / 80.8% of Ceiling",
+                                  "fill": "#10B98115",
+                                  "cornerRadius": "$radius-sm",
+                                  "stroke": "#10B98130",
+                                  "strokeWidth": 1,
+                                  "padding": [
+                                    3,
+                                    8
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "txt-1061",
+                                      "name": "Text",
+                                      "fill": "#10B981",
+                                      "content": "80.8% of Ceiling",
+                                      "lineHeight": 1.4,
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "bold"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "metric-card-1064",
+                      "name": "Metric Card / Positive Variance",
+                      "width": "fill_container",
+                      "fill": "$bg-card",
+                      "cornerRadius": "$radius-lg",
+                      "stroke": "$border-color",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 12,
+                      "padding": 18,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "frame-1068",
+                          "name": "Top Row",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "txt-1065",
+                              "name": "Text",
+                              "fill": "$text-muted",
+                              "content": "POSITIVE VARIANCE",
+                              "lineHeight": 1.4,
+                              "fontFamily": "$font-sans",
+                              "fontSize": 11,
+                              "fontWeight": "600",
+                              "letterSpacing": 0.5
+                            },
+                            {
+                              "type": "frame",
+                              "id": "frame-1067",
+                              "name": "Icon Box",
+                              "width": 32,
+                              "height": 32,
+                              "fill": "#10B98120",
+                              "cornerRadius": "$radius-md",
+                              "stroke": "#10B98140",
+                              "strokeWidth": 1,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "icon-1066",
+                                  "name": "Icon / dollar-sign",
+                                  "width": 16,
+                                  "height": 16,
+                                  "icon": "dollar-sign",
+                                  "library": "lucide",
+                                  "fill": "#10B981"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "frame-1073",
+                          "name": "Bottom Row",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "txt-1069",
+                              "name": "Text",
+                              "fill": "$text-main",
+                              "content": "$258,000",
+                              "lineHeight": 1.4,
+                              "fontFamily": "$font-sans",
+                              "fontSize": 22,
+                              "fontWeight": "bold"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "frame-1072",
+                              "name": "Trend Indicator",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "badge-1070",
+                                  "name": "Badge / +19.2% Under Budget",
+                                  "fill": "#10B98115",
+                                  "cornerRadius": "$radius-sm",
+                                  "stroke": "#10B98130",
+                                  "strokeWidth": 1,
+                                  "padding": [
+                                    3,
+                                    8
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "txt-1071",
+                                      "name": "Text",
+                                      "fill": "#10B981",
+                                      "content": "+19.2% Under Budget",
+                                      "lineHeight": 1.4,
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "bold"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "metric-card-1074",
+                      "name": "Metric Card / Monthly Run-Rate",
+                      "width": "fill_container",
+                      "fill": "$bg-card",
+                      "cornerRadius": "$radius-lg",
+                      "stroke": "$border-color",
+                      "strokeWidth": 1,
+                      "layout": "vertical",
+                      "gap": 12,
+                      "padding": 18,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "frame-1078",
+                          "name": "Top Row",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "txt-1075",
+                              "name": "Text",
+                              "fill": "$text-muted",
+                              "content": "MONTHLY RUN-RATE",
+                              "lineHeight": 1.4,
+                              "fontFamily": "$font-sans",
+                              "fontSize": 11,
+                              "fontWeight": "600",
+                              "letterSpacing": 0.5
+                            },
+                            {
+                              "type": "frame",
+                              "id": "frame-1077",
+                              "name": "Icon Box",
+                              "width": 32,
+                              "height": 32,
+                              "fill": "#8B5CF620",
+                              "cornerRadius": "$radius-md",
+                              "stroke": "#8B5CF640",
+                              "strokeWidth": 1,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "icon-1076",
+                                  "name": "Icon / receipt",
+                                  "width": 16,
+                                  "height": 16,
+                                  "icon": "receipt",
+                                  "library": "lucide",
+                                  "fill": "#8B5CF6"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "frame-1083",
+                          "name": "Bottom Row",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "txt-1079",
+                              "name": "Text",
+                              "fill": "$text-main",
+                              "content": "$94,500",
+                              "lineHeight": 1.4,
+                              "fontFamily": "$font-sans",
+                              "fontSize": 22,
+                              "fontWeight": "bold"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "frame-1082",
+                              "name": "Trend Indicator",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "badge-1080",
+                                  "name": "Badge / Stable Run-Rate",
+                                  "fill": "#10B98115",
+                                  "cornerRadius": "$radius-sm",
+                                  "stroke": "#10B98130",
+                                  "strokeWidth": 1,
+                                  "padding": [
+                                    3,
+                                    8
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "txt-1081",
+                                      "name": "Text",
+                                      "fill": "#10B981",
+                                      "content": "Stable Run-Rate",
+                                      "lineHeight": 1.4,
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "bold"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "frame-1128",
+                  "name": "Budget Table Panel",
+                  "width": "fill_container",
+                  "fill": "$bg-card",
+                  "cornerRadius": "$radius-lg",
+                  "stroke": "$border-color",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "frame-1089",
+                      "name": "Table Header Bar",
+                      "width": "fill_container",
+                      "stroke": "$border-color",
+                      "strokeWidth": {
+                        "bottom": 1
+                      },
+                      "padding": [
+                        16,
+                        20
+                      ],
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "txt-1085",
+                          "name": "Text",
+                          "fill": "$text-main",
+                          "content": "Multi-Tier Cost Breakdown & Allocation",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 15,
+                          "fontWeight": "bold"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "btn-1088",
+                          "name": "Button / Adjust Budget Ceiling",
+                          "fill": "$accent-primary",
+                          "cornerRadius": "$radius-md",
+                          "gap": 6,
+                          "padding": [
+                            8,
+                            14
+                          ],
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "icon-1086",
+                              "name": "Icon / plus",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "plus",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            },
+                            {
+                              "type": "text",
+                              "id": "txt-1087",
+                              "name": "Text",
+                              "fill": "#FFFFFF",
+                              "content": "Adjust Budget Ceiling",
+                              "lineHeight": 1.4,
+                              "fontFamily": "$font-sans",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "frame-1095",
+                      "name": "Columns Header",
+                      "width": "fill_container",
+                      "fill": "$bg-card-subtle",
+                      "padding": [
+                        12,
+                        20
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "txt-1090",
+                          "name": "Text",
+                          "fill": "$text-muted",
+                          "content": "TIER / COST CATEGORY",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-mono",
+                          "fontSize": 11,
+                          "fontWeight": "bold"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1091",
+                          "name": "Text",
+                          "fill": "$text-muted",
+                          "content": "ALLOCATED",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-mono",
+                          "fontSize": 11,
+                          "fontWeight": "bold"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1092",
+                          "name": "Text",
+                          "fill": "$text-muted",
+                          "content": "ACTUAL SPEND",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-mono",
+                          "fontSize": 11,
+                          "fontWeight": "bold"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1093",
+                          "name": "Text",
+                          "fill": "$text-muted",
+                          "content": "REMAINING VARIANCE",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-mono",
+                          "fontSize": 11,
+                          "fontWeight": "bold"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1094",
+                          "name": "Text",
+                          "fill": "$text-muted",
+                          "content": "CEILING STATUS",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-mono",
+                          "fontSize": 11,
+                          "fontWeight": "bold"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "frame-1103",
+                      "name": "Row / Capital Expenditure (CapEx)",
+                      "width": "fill_container",
+                      "stroke": "$border-subtle",
+                      "strokeWidth": {
+                        "bottom": 1
+                      },
+                      "padding": [
+                        16,
+                        20
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "txt-1096",
+                          "name": "Text",
+                          "fill": "$text-main",
+                          "content": "Capital Expenditure (CapEx)",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1097",
+                          "name": "Text",
+                          "fill": "$text-sub",
+                          "content": "$450,000",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1098",
+                          "name": "Text",
+                          "fill": "$text-sub",
+                          "content": "$320,000",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1099",
+                          "name": "Text",
+                          "fill": "#10B981",
+                          "content": "+$130,000",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "bold"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "frame-1102",
+                          "name": "Frame",
+                          "width": 160,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "badge-1100",
+                              "name": "Badge / Healthy",
+                              "fill": "#10B98120",
+                              "cornerRadius": "$radius-sm",
+                              "stroke": "#10B98140",
+                              "strokeWidth": 1,
+                              "padding": [
+                                3,
+                                8
+                              ],
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "txt-1101",
+                                  "name": "Text",
+                                  "fill": "#10B981",
+                                  "content": "Healthy",
+                                  "lineHeight": 1.4,
+                                  "fontFamily": "$font-mono",
+                                  "fontSize": 11,
+                                  "fontWeight": "bold"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "frame-1111",
+                      "name": "Row / Operational Expenditure (OpEx)",
+                      "width": "fill_container",
+                      "stroke": "$border-subtle",
+                      "strokeWidth": {
+                        "bottom": 1
+                      },
+                      "padding": [
+                        16,
+                        20
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "txt-1104",
+                          "name": "Text",
+                          "fill": "$text-main",
+                          "content": "Operational Expenditure (OpEx)",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1105",
+                          "name": "Text",
+                          "fill": "$text-sub",
+                          "content": "$280,000",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1106",
+                          "name": "Text",
+                          "fill": "$text-sub",
+                          "content": "$265,000",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1107",
+                          "name": "Text",
+                          "fill": "#F59E0B",
+                          "content": "+$15,000",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "bold"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "frame-1110",
+                          "name": "Frame",
+                          "width": 160,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "badge-1108",
+                              "name": "Badge / Warning",
+                              "fill": "#F59E0B20",
+                              "cornerRadius": "$radius-sm",
+                              "stroke": "#F59E0B40",
+                              "strokeWidth": 1,
+                              "padding": [
+                                3,
+                                8
+                              ],
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "txt-1109",
+                                  "name": "Text",
+                                  "fill": "#F59E0B",
+                                  "content": "Warning",
+                                  "lineHeight": 1.4,
+                                  "fontFamily": "$font-mono",
+                                  "fontSize": 11,
+                                  "fontWeight": "bold"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "frame-1119",
+                      "name": "Row / Dedicated Engineering Labor",
+                      "width": "fill_container",
+                      "stroke": "$border-subtle",
+                      "strokeWidth": {
+                        "bottom": 1
+                      },
+                      "padding": [
+                        16,
+                        20
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "txt-1112",
+                          "name": "Text",
+                          "fill": "$text-main",
+                          "content": "Dedicated Engineering Labor",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1113",
+                          "name": "Text",
+                          "fill": "$text-sub",
+                          "content": "$520,000",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1114",
+                          "name": "Text",
+                          "fill": "$text-sub",
+                          "content": "$410,000",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1115",
+                          "name": "Text",
+                          "fill": "#10B981",
+                          "content": "+$110,000",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "bold"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "frame-1118",
+                          "name": "Frame",
+                          "width": 160,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "badge-1116",
+                              "name": "Badge / Healthy",
+                              "fill": "#10B98120",
+                              "cornerRadius": "$radius-sm",
+                              "stroke": "#10B98140",
+                              "strokeWidth": 1,
+                              "padding": [
+                                3,
+                                8
+                              ],
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "txt-1117",
+                                  "name": "Text",
+                                  "fill": "#10B981",
+                                  "content": "Healthy",
+                                  "lineHeight": 1.4,
+                                  "fontFamily": "$font-mono",
+                                  "fontSize": 11,
+                                  "fontWeight": "bold"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "frame-1127",
+                      "name": "Row / External Subcontractors & Audits",
+                      "width": "fill_container",
+                      "stroke": "$border-subtle",
+                      "strokeWidth": {
+                        "bottom": 1
+                      },
+                      "padding": [
+                        16,
+                        20
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "txt-1120",
+                          "name": "Text",
+                          "fill": "$text-main",
+                          "content": "External Subcontractors & Audits",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1121",
+                          "name": "Text",
+                          "fill": "$text-sub",
+                          "content": "$95,000",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1122",
+                          "name": "Text",
+                          "fill": "$text-sub",
+                          "content": "$92,000",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1123",
+                          "name": "Text",
+                          "fill": "#EF4444",
+                          "content": "+$3,000",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 13,
+                          "fontWeight": "bold"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "frame-1126",
+                          "name": "Frame",
+                          "width": 160,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "badge-1124",
+                              "name": "Badge / Review Needed",
+                              "fill": "#EF444420",
+                              "cornerRadius": "$radius-sm",
+                              "stroke": "#EF444440",
+                              "strokeWidth": 1,
+                              "padding": [
+                                3,
+                                8
+                              ],
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "txt-1125",
+                                  "name": "Text",
+                                  "fill": "#EF4444",
+                                  "content": "Review Needed",
+                                  "lineHeight": 1.4,
+                                  "fontFamily": "$font-mono",
+                                  "fontSize": 11,
+                                  "fontWeight": "bold"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "themes": {
+    "theme": [
+      "dark",
+      "light"
+    ]
+  },
+  "variables": {
+    "bg-main": {
+      "type": "color",
+      "value": "#0B0F19"
+    },
+    "bg-sidebar": {
+      "type": "color",
+      "value": "#0D1322"
+    },
+    "bg-card": {
+      "type": "color",
+      "value": "#131B2E"
+    },
+    "bg-card-subtle": {
+      "type": "color",
+      "value": "#1E293B"
+    },
+    "bg-input": {
+      "type": "color",
+      "value": "#080D1A"
+    },
+    "border-color": {
+      "type": "color",
+      "value": "#22304A"
+    },
+    "border-subtle": {
+      "type": "color",
+      "value": "#1A2438"
+    },
+    "border-focus": {
+      "type": "color",
+      "value": "#6366F1"
+    },
+    "text-main": {
+      "type": "color",
+      "value": "#F8FAFC"
+    },
+    "text-sub": {
+      "type": "color",
+      "value": "#94A3B8"
+    },
+    "text-muted": {
+      "type": "color",
+      "value": "#64748B"
+    },
+    "accent-primary": {
+      "type": "color",
+      "value": "#6366F1"
+    },
+    "accent-hover": {
+      "type": "color",
+      "value": "#4F46E5"
+    },
+    "accent-gradient-start": {
+      "type": "color",
+      "value": "#4F46E5"
+    },
+    "accent-gradient-end": {
+      "type": "color",
+      "value": "#7C3AED"
+    },
+    "status-success": {
+      "type": "color",
+      "value": "#10B981"
+    },
+    "status-warning": {
+      "type": "color",
+      "value": "#F59E0B"
+    },
+    "status-danger": {
+      "type": "color",
+      "value": "#EF4444"
+    },
+    "status-info": {
+      "type": "color",
+      "value": "#06B6D4"
+    },
+    "font-sans": {
+      "type": "string",
+      "value": "Inter"
+    },
+    "font-mono": {
+      "type": "string",
+      "value": "JetBrains Mono"
+    },
+    "radius-sm": {
+      "type": "number",
+      "value": 6
+    },
+    "radius-md": {
+      "type": "number",
+      "value": 8
+    },
+    "radius-lg": {
+      "type": "number",
+      "value": 12
+    },
+    "radius-xl": {
+      "type": "number",
+      "value": 16
+    }
+  },
+  "fileToken": "f315aee8-4ba6-4813-8ea2-9aab8c8c5695"
+}

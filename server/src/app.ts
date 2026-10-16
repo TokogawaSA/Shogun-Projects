@@ -17,6 +17,7 @@ import { settingsRouter } from './routes/settingsRoutes.js';
 import { mcpRouter } from './routes/mcpRoutes.js';
 import { projectManagementRouter } from './routes/projectManagementRoutes.js';
 import { hierarchyRouter } from './routes/hierarchyRoutes.js';
+import { formRouter } from './routes/formRoutes.js';
 
 dotenv.config();
 
@@ -93,6 +94,7 @@ app.use('/api/pm', authenticateTenant, projectManagementRouter);
 app.use('/api/settings', authenticateTenant, settingsRouter);
 app.use('/api/mcp', authenticateTenant, mcpRouter);
 app.use('/api/hierarchy', authenticateTenant, hierarchyRouter);
+app.use('/api/forms', formRouter);
 
 // 404 Route Catch-All
 app.use((_req: Request, res: Response) => {

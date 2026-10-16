@@ -31,6 +31,8 @@ export interface Project {
   accountId?: string | null;
   dealId?: string | null;
   primaryContactId?: string | null;
+  client?: string;
+  customFields?: Record<string, any>;
 }
 
 export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'done';
@@ -191,5 +193,6 @@ export * from './projectManagement';
 export * from './hierarchy';
 export * from './taskEngine';
 export * from './views';
+export * from './aec';
 
 

@@ -76,7 +76,7 @@ export const Account360Drawer: React.FC<Account360DrawerProps> = ({
   const handleOpenProject = (projectId: string) => {
     setCurrentProjectId(projectId);
     onClose();
-    navigate('/board');
+    navigate(`/projects/${projectId}?tab=tasks`);
   };
 
   return (

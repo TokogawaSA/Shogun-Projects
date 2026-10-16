@@ -1,32 +1,21 @@
 /**
- * Consolidated Projects & Project Management Module
- * Multi-Tenant Antigravity 2.0 Ecosystem
+ * Simple Project Management System
+ * Antigravity 2.0 Ecosystem
  */
 
-// Hub & Main Pages
-export { ProjectManagementHub } from './ProjectManagementHub';
-export { ProjectCosting } from './ProjectCosting';
+// Core Workspace Hub
+export { ProjectWorkspace } from './ProjectWorkspace';
+export { default } from './ProjectWorkspace';
 
-// Gantt & Milestones
-export { GanttChart } from './gantt/GanttChart';
-export { MilestoneTracker } from './gantt/MilestoneTracker';
-export { DependencyManager } from './gantt/DependencyManager';
+// Views & Components
+export { ProjectBoard } from './components/ProjectBoard';
+export { ProjectTaskList } from './components/ProjectTaskList';
+export { ProjectMilestones } from './components/ProjectMilestones';
+export { ProjectOverview } from './components/ProjectOverview';
+export { TaskDetailModal } from './components/TaskDetailModal';
+export { CreateTaskModal } from './components/CreateTaskModal';
+export { ColumnConfigModal } from './components/ColumnConfigModal';
 
-// Task Management & Trees
-export { TaskTree } from './tasks/TaskTree';
-export { TaskDetailDrawer } from './tasks/TaskDetailDrawer';
-export { SubTaskItem } from './tasks/SubTaskItem';
-export { TimeTrackerWidget } from './tasks/TimeTrackerWidget';
-export { TaskAttachmentsPanel } from './tasks/TaskAttachmentsPanel';
-
-// 10 PM 360 Domain Views
-export { WbsKanbanView } from './views/WbsKanbanView';
-export { InteractiveTimelineView } from './views/InteractiveTimelineView';
-export { ResourceCapacityView } from './views/ResourceCapacityView';
-export { TimeSheetBillingView } from './views/TimeSheetBillingView';
-export { BudgetExpensesView } from './views/BudgetExpensesView';
-export { RiskDeliverablesView } from './views/RiskDeliverablesView';
-export { CollaborationWikiView } from './views/CollaborationWikiView';
-export { ClientPortalView } from './views/ClientPortalView';
-export { AnalyticsReportsView } from './views/AnalyticsReportsView';
-export { AdminWorkflowView } from './views/AdminWorkflowView';
+// Services & Types
+export { projectService } from './services/projectService';
+export * from './types';

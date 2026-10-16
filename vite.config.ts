@@ -23,6 +23,16 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    chunkSizeWarningLimit: 800,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-flow': ['@xyflow/react'],
+          'vendor-query': ['@tanstack/react-query', 'axios', 'socket.io-client'],
+          'vendor-icons': ['lucide-react'],
+        },
+      },
+    },
   },
 });
-

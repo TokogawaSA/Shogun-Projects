@@ -303,6 +303,7 @@ export async function getTasks(req: Request, res: Response): Promise<void> {
       },
       include: {
         assignee: { select: { id: true, displayName: true, email: true } },
+        creator: { select: { id: true, displayName: true, email: true } },
         checklistSubtasks: { orderBy: { createdAt: 'asc' } },
         subtasks: { select: { id: true, title: true, status: true, actualHours: true } },
       },

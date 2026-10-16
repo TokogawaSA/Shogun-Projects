@@ -168,6 +168,10 @@ model Project {
   primaryContact   Contact?          @relation(fields: [primaryContactId], references: [id], onDelete: SetNull)
   portfolio        Portfolio?        @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
 
+  code             String?
+  estimatedCost    Decimal?          @db.Decimal(14, 2)
+  targetMultiplier Decimal           @default(3.0) @db.Decimal(4, 2)
+
   tasks            Task[]
   milestones       ProjectMilestone[]
   deliverables     ProjectDeliverable[]
@@ -179,6 +183,14 @@ model Project {
   documents        ProjectDocument[]
   wikiPages        ProjectWikiPage[]
   changeRequests   ClientChangeRequest[]
+
+  // AEC Architectural Extensions
+  phases           ProjectPhase[]
+  drawingSheets    DrawingSheet[]
+  rfis             Rfi[]
+  submittals       Submittal[]
+  siteReports      SiteReport[]
+  subConsultants   SubConsultantLedger[]
 
   @@index([tenantId])
   @@index([ownerId])
@@ -250,11 +262,20 @@ model Task {
   checklistSubtasks  SubTask[]
   timeLogs           TimeLog[]
 
+  // AEC Task Extensions
+  discipline         String?   // Architectural | Structural | MEP | Civil | BIM
+  requiredRole       String?   // Principal | Associate | Trainee | BIM Tech | Project Architect
+  prerequisiteTaskId String?
+  isGatekeeper       Boolean   @default(false)
+  phaseId            String?
+  projectPhase       ProjectPhase? @relation(fields: [phaseId], references: [id], onDelete: SetNull)
+
   @@index([projectId])
   @@index([tenantId])
   @@index([assigneeId])
   @@index([parentTaskId])
   @@index([milestoneId])
+  @@index([phaseId])
   @@map("tasks")
 }
 
@@ -296,8 +317,14 @@ model TimeLog {
   timesheetId String?
   timesheet   Timesheet? @relation(fields: [timesheetId], references: [id], onDelete: SetNull)
 
+  // AEC Time Tracking Extensions
+  phaseId          String?
+  projectPhase     ProjectPhase? @relation(fields: [phaseId], references: [id], onDelete: SetNull)
+  phaseBillingCode String?       // e.g. "SD-101-MASSING"
+
   @@index([taskId])
   @@index([userId])
+  @@index([phaseId])
   @@map("time_logs")
 }
 
@@ -1015,4 +1042,180 @@ model ClientChangeRequest {
   @@index([tenantId])
   @@map("pm_client_change_requests")
 }
+
+// ==========================================
+// 12. AEC Architectural Project Management Extensions
+// ==========================================
+
+enum ProjectPhaseType {
+  SD // Schematic Design
+  DD // Design Development
+  CD // Construction Documents
+  CA // Construction Administration
+}
+
+enum FeeModel {
+  FIXED_FEE_PHASE_CAP
+  HOURLY_CAPPED
+  PERCENTAGE_CONSTRUCTION_COST
+  RETAINER_PASS_THROUGH
+}
+
+enum RfiStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  RESPONDED
+  CLOSED
+}
+
+enum SubmittalStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  APPROVED_AS_NOTED
+  REVISE_RESUBMIT
+  REJECTED
+}
+
+model ProjectPhase {
+  id              String           @id @default(cuid())
+  projectId       String
+  tenantId        String
+  phaseType       ProjectPhaseType
+  feeModel        FeeModel         @default(FIXED_FEE_PHASE_CAP)
+  allocatedFee    Decimal          @db.Decimal(12, 2)
+  spentFee        Decimal          @default(0.0) @db.Decimal(12, 2)
+  signOffDate     DateTime?
+  signOffBy       String?
+  isCompleted     Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks           Task[]
+  timeLogs        TimeLog[]
+
+  @@index([projectId])
+  @@index([tenantId])
+  @@map("aec_project_phases")
+}
+
+model DrawingSheet {
+  id              String           @id @default(cuid())
+  projectId       String
+  tenantId        String
+  sheetNumber     String           // e.g. "A-101"
+  title           String           // e.g. "Level 1 Floor Plan"
+  discipline      String           // Architectural | Structural | MEP | Civil
+  currentRevision String           // e.g. "Rev 02"
+  issueStatus     String           // "For Review" | "Permit Issue" | "IFC"
+  versions        SheetVersion[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([tenantId])
+  @@map("aec_drawing_sheets")
+}
+
+model SheetVersion {
+  id              String       @id @default(cuid())
+  sheetId         String
+  revision        String       // "Rev 01"
+  fileUrl         String?
+  markupUrl       String?      // Bluebeam link
+  issueDate       DateTime     @default(now())
+  notes           String?
+
+  sheet           DrawingSheet @relation(fields: [sheetId], references: [id], onDelete: Cascade)
+
+  @@index([sheetId])
+  @@map("aec_sheet_versions")
+}
+
+model Rfi {
+  id              String     @id @default(cuid())
+  projectId       String
+  tenantId        String
+  rfiNumber       Int        // Sequential RFI #
+  subject         String
+  disciplineTag   String     // Structural clash | MEP clearance | Finish spec
+  question        String     @db.Text
+  response        String?    @db.Text
+  impactCost      Boolean    @default(false)
+  impactSchedule  Boolean    @default(false)
+  status          RfiStatus  @default(SUBMITTED)
+  submittedAt     DateTime   @default(now())
+  dueDate         DateTime
+  resolvedAt      DateTime?
+
+  project         Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([tenantId])
+  @@map("aec_rfis")
+}
+
+model Submittal {
+  id              String          @id @default(cuid())
+  projectId       String
+  tenantId        String
+  submittalNumber Int
+  title           String
+  specSection     String          // e.g. "08 44 00 - Curtain Wall"
+  status          SubmittalStatus @default(SUBMITTED)
+  dueDate         DateTime
+  returnedDate    DateTime?
+
+  project         Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([tenantId])
+  @@map("aec_submittals")
+}
+
+model SiteReport {
+  id              String    @id @default(cuid())
+  projectId       String
+  tenantId        String
+  reportNumber    Int
+  visitDate       DateTime  @default(now())
+  weather         String?
+  attendees       Json?
+  observations    String    @db.Text
+  punchList       Json?     // Array of punch items
+  photos          Json?     // Array of image references
+  createdAt       DateTime  @default(now())
+
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([tenantId])
+  @@map("aec_site_reports")
+}
+
+model SubConsultantLedger {
+  id              String    @id @default(cuid())
+  projectId       String
+  tenantId        String
+  consultantName  String    // e.g. "Apex Structural Engineers"
+  discipline      String    // Structural | MEP | Acoustic | Façade | Civil
+  allocatedBudget Decimal   @db.Decimal(12, 2)
+  invoicedAmount  Decimal   @default(0.0) @db.Decimal(12, 2)
+  contractStatus  String    @default("active") // active | completed | on_hold
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([tenantId])
+  @@map("aec_sub_consultant_ledgers")
+}
+
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { NavLink } from 'react-router-dom';
 import {
   Workflow,
   Plus,
@@ -15,6 +16,7 @@ import {
   Layers,
   FileCode,
   Download,
+  FileText,
 } from 'lucide-react';
 import { apiClient } from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
@@ -171,13 +173,22 @@ export const WorkflowListView: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => openBuilder()}
-          className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-all shadow-lg shadow-amber-600/20 flex items-center gap-1.5 self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>New Workflow Canvas</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <NavLink
+            to="/settings/automation/forms"
+            className="px-3.5 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+          >
+            <FileText className="w-4 h-4" />
+            <span>Web Forms & Ingestion</span>
+          </NavLink>
+          <button
+            onClick={() => openBuilder()}
+            className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-all shadow-lg shadow-amber-600/20 flex items-center gap-1.5"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New Workflow Canvas</span>
+          </button>
+        </div>
       </div>
 
       {/* Test Execution Result Banner */}

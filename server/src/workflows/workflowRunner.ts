@@ -25,10 +25,113 @@ export async function executeWorkflow(
   eventPayload: Record<string, any>
 ): Promise<WorkflowExecutionResult> {
   const tenantId = workflow.tenantId || eventPayload.tenantId || 'tenant-default';
-  const nodes = workflow.graphData?.nodes || workflow.nodes || [];
-  const edges = workflow.graphData?.edges || workflow.edges || [];
-  
-  const triggerId = workflow.graphData?.trigger?.id || workflow.trigger?.id || 'node_1';
+  let nodes = workflow.graphData?.nodes || workflow.nodes || [];
+  let edges = workflow.graphData?.edges || workflow.edges || [];
+  let triggerId = workflow.graphData?.trigger?.id || workflow.trigger?.id || 'node_1';
+
+  // If graph nodes are empty, automatically synthesize DAG graph from linear conditions and actions
+  if ((!nodes || nodes.length === 0) && (workflow.conditions || workflow.actions)) {
+    const triggerNodeId = 'node_1';
+    triggerId = triggerNodeId;
+    nodes = [
+      {
+        id: triggerNodeId,
+        type: 'event_trigger',
+        data: {
+          id: triggerNodeId,
+          type: 'event_trigger',
+          module: workflow.targetModule || 'deals',
+          event: workflow.triggerType || 'on_stage_change',
+        },
+      },
+    ];
+    edges = [];
+    let currentSourceId = triggerNodeId;
+
+    if (Array.isArray(workflow.conditions) && workflow.conditions.length > 0) {
+      const condNodeId = 'node_cond_1';
+      nodes.push({
+        id: condNodeId,
+        type: 'condition',
+        data: {
+          logicalOperator: 'AND',
+          rules: workflow.conditions,
+        },
+      });
+      edges.push({
+        id: `e-${currentSourceId}-${condNodeId}`,
+        source: currentSourceId,
+        target: condNodeId,
+      });
+      currentSourceId = condNodeId;
+    }
+
+    if (Array.isArray(workflow.actions)) {
+      workflow.actions.forEach((act: any, idx: number) => {
+        const actionNodeId = `node_act_${idx + 1}`;
+        let nodeType = 'action_create_task';
+        let dataPayload: any = {};
+
+        switch (act.type) {
+          case 'send_email':
+            nodeType = 'action_send_email';
+            dataPayload = {
+              templateId: act.config?.templateId || act.templateId || 'tmpl_default',
+              to: act.config?.recipientField || act.recipientField || act.to || '',
+              subject: act.config?.subject || act.subject || 'Workflow Alert',
+            };
+            break;
+          case 'create_task':
+            nodeType = 'action_create_task';
+            dataPayload = {
+              taskTitle: act.config?.taskTitle || act.taskTitle || act.title || 'Follow-up Task',
+              dueInDays: act.config?.dueInDays || act.dueInDays || 2,
+              priority: act.config?.priority || act.priority || 'medium',
+              description: act.config?.description || act.description,
+            };
+            break;
+          case 'update_field':
+            nodeType = 'action_update_field';
+            dataPayload = {
+              targetField: act.config?.targetField || act.targetField || act.fieldName || 'status',
+              newValue: act.config?.newValue !== undefined ? act.config.newValue : act.newValue !== undefined ? act.newValue : act.value,
+            };
+            break;
+          case 'call_webhook':
+            nodeType = 'action_call_webhook';
+            dataPayload = {
+              url: act.config?.url || act.url || '',
+              method: act.config?.method || act.method || 'POST',
+              payloadTemplate: act.config?.payloadTemplate || act.payloadTemplate,
+            };
+            break;
+          case 'create_record':
+            nodeType = 'action_create_record';
+            dataPayload = {
+              targetModule: act.config?.targetModule || act.targetModule || 'projects',
+              mapping: act.config?.mapping || act.mapping || {},
+            };
+            break;
+        }
+
+        const isBranchSource = currentSourceId.startsWith('node_cond');
+        nodes.push({
+          id: actionNodeId,
+          type: nodeType,
+          data: dataPayload,
+        });
+
+        edges.push({
+          id: `e-${currentSourceId}-${actionNodeId}`,
+          source: currentSourceId,
+          target: actionNodeId,
+          sourceHandle: isBranchSource ? 'true' : undefined,
+        });
+
+        currentSourceId = actionNodeId;
+      });
+    }
+  }
   const context: Record<string, any> = { ...eventPayload };
 
   const executedNodeIds: string[] = [];
@@ -63,8 +166,14 @@ export async function executeWorkflow(
         if (branchEdge) {
           currentNodeId = branchEdge.target;
         } else {
-          // Default fallthrough edge if handle not explicitly mapped
-          currentNodeId = outgoingEdges[0]?.target || null;
+          // If edges have explicit true/false branching, never fallthrough to the wrong branch
+          const hasBranchHandles = outgoingEdges.some((e: any) => e.sourceHandle === 'true' || e.sourceHandle === 'false');
+          if (hasBranchHandles) {
+            currentNodeId = null;
+          } else {
+            // Unbranched edge only continues if condition matched
+            currentNodeId = isMatch ? (outgoingEdges[0]?.target || null) : null;
+          }
         }
         continue;
       }

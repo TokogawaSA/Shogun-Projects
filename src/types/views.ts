@@ -2,7 +2,15 @@
  * ClickUp-Style Universal Multi-View Visualization Contracts
  */
 
-export type ViewMode = 'list' | 'board' | 'gantt' | 'calendar' | 'workload' | 'mindmap';
+export type ViewMode =
+  | 'list'
+  | 'board'
+  | 'tree'
+  | 'phase_gates'
+  | 'gantt'
+  | 'calendar'
+  | 'workload'
+  | 'mindmap';
 
 export type ViewGroupBy = 'status' | 'priority' | 'assignee' | 'dueDate' | 'none';
 

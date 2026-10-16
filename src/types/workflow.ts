@@ -230,13 +230,11 @@ export function convertLinearToDAG(
       id: `e-${currentSourceId}-${actionNodeId}`,
       source: currentSourceId,
       target: actionNodeId,
-      sourceHandle: isBranchSource ? (idx === 0 ? 'true' : 'false') : undefined,
+      sourceHandle: isBranchSource ? 'true' : undefined,
     });
 
-    if (!isBranchSource) {
-      currentSourceId = actionNodeId;
-      currentY += 150;
-    }
+    currentSourceId = actionNodeId;
+    currentY += 150;
   });
 
   return {

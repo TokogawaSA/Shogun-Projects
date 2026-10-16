@@ -105,6 +105,7 @@ async function testHttpEndpoints() {
   } finally {
     server.close();
     await prisma.$disconnect();
+    process.exit(0);
   }
 }
 

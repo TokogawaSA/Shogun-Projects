@@ -9,8 +9,16 @@ import {
   createRisk,
   updateRisk,
 } from '../controllers/ppmController.js';
+import {
+  getStudioCapacityHeatmap,
+  getStudioNetMultiplier,
+} from '../controllers/aecProjectController.js';
 
 export const ppmRouter = Router();
+
+// AEC Studio Capacity Heatmap & Net Multiplier Governance
+ppmRouter.get('/studio-capacity', getStudioCapacityHeatmap);
+ppmRouter.get('/net-multiplier', getStudioNetMultiplier);
 
 // Portfolios
 ppmRouter.get('/portfolios', getPortfolios);

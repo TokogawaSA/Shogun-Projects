@@ -77,18 +77,9 @@ export const EntitySummaryWidget: React.FC<EntitySummaryWidgetProps> = ({
           setActivities([initialLog]);
         }
       } catch (err) {
-        console.warn('[EntitySummaryWidget] Activity log fallback:', err);
+        console.warn('[EntitySummaryWidget] Activity log error:', err);
         if (isMounted) {
-          setActivities([
-            {
-              id: 'mock-log-01',
-              action: 'created',
-              description: `${moduleName.slice(0, -1).toUpperCase()} record active and synchronized.`,
-              userId: user?.uid || 'usr-admin',
-              userName: user?.displayName || 'CRM Admin',
-              timestamp: new Date().toISOString(),
-            },
-          ]);
+          setActivities([]);
         }
       } finally {
         if (isMounted) setLoadingActivities(false);

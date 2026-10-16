@@ -8,20 +8,10 @@ import {
   Building2,
   Users,
   Target,
-  CalendarRange,
   Cpu,
   Settings,
   Layers,
-  Award,
-  Gauge,
-  BarChart3,
-  Calculator,
-  Receipt,
-  ShieldAlert,
-  Network,
-  ShieldCheck,
   Briefcase,
-  FileText,
   Boxes,
   BookOpen,
   FileSpreadsheet,
@@ -34,26 +24,11 @@ export const Sidebar: React.FC = () => {
   const { user, tenant, logout } = useAuth();
   const workspaceItems = [
     { to: '/', label: 'Overview', icon: LayoutDashboard },
-    { to: '/board', label: 'Task Hub', icon: Layers },
-    { to: '/projects', label: 'Spaces & Projects', icon: FolderKanban },
   ];
 
-  const pmItems = [
-    { to: '/pm', label: 'PM 360 Hub', icon: FolderKanban },
-  ];
-
-  const ppmItems = [
-    { to: '/ppm/portfolio', label: 'Executive Portfolios', icon: Briefcase },
-    { to: '/ppm/portfolio/strategic', label: 'Strategic Alignment', icon: Target },
-    { to: '/ppm/portfolio/audit', label: 'Audit Trail & Compliance', icon: FileText },
-    { to: '/ppm/financials', label: 'Financial Overview', icon: BarChart3 },
-    { to: '/ppm/financials/budget', label: 'Budget Controls', icon: Calculator },
-    { to: '/ppm/financials/expenses', label: 'Expense Claims', icon: Receipt },
-    { to: '/ppm/risks', label: 'Risk Matrix & Register', icon: ShieldAlert },
-    { to: '/ppm/risks/dependencies', label: 'Dependency Matrix', icon: Network },
-    { to: '/ppm/risks/mitigation', label: 'Mitigation Tracker', icon: ShieldCheck },
-    { to: '/ppm/resources', label: 'Capacity & Workload', icon: Gauge },
-    { to: '/ppm/resources/skills', label: 'Skill Matrix & Rates', icon: Award },
+  const projectPortfolioItems = [
+    { to: '/projects', label: 'Projects Directory', icon: FolderKanban },
+    { to: '/pm', label: 'Project Workspace', icon: Briefcase },
   ];
 
   const crmItems = [
@@ -70,7 +45,6 @@ export const Sidebar: React.FC = () => {
   ];
 
   const systemItems = [
-    { to: '/gantt', label: 'Gantt Timeline', icon: CalendarRange },
     { to: '/mcp', label: 'MCP & Agents', icon: Cpu },
     { to: '/settings', label: 'Settings', icon: Settings },
   ];
@@ -118,13 +92,13 @@ export const Sidebar: React.FC = () => {
           })}
         </div>
 
-        {/* General Project Management Subsystem */}
+        {/* Unified Projects & Portfolio Subsystem (Zoho Projects Model) */}
         <div className="space-y-1">
           <div className="px-3 pb-1 text-[10px] font-semibold text-indigo-400 uppercase tracking-wider font-mono flex items-center justify-between">
-            <span>Project Management</span>
-            <span className="text-[9px] px-1.5 py-0.2 rounded bg-indigo-950 text-indigo-300 border border-indigo-800">PM 360</span>
+            <span>Projects & Portfolio</span>
+            <span className="text-[9px] px-1.5 py-0.2 rounded bg-indigo-950 text-indigo-300 border border-indigo-800">Zoho Model</span>
           </div>
-          {pmItems.map((item) => {
+          {projectPortfolioItems.map((item) => {
             const Icon = item.icon;
             return (
               <NavLink
@@ -134,35 +108,7 @@ export const Sidebar: React.FC = () => {
                   clsx(
                     'flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150',
                     isActive
-                      ? 'bg-indigo-600 text-white shadow-sm font-semibold'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/70'
-                  )
-                }
-              >
-                <Icon className="w-4 h-4" />
-                <span>{item.label}</span>
-              </NavLink>
-            );
-          })}
-        </div>
-
-        {/* Enterprise PPM Subsystem */}
-        <div className="space-y-1">
-          <div className="px-3 pb-1 text-[10px] font-semibold text-emerald-600 uppercase tracking-wider font-mono flex items-center justify-between">
-            <span>Portfolio & PPM</span>
-            <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Enterprise</span>
-          </div>
-          {ppmItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  clsx(
-                    'flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150',
-                    isActive
-                      ? 'bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-sm font-semibold'
+                      ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/30 font-semibold'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/70'
                   )
                 }

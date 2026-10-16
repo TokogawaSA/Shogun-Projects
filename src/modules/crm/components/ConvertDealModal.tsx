@@ -60,8 +60,8 @@ export const ConvertDealModal: React.FC<ConvertDealModalProps> = ({
       });
 
       onClose();
-      // Navigate to task board
-      navigate('/board');
+      // Navigate to project workspace tasks
+      navigate('/pm?tab=tasks');
     } catch (err) {
       console.warn('Deal conversion failed:', err);
     } finally {

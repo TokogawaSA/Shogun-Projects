@@ -15,6 +15,7 @@ declare global {
     interface Request {
       user?: AuthUserClaims;
       tenantContext?: TenantContext;
+      tenantId?: string;
     }
   }
 }

@@ -424,7 +424,7 @@ export const DealKanbanBoard: React.FC = () => {
                             {deal.linkedProjectId ? (
                               <button
                                 onClick={() => {
-                                  navigate('/board');
+                                  navigate(deal.linkedProjectId ? `/projects/${deal.linkedProjectId}?tab=tasks` : '/pm?tab=tasks');
                                 }}
                                 className="w-full py-1.5 px-2.5 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-500/30 text-indigo-300 text-[11px] font-semibold flex items-center justify-between transition cursor-pointer"
                               >

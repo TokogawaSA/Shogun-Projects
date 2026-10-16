@@ -1,11 +1,10 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { DashboardPage } from './pages/DashboardPage';
 import { ProjectsPage } from './pages/ProjectsPage';
-import { TaskBoardPage } from './pages/TaskBoardPage';
-import { GanttChart, ProjectCosting, MilestoneTracker } from './modules/projects';
+import { ProjectWorkspace } from './modules/projects';
 import { McpServersPage } from './pages/McpServersPage';
 import { renderSettingsRoutes } from './routes/settingsRoutes';
 import { renderCrmRoutes } from './routes/crmRoutes';
@@ -14,6 +13,7 @@ import { renderCatalogRoutes } from './routes/catalogRoutes';
 import { renderPmRoutes } from './routes/projectManagementRoutes';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { PublicWebFormPage } from './pages/PublicWebFormPage';
 import { useAuth } from './context/AuthContext';
 import { Loader2 } from 'lucide-react';
 
@@ -25,16 +25,10 @@ const AppLayout: React.FC = () => {
 
   const getPageInfo = () => {
     const path = location.pathname;
-    if (path === '/projects') {
+    if (path === '/projects' || path === '/portfolio') {
       return { 
-        title: 'Projects Overview', 
-        subtitle: 'Multi-agent project memberships & workspace registry' 
-      };
-    }
-    if (path === '/board' || path === '/tasks') {
-      return { 
-        title: 'Kanban Task Board', 
-        subtitle: 'Real-time collaborative task execution & Subtask checklist' 
+        title: 'Projects & Portfolio Vitals', 
+        subtitle: 'Zoho-model multi-project aggregator, lifecycle stages & active workspaces' 
       };
     }
     if (path.startsWith('/crm/leads')) {
@@ -73,76 +67,10 @@ const AppLayout: React.FC = () => {
         subtitle: 'Model Context Protocol server management' 
       };
     }
-    if (path.startsWith('/ppm/financials/budget')) {
+    if (path.startsWith('/ppm')) {
       return {
-        title: 'Project Budget & Multi-Tier Tracker',
-        subtitle: 'CapEx, OpEx & Labor cost variance monitoring and ceiling controls',
-      };
-    }
-    if (path.startsWith('/ppm/financials/expenses')) {
-      return {
-        title: 'Expense Claims & Approvals',
-        subtitle: 'Manager authorization workflows & project expense audit logging',
-      };
-    }
-    if (path.startsWith('/ppm/financials')) {
-      return {
-        title: 'Portfolio Financial Intelligence',
-        subtitle: 'Executive spend analytics, multi-tier budget variance & profit margins',
-      };
-    }
-    if (path.startsWith('/ppm/risks/dependencies')) {
-      return {
-        title: 'Cross-Departmental Dependency Matrix',
-        subtitle: 'Inter-team bottleneck analysis & critical-path risk propagation',
-      };
-    }
-    if (path.startsWith('/ppm/risks/mitigation')) {
-      return {
-        title: 'Risk Mitigation & Action Tracker',
-        subtitle: 'Active remediation workflows & action owner execution gates',
-      };
-    }
-    if (path.startsWith('/ppm/risks')) {
-      return {
-        title: 'Enterprise Risk Register & Heatmap Matrix',
-        subtitle: '5x5 Probability-Impact matrix scoring, critical escalation & threat controls',
-      };
-    }
-    if (path.startsWith('/ppm/portfolio/strategic')) {
-      return {
-        title: 'Strategic Goal Alignment & ROI Mapping',
-        subtitle: 'Corporate pillar alignment, target ROI projections & milestone delivery tracking',
-      };
-    }
-    if (path.startsWith('/ppm/portfolio/audit')) {
-      return {
-        title: 'Enterprise Governance & Audit Trail Engine',
-        subtitle: 'Immutable state mutations, field-level JSON state diffs & SOC 2 compliance verification',
-      };
-    }
-    if (path.startsWith('/ppm/portfolio')) {
-      return {
-        title: 'Executive Portfolio Aggregator & Command Center',
-        subtitle: 'High-level strategic portfolio umbrellas, cross-project budget rollups & ROI governance',
-      };
-    }
-    if (path.startsWith('/ppm/resources/skills')) {
-      return {
-        title: 'Skill Matrix & Capability Registry',
-        subtitle: 'Enterprise competency taxonomy, billing rate bands & resource profiles',
-      };
-    }
-    if (path.startsWith('/ppm/resources')) {
-      return {
-        title: 'Resource Capacity & Workload Heatmap',
-        subtitle: 'Real-time engineer workload bands, burnout risk indicators & task rebalancing',
-      };
-    }
-    if (path === '/ppm') {
-      return {
-        title: 'Executive Portfolio Aggregator & Command Center',
-        subtitle: 'High-level strategic portfolio umbrellas, cross-project budget rollups & ROI governance',
+        title: 'Project Workspace & Modular AEC Engine',
+        subtitle: 'Phase-gated [SD/DD/CD/CA] delivery, drawings, CA RFIs & admin-modular tabs',
       };
     }
     if (path.includes('/milestones')) {
@@ -169,10 +97,10 @@ const AppLayout: React.FC = () => {
         subtitle: 'Multi-tier PriceBook pricing, taxes, line item discounts & project scope conversion',
       };
     }
-    if (path.startsWith('/pm')) {
+    if (path.startsWith('/pm') || (path.startsWith('/projects/') && !path.includes('/costing') && !path.includes('/milestones') && !path.includes('/gantt'))) {
       return {
-        title: 'Project Management (PM 360) Hub',
-        subtitle: 'Unified WBS, Gantt timelines, capacity, timesheets, invoicing, risk & client portal',
+        title: 'Project Workspace & Modular AEC Engine',
+        subtitle: 'Phase-gated [SD/DD/CD/CA] delivery, drawings, CA RFIs & admin-modular tabs',
       };
     }
     if (path.startsWith('/catalog/price-books')) {
@@ -187,6 +115,12 @@ const AppLayout: React.FC = () => {
         subtitle: 'Hardware inventory, billable services, recurring SLA subscriptions & SKUs',
       };
     }
+    if (path.startsWith('/settings/automation/forms')) {
+      return { 
+        title: 'Web Forms & Workflow Routing', 
+        subtitle: 'Dynamic web forms with full conditional logic matrix and automated routing to CRM & Projects' 
+      };
+    }
     if (path.startsWith('/settings')) {
       return { 
         title: 'Settings & Administration Hub', 
@@ -199,7 +133,18 @@ const AppLayout: React.FC = () => {
     };
   };
 
+  const isPublicFormRoute = location.pathname.startsWith('/forms/') || location.pathname.startsWith('/public/forms/');
+
   const { title, subtitle } = getPageInfo();
+
+  if (isPublicFormRoute) {
+    return (
+      <Routes>
+        <Route path="/forms/:formId" element={<PublicWebFormPage />} />
+        <Route path="/public/forms/:formId" element={<PublicWebFormPage />} />
+      </Routes>
+    );
+  }
 
   if (authLoading) {
     return (
@@ -227,17 +172,15 @@ const AppLayout: React.FC = () => {
         <main className={isSettingsActive ? 'flex-1 overflow-hidden p-0' : 'flex-1 overflow-y-auto p-8'}>
           <Routes>
             <Route path="/" element={<DashboardPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
             <Route path="/projects" element={<ProjectsPage />} />
-            <Route path="/projects/:id/costing" element={<ProjectCosting />} />
-            <Route path="/projects/costing" element={<ProjectCosting />} />
-            <Route path="/projects/:id/milestones" element={<MilestoneTracker />} />
-            <Route path="/projects/milestones" element={<MilestoneTracker />} />
-            <Route path="/projects/:id/gantt" element={<GanttChart />} />
-            <Route path="/projects/gantt" element={<GanttChart />} />
-            <Route path="/board" element={<TaskBoardPage />} />
-            <Route path="/tasks" element={<TaskBoardPage />} />
+            <Route path="/portfolio" element={<ProjectsPage />} />
+            <Route path="/projects/:id" element={<ProjectWorkspace />} />
+            <Route path="/projects/:id/workspace" element={<ProjectWorkspace />} />
+            <Route path="/projects/:id/*" element={<ProjectWorkspace />} />
+            <Route path="/projects/costing" element={<Navigate to="/projects" replace />} />
+            <Route path="/projects/milestones" element={<Navigate to="/projects" replace />} />
+            <Route path="/projects/gantt" element={<Navigate to="/projects" replace />} />
+            <Route path="/gantt" element={<Navigate to="/projects" replace />} />
             
             {/* General Project Management Routes */}
             {renderPmRoutes()}
@@ -251,8 +194,8 @@ const AppLayout: React.FC = () => {
             {/* Products & Services Catalog Routes */}
             {renderCatalogRoutes()}
             
-            <Route path="/gantt" element={<GanttChart />} />
             <Route path="/mcp" element={<McpServersPage />} />
+            <Route path="/forms" element={<Navigate to="/settings/automation/forms" replace />} />
             
             {/* VTiger-Style Settings & Administration Hub */}
             {renderSettingsRoutes()}

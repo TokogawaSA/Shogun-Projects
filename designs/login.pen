@@ -1,0 +1,435 @@
+{
+  "version": "2.20",
+  "children": [
+    {
+      "type": "frame",
+      "id": "frame-1600",
+      "x": 0,
+      "y": 0,
+      "name": "Login Canvas",
+      "width": 1440,
+      "height": 900,
+      "fill": "$bg-main",
+      "layout": "vertical",
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "frame-1599",
+          "name": "Login Container Box",
+          "width": 440,
+          "fill": "$bg-card",
+          "cornerRadius": "$radius-xl",
+          "stroke": "$border-color",
+          "strokeWidth": 1,
+          "layout": "vertical",
+          "gap": 24,
+          "padding": 36,
+          "children": [
+            {
+              "type": "frame",
+              "id": "frame-1574",
+              "name": "Logo & Title",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "frame-1571",
+                  "name": "Frame",
+                  "width": 48,
+                  "height": 48,
+                  "fill": "$accent-primary",
+                  "cornerRadius": "$radius-lg",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "icon-1570",
+                      "name": "Icon / shield-check",
+                      "width": 26,
+                      "height": 26,
+                      "icon": "shield-check",
+                      "library": "lucide",
+                      "fill": "#FFFFFF"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "txt-1572",
+                  "name": "Text",
+                  "fill": "$text-main",
+                  "content": "Shogun Projects 2.0",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font-sans",
+                  "fontSize": 20,
+                  "fontWeight": "bold"
+                },
+                {
+                  "type": "text",
+                  "id": "txt-1573",
+                  "name": "Text",
+                  "fill": "$text-muted",
+                  "content": "Enterprise Multi-Agent Command Center",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font-sans",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "frame-1595",
+              "name": "Form Fields",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "frame-1579",
+                  "name": "Email Field Group",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "txt-1575",
+                      "name": "Text",
+                      "fill": "$text-sub",
+                      "content": "WORK EMAIL ADDRESS",
+                      "lineHeight": 1.4,
+                      "fontFamily": "$font-mono",
+                      "fontSize": 10,
+                      "fontWeight": "bold"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "frame-1578",
+                      "name": "Email Input",
+                      "width": "fill_container",
+                      "fill": "$bg-input",
+                      "cornerRadius": "$radius-md",
+                      "stroke": "$border-color",
+                      "strokeWidth": 1,
+                      "gap": 10,
+                      "padding": [
+                        10,
+                        14
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "icon-1576",
+                          "name": "Icon / mail",
+                          "width": 14,
+                          "height": 14,
+                          "icon": "mail",
+                          "library": "lucide",
+                          "fill": "$text-muted"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1577",
+                          "name": "Text",
+                          "fill": "$text-main",
+                          "content": "admin@shogunate.solutions",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-mono",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "frame-1588",
+                  "name": "Password Field Group",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "frame-1582",
+                      "name": "Frame",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "txt-1580",
+                          "name": "Text",
+                          "fill": "$text-sub",
+                          "content": "PASSWORD",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-mono",
+                          "fontSize": 10,
+                          "fontWeight": "bold"
+                        },
+                        {
+                          "type": "text",
+                          "id": "txt-1581",
+                          "name": "Text",
+                          "fill": "$accent-primary",
+                          "content": "Forgot?",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-sans",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "frame-1587",
+                      "name": "Password Input",
+                      "width": "fill_container",
+                      "fill": "$bg-input",
+                      "cornerRadius": "$radius-md",
+                      "stroke": "$border-color",
+                      "strokeWidth": 1,
+                      "padding": [
+                        10,
+                        14
+                      ],
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "frame-1585",
+                          "name": "Frame",
+                          "gap": 10,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "icon-1583",
+                              "name": "Icon / lock",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "lock",
+                              "library": "lucide",
+                              "fill": "$text-muted"
+                            },
+                            {
+                              "type": "text",
+                              "id": "txt-1584",
+                              "name": "Text",
+                              "fill": "$text-main",
+                              "content": "••••••••••••••••",
+                              "lineHeight": 1.4,
+                              "fontFamily": "$font-sans",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "icon",
+                          "id": "icon-1586",
+                          "name": "Icon / eye",
+                          "width": 14,
+                          "height": 14,
+                          "icon": "eye",
+                          "library": "lucide",
+                          "fill": "$text-muted"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "btn-1591",
+                  "name": "Button / Sign In to Workspace",
+                  "fill": "$accent-primary",
+                  "cornerRadius": "$radius-md",
+                  "gap": 6,
+                  "padding": [
+                    8,
+                    14
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "icon-1589",
+                      "name": "Icon / arrow-right",
+                      "width": 14,
+                      "height": 14,
+                      "icon": "arrow-right",
+                      "library": "lucide",
+                      "fill": "#FFFFFF"
+                    },
+                    {
+                      "type": "text",
+                      "id": "txt-1590",
+                      "name": "Text",
+                      "fill": "#FFFFFF",
+                      "content": "Sign In to Workspace",
+                      "lineHeight": 1.4,
+                      "fontFamily": "$font-sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "btn-1594",
+                  "name": "Button / One-Click Demo Admin Login",
+                  "fill": "$bg-card-subtle",
+                  "cornerRadius": "$radius-md",
+                  "stroke": "$border-color",
+                  "strokeWidth": 1,
+                  "gap": 6,
+                  "padding": [
+                    8,
+                    14
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "txt-1593",
+                      "name": "Text",
+                      "fill": "$text-main",
+                      "content": "One-Click Demo Admin Login",
+                      "lineHeight": 1.4,
+                      "fontFamily": "$font-sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "themes": {
+    "theme": [
+      "dark",
+      "light"
+    ]
+  },
+  "variables": {
+    "bg-main": {
+      "type": "color",
+      "value": "#0B0F19"
+    },
+    "bg-sidebar": {
+      "type": "color",
+      "value": "#0D1322"
+    },
+    "bg-card": {
+      "type": "color",
+      "value": "#131B2E"
+    },
+    "bg-card-subtle": {
+      "type": "color",
+      "value": "#1E293B"
+    },
+    "bg-input": {
+      "type": "color",
+      "value": "#080D1A"
+    },
+    "border-color": {
+      "type": "color",
+      "value": "#22304A"
+    },
+    "border-subtle": {
+      "type": "color",
+      "value": "#1A2438"
+    },
+    "border-focus": {
+      "type": "color",
+      "value": "#6366F1"
+    },
+    "text-main": {
+      "type": "color",
+      "value": "#F8FAFC"
+    },
+    "text-sub": {
+      "type": "color",
+      "value": "#94A3B8"
+    },
+    "text-muted": {
+      "type": "color",
+      "value": "#64748B"
+    },
+    "accent-primary": {
+      "type": "color",
+      "value": "#6366F1"
+    },
+    "accent-hover": {
+      "type": "color",
+      "value": "#4F46E5"
+    },
+    "accent-gradient-start": {
+      "type": "color",
+      "value": "#4F46E5"
+    },
+    "accent-gradient-end": {
+      "type": "color",
+      "value": "#7C3AED"
+    },
+    "status-success": {
+      "type": "color",
+      "value": "#10B981"
+    },
+    "status-warning": {
+      "type": "color",
+      "value": "#F59E0B"
+    },
+    "status-danger": {
+      "type": "color",
+      "value": "#EF4444"
+    },
+    "status-info": {
+      "type": "color",
+      "value": "#06B6D4"
+    },
+    "font-sans": {
+      "type": "string",
+      "value": "Inter"
+    },
+    "font-mono": {
+      "type": "string",
+      "value": "JetBrains Mono"
+    },
+    "radius-sm": {
+      "type": "number",
+      "value": 6
+    },
+    "radius-md": {
+      "type": "number",
+      "value": 8
+    },
+    "radius-lg": {
+      "type": "number",
+      "value": 12
+    },
+    "radius-xl": {
+      "type": "number",
+      "value": 16
+    }
+  },
+  "fileToken": "ca7e75e0-1703-4643-9aa9-15d0c7243778"
+}
