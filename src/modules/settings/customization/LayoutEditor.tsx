@@ -19,9 +19,11 @@ import {
   SupportedModule,
 } from '../../../types/settings';
 import { PicklistEditorModal } from './PicklistEditorModal';
+import { useCurrency } from '../../../context/CurrencyContext';
 
 export const LayoutEditor: React.FC = () => {
   const { user } = useAuth();
+  const { currencySymbol } = useCurrency();
   const tenantId = user?.tenantId || 'tenant-default';
 
   const [selectedModule, setSelectedModule] = useState<SupportedModule>('deals');
@@ -276,7 +278,7 @@ export const LayoutEditor: React.FC = () => {
             >
               <option value="text">Text</option>
               <option value="number">Number</option>
-              <option value="currency">Currency ($)</option>
+              <option value="currency">Currency ({currencySymbol})</option>
               <option value="date">Date</option>
               <option value="picklist">Picklist</option>
               <option value="boolean">Checkbox</option>

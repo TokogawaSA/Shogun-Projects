@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "test": "node scripts/test-logic.js && node scripts/test-ppm-logic.js && node scripts/test-catalog-project-microservices.js && node scripts/test-crm-conversion.js && node scripts/test-phase2-workers.js && node scripts/test-phase3-api-socket-mcp.js && node scripts/test-phase4-frontend-decoupling.js && node scripts/test-phase5-etl-migration.js && node scripts/test-task-hub.js && node scripts/test-workflow-dag-engine.js",
+    "test": "node scripts/test-logic.js && node scripts/test-ppm-logic.js && node scripts/test-catalog-project-microservices.js && node scripts/test-crm-conversion.js && node scripts/test-phase2-workers.js && node scripts/test-phase3-api-socket-mcp.js && node scripts/test-phase4-frontend-decoupling.js && node scripts/test-phase5-etl-migration.js && node scripts/test-task-hub.js && node scripts/test-workflow-dag-engine.js && node scripts/test-social-module.js && node scripts/test-scheduler-booking-module.js",
     "typecheck": "tsc --noEmit",
     "build": "tsc && vite build",
     "build:all": "npm run build && npm --prefix server run build",

@@ -27,6 +27,7 @@ import { useAccounts } from '../hooks/useAccounts';
 import { useContacts } from '../hooks/useContacts';
 import { Account360Drawer } from './Account360Drawer';
 import { ConvertDealModal } from './ConvertDealModal';
+import { useCurrency } from '../../../context/CurrencyContext';
 
 interface StageColumnConfig {
   stage: PipelineStage;
@@ -78,6 +79,7 @@ const stageOrder: PipelineStage[] = ['discovery', 'proposal', 'negotiation', 'cl
 
 export const DealKanbanBoard: React.FC = () => {
   const navigate = useNavigate();
+  const { currencyCode, currencySymbol, formatCurrency } = useCurrency();
 
   const {
     deals,
@@ -176,7 +178,7 @@ export const DealKanbanBoard: React.FC = () => {
       tenantId: 'tenant-default',
       title: newTitle.trim(),
       value: Number(newValue) || 0,
-      currency: 'USD',
+      currency: currencyCode,
       winProbability: newStage === 'closed_won' ? 100 : newStage === 'negotiation' ? 75 : newStage === 'proposal' ? 50 : 25,
       pipelineStage: newStage,
       accountId: defaultAccId,
@@ -212,7 +214,7 @@ export const DealKanbanBoard: React.FC = () => {
             </div>
           </div>
           <div className="mt-2 text-2xl font-bold text-slate-100 tracking-tight font-mono">
-            ${totalPipelineValue.toLocaleString()}
+            {formatCurrency(totalPipelineValue)}
           </div>
           <p className="text-[11px] text-indigo-400 mt-1 font-medium">Weighted Opportunity Pool</p>
         </div>
@@ -225,7 +227,7 @@ export const DealKanbanBoard: React.FC = () => {
             </div>
           </div>
           <div className="mt-2 text-2xl font-bold text-emerald-400 tracking-tight font-mono">
-            ${closedWonRevenue.toLocaleString()}
+            {formatCurrency(closedWonRevenue)}
           </div>
           <p className="text-[11px] text-slate-400 mt-1">Converted into Deliveries</p>
         </div>
@@ -343,7 +345,7 @@ export const DealKanbanBoard: React.FC = () => {
                   </span>
                 </div>
                 <div className="text-xs font-bold text-slate-400 font-mono">
-                  ${colTotalValue.toLocaleString()}
+                  {formatCurrency(colTotalValue)}
                 </div>
               </div>
 
@@ -369,9 +371,8 @@ export const DealKanbanBoard: React.FC = () => {
                         <div className="space-y-1.5">
                           {/* Value & Delete */}
                           <div className="flex items-center justify-between gap-1">
-                            <span className="text-sm font-black text-emerald-400 font-mono flex items-center gap-0.5">
-                              <DollarSign className="w-3.5 h-3.5" />
-                              {(deal.value || 0).toLocaleString()}
+                            <span className="text-sm font-black text-emerald-400 font-mono flex items-center gap-1">
+                              {formatCurrency(deal.value || deal.amount || 0)}
                             </span>
                             <button
                               onClick={() => deleteDeal(deal.id)}
@@ -558,7 +559,7 @@ export const DealKanbanBoard: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-slate-200">Opportunity Value ($) *</label>
+                  <label className="text-xs font-semibold text-slate-200">Opportunity Value ({currencySymbol}) *</label>
                   <input
                     type="number"
                     required

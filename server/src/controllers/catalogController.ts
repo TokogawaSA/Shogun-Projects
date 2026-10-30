@@ -5,6 +5,13 @@ import { prisma } from '../config/db.js';
 // 1. PRODUCTS & SERVICES CRUD
 // ============================================================================
 
+function sendCatalogError(res: Response, errorMessage: string, err: any): void {
+  res.status(500).json({
+    error: errorMessage,
+    ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+  });
+}
+
 export async function getProducts(req: Request, res: Response): Promise<void> {
   try {
     const tenantId = req.user!.tenantId;
@@ -14,7 +21,7 @@ export async function getProducts(req: Request, res: Response): Promise<void> {
     });
     res.json(products);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch products/services.', details: err.message });
+    sendCatalogError(res, 'Failed to fetch products/services.', err);
   }
 }
 
@@ -34,7 +41,7 @@ export async function getProductById(req: Request, res: Response): Promise<void>
 
     res.json(product);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch item.', details: err.message });
+    sendCatalogError(res, 'Failed to fetch item.', err);
   }
 }
 
@@ -63,7 +70,7 @@ export async function createProduct(req: Request, res: Response): Promise<void> 
 
     res.status(201).json(product);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to create product.', details: err.message });
+    sendCatalogError(res, 'Failed to create product.', err);
   }
 }
 
@@ -99,7 +106,7 @@ export async function updateProduct(req: Request, res: Response): Promise<void> 
 
     res.json(updated);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to update product.', details: err.message });
+    sendCatalogError(res, 'Failed to update product.', err);
   }
 }
 
@@ -117,7 +124,7 @@ export async function deleteProduct(req: Request, res: Response): Promise<void> 
     await prisma.productOrService.delete({ where: { id } });
     res.json({ message: 'Product deleted successfully.', id });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to delete product.', details: err.message });
+    sendCatalogError(res, 'Failed to delete product.', err);
   }
 }
 
@@ -134,7 +141,7 @@ export async function getPriceBooks(req: Request, res: Response): Promise<void> 
     });
     res.json(priceBooks);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch price books.', details: err.message });
+    sendCatalogError(res, 'Failed to fetch price books.', err);
   }
 }
 
@@ -155,7 +162,7 @@ export async function createPriceBook(req: Request, res: Response): Promise<void
 
     res.status(201).json(priceBook);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to create price book.', details: err.message });
+    sendCatalogError(res, 'Failed to create price book.', err);
   }
 }
 
@@ -195,8 +202,8 @@ export async function fulfillDeliverable(req: Request, res: Response): Promise<v
 
       // 1. If linked to a physical product, deduct inventory
       if (deliverable.productId) {
-        const product = await tx.productOrService.findUnique({
-          where: { id: deliverable.productId },
+        const product = await tx.productOrService.findFirst({
+          where: { id: deliverable.productId, tenantId },
         });
 
         if (product && product.type === 'product') {
@@ -252,6 +259,6 @@ export async function fulfillDeliverable(req: Request, res: Response): Promise<v
     });
   } catch (err: any) {
     console.error('[Fulfill Deliverable Error]:', err);
-    res.status(500).json({ error: 'Failed to fulfill deliverable.', details: err.message });
+    sendCatalogError(res, 'Failed to fulfill deliverable.', err);
   }
 }

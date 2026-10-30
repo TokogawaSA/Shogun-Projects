@@ -45,6 +45,7 @@ export function authenticateTenant(req: Request, res: Response, next: NextFuncti
 
     req.user = claims;
     req.tenantContext = claims;
+    req.tenantId = claims.tenantId;
 
     next();
   } catch (err: any) {

@@ -2,12 +2,14 @@ import { Worker } from 'bullmq';
 import { createWorkflowWorker } from './workflowWorker.js';
 import { createHealthCheckWorker } from './healthCheckWorker.js';
 import { createEmailWorker } from './emailWorker.js';
+import { createSocialAnalysisWorker } from './socialWorker.js';
 import { disconnectRedis } from '../config/redis.js';
 
 export interface RunningWorkers {
   workflowWorker: Worker;
   healthCheckWorker: Worker;
   emailWorker: Worker;
+  socialWorker: Worker;
 }
 
 let activeWorkers: RunningWorkers | null = null;
@@ -25,11 +27,13 @@ export function startWorkers(): RunningWorkers {
   const workflowWorker = createWorkflowWorker();
   const healthCheckWorker = createHealthCheckWorker();
   const emailWorker = createEmailWorker();
+  const socialWorker = createSocialAnalysisWorker();
 
   activeWorkers = {
     workflowWorker,
     healthCheckWorker,
     emailWorker,
+    socialWorker,
   };
 
   console.log('✅ [BullMQ Workers] All queue workers active and listening for jobs.');
@@ -49,6 +53,7 @@ export async function stopWorkers(): Promise<void> {
     activeWorkers.workflowWorker.close(),
     activeWorkers.healthCheckWorker.close(),
     activeWorkers.emailWorker.close(),
+    activeWorkers.socialWorker.close(),
   ]);
 
   await disconnectRedis();

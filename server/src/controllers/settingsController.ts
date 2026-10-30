@@ -1,14 +1,15 @@
 import { Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
+import nodemailer from 'nodemailer';
 import { prisma } from '../config/db.js';
 import { withTenantTx } from '../utils/tenantTx.js';
 
 function getTenantId(req: Request): string {
-  return (
-    (req.user || req.tenantContext)?.tenantId ||
-    (req.headers['x-tenant-id'] as string) ||
-    (req.body?.tenantId as string) ||
-    'tenant-default'
-  );
+  const tenantId = (req.user || req.tenantContext)?.tenantId || req.tenantId;
+  if (!tenantId) {
+    throw new Error('Unauthorized: Missing verified tenant context.');
+  }
+  return tenantId;
 }
 
 // Default seed configurations for system settings
@@ -106,6 +107,19 @@ export async function updateSystemConfig(req: Request, res: Response): Promise<v
         updatedBy: updatedBy || req.user?.userId || (req.user as any)?.uid || 'system',
       },
     });
+
+    if (companyDetails?.currency) {
+      const match = String(companyDetails.currency).match(/^[A-Z]{3}/i);
+      const code = match ? match[0].toUpperCase() : String(companyDetails.currency).trim().split(/[\s(]/)[0].toUpperCase();
+      try {
+        await prisma.deal.updateMany({
+          where: { tenantId },
+          data: { currency: code },
+        });
+      } catch (dealErr) {
+        console.warn('[updateSystemConfig] Failed to sync deal currency:', dealErr);
+      }
+    }
 
     res.json(config);
   } catch (err: any) {
@@ -603,8 +617,11 @@ export async function createOrUpdateUser(req: Request, res: Response): Promise<v
     }
 
     if (!user) {
-      // Check if user with email already exists in this tenant
-      const existingEmail = await prisma.user.findFirst({ where: { email } });
+      // Check if user with email already exists in THIS tenant only
+      const existingEmail = email
+        ? await prisma.user.findFirst({ where: { email, tenantId } })
+        : null;
+
       if (existingEmail) {
         user = await prisma.user.update({
           where: { id: existingEmail.id },
@@ -616,12 +633,22 @@ export async function createOrUpdateUser(req: Request, res: Response): Promise<v
           },
         });
       } else {
+        // Ensure email is not owned by a different tenant
+        if (email) {
+          const crossTenantUser = await prisma.user.findUnique({ where: { email } });
+          if (crossTenantUser && crossTenantUser.tenantId !== tenantId) {
+            res.status(409).json({ error: 'A user with this email address already belongs to another organization.' });
+            return;
+          }
+        }
+        const rawPassword = req.body.password || `Tmp_${Date.now()}_${Math.random().toString(36).slice(2, 10)}!`;
+        const passwordHash = await bcrypt.hash(rawPassword, 10);
         user = await prisma.user.create({
           data: {
             id: userId || undefined,
             tenantId,
             email: email || `user_${Date.now()}@shogunate.dev`,
-            passwordHash: 'hashed_placeholder_default',
+            passwordHash,
             displayName: displayName || email?.split('@')[0] || 'Team Member',
             role: role || 'developer',
             profileId: profileId || null,
@@ -733,8 +760,26 @@ export async function updateEmailConfig(req: Request, res: Response): Promise<vo
 
 export async function testEmailConnection(req: Request, res: Response): Promise<void> {
   try {
+    const tenantId = getTenantId(req);
     const { config, testRecipient } = req.body;
-    const provider = config?.provider || 'smtp';
+    const storedConfig = await prisma.emailConfig.findUnique({ where: { tenantId } });
+    const provider = config?.provider || storedConfig?.provider || 'smtp';
+    const smtp = config?.smtp || config?.smtpSettings || (storedConfig?.smtpSettings as any) || {};
+
+    if (provider === 'smtp' && smtp.host && smtp.username && smtp.password) {
+      const transporter = nodemailer.createTransport({
+        host: smtp.host,
+        port: Number(smtp.port) || 587,
+        secure: Boolean(smtp.secure) || Number(smtp.port) === 465,
+        auth: {
+          user: smtp.username,
+          pass: smtp.password,
+        },
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
+      });
+      await transporter.verify();
+    }
 
     res.json({
       success: true,
@@ -744,7 +789,7 @@ export async function testEmailConnection(req: Request, res: Response): Promise<
     res.status(500).json({
       success: false,
       error: 'Transport connection failed.',
-      details: err.message,
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
     });
   }
 }

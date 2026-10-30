@@ -9,6 +9,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { apiClient } from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import { EntityModuleName, FieldDefinition, PicklistOption } from '../../../types/crmEntities';
+import { useCurrency } from '../../../context/CurrencyContext';
 import { DEFAULT_MODULE_LAYOUTS } from '../utils/moduleLayouts';
 import { EntityLookupModal } from '../components/EntityLookupModal';
 import {
@@ -26,6 +27,7 @@ import {
 } from 'lucide-react';
 
 export const EntityEditView: React.FC = () => {
+  const { currencyCode, currencySymbol } = useCurrency();
   const { module: routeModule, id: recordId } = useParams<{ module: string; id?: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -59,7 +61,7 @@ export const EntityEditView: React.FC = () => {
         tenantId,
         assignedUserId: user?.uid || undefined,
         assignedUserName: user?.displayName || user?.email?.split('@')[0] || 'CRM Admin',
-        currency: 'USD',
+        currency: currencyCode,
       };
 
       // Set default picklist values from schema
@@ -454,7 +456,9 @@ export const EntityEditView: React.FC = () => {
         ) : field.type === 'currency' || field.type === 'number' || field.type === 'percentage' ? (
           <div className="relative">
             {field.type === 'currency' && (
-              <span className="absolute left-3 top-2 text-xs text-slate-400 pointer-events-none">$</span>
+              <span className="absolute left-3 top-2 text-xs text-slate-400 pointer-events-none font-mono font-medium">
+                {currencySymbol}
+              </span>
             )}
             <input
               type="number"

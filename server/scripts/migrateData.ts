@@ -313,7 +313,7 @@ export async function runETLMigration(dataset?: SourceDataset) {
       const tenantId = mapper.getOrFallback(u.tenantId, 'tenant-enterprise-root');
       const user = await prisma.user.upsert({
         where: {
-          tenantId_email: { tenantId, email: u.email },
+          email: u.email,
         },
         create: {
           id: u.id,
@@ -338,9 +338,11 @@ export async function runETLMigration(dataset?: SourceDataset) {
     // STEP 3: Accounts
     // ------------------------------------------------------------------------
     console.log('🏢 [3/8] Migrating Client Accounts & Custom Attributes...');
-    const accountStdKeys = ['id', 'tenantId', 'name', 'accountName', 'industry', 'rating', 'created_at', 'createdAt', 'updatedAt'];
-    for (const a of data.accounts) {
+    const accountStdKeys = ['id', 'tenantId', 'name', 'accountName', 'accountNumber', 'industry', 'rating', 'assignedUserId', 'createdById', 'created_at', 'createdAt', 'updatedAt'];
+    for (let idx = 0; idx < data.accounts.length; idx++) {
+      const a = data.accounts[idx];
       const tenantId = mapper.getOrFallback(a.tenantId, 'tenant-enterprise-root');
+      const defaultUserId = mapper.get('usr-admin-01') || 'usr-admin-01';
       const customFields = extractCustomFields(a, accountStdKeys);
       const createdAt = normalizeTimestamp(a.created_at || a.createdAt);
 
@@ -349,9 +351,12 @@ export async function runETLMigration(dataset?: SourceDataset) {
         create: {
           id: a.id,
           tenantId,
+          accountNumber: a.accountNumber || `ACC-${1000 + idx + 1}`,
           accountName: a.name || a.accountName || 'Unnamed Client',
           industry: a.industry || 'General',
           rating: a.rating || 'active',
+          assignedUserId: mapper.get(a.assignedUserId) || a.assignedUserId || defaultUserId,
+          createdById: mapper.get(a.createdById) || a.createdById || defaultUserId,
           customFields,
           createdAt,
         },
@@ -370,10 +375,12 @@ export async function runETLMigration(dataset?: SourceDataset) {
     // STEP 4: Contacts
     // ------------------------------------------------------------------------
     console.log('👥 [4/8] Migrating Contacts & Account Relations...');
-    const contactStdKeys = ['id', 'tenantId', 'accountId', 'firstName', 'lastName', 'email', 'title', 'phone', 'createdAt', 'updatedAt'];
-    for (const c of data.contacts) {
+    const contactStdKeys = ['id', 'tenantId', 'accountId', 'contactNumber', 'firstName', 'lastName', 'email', 'title', 'jobTitle', 'phone', 'assignedUserId', 'createdById', 'createdAt', 'updatedAt'];
+    for (let idx = 0; idx < data.contacts.length; idx++) {
+      const c = data.contacts[idx];
       const tenantId = mapper.getOrFallback(c.tenantId, 'tenant-enterprise-root');
-      const accountId = mapper.get(c.accountId) || c.accountId;
+      const accountId = mapper.get(c.accountId) || c.accountId || 'acc-legacy-101';
+      const defaultUserId = mapper.get('usr-admin-01') || 'usr-admin-01';
       const customFields = extractCustomFields(c, contactStdKeys);
 
       const contact = await prisma.contact.upsert({
@@ -381,19 +388,22 @@ export async function runETLMigration(dataset?: SourceDataset) {
         create: {
           id: c.id,
           tenantId,
-          accountId: accountId || null,
+          accountId,
+          contactNumber: c.contactNumber || `CON-${2000 + idx + 1}`,
           firstName: c.firstName || '',
           lastName: c.lastName || 'Contact',
           email: c.email || `${c.id}@contact.local`,
-          title: c.title || null,
+          jobTitle: c.jobTitle || c.title || null,
           phone: c.phone || null,
+          assignedUserId: mapper.get(c.assignedUserId) || c.assignedUserId || defaultUserId,
+          createdById: mapper.get(c.createdById) || c.createdById || defaultUserId,
           customFields,
         },
         update: {
           firstName: c.firstName,
           lastName: c.lastName,
           email: c.email,
-          title: c.title,
+          jobTitle: c.jobTitle || c.title,
           phone: c.phone,
           customFields,
         },
@@ -406,12 +416,14 @@ export async function runETLMigration(dataset?: SourceDataset) {
     // STEP 5: Deals
     // ------------------------------------------------------------------------
     console.log('💼 [5/8] Migrating Deals & Sales Pipeline...');
-    const dealStdKeys = ['id', 'tenantId', 'accountId', 'contactId', 'ownerId', 'title', 'dealName', 'amount', 'currency', 'stage', 'probability', 'createdAt', 'updatedAt'];
-    for (const d of data.deals) {
+    const dealStdKeys = ['id', 'tenantId', 'accountId', 'contactId', 'ownerId', 'assignedUserId', 'createdById', 'dealNumber', 'title', 'dealName', 'amount', 'currency', 'stage', 'probability', 'closingDate', 'createdAt', 'updatedAt'];
+    for (let idx = 0; idx < data.deals.length; idx++) {
+      const d = data.deals[idx];
       const tenantId = mapper.getOrFallback(d.tenantId, 'tenant-enterprise-root');
-      const accountId = mapper.get(d.accountId) || d.accountId;
+      const accountId = mapper.get(d.accountId) || d.accountId || 'acc-legacy-101';
       const contactId = mapper.get(d.contactId) || d.contactId;
-      const ownerId = mapper.get(d.ownerId) || d.ownerId;
+      const defaultUserId = mapper.get('usr-admin-01') || 'usr-admin-01';
+      const ownerId = mapper.get(d.ownerId) || d.ownerId || defaultUserId;
       const customFields = extractCustomFields(d, dealStdKeys);
 
       const deal = await prisma.deal.upsert({
@@ -419,14 +431,17 @@ export async function runETLMigration(dataset?: SourceDataset) {
         create: {
           id: d.id,
           tenantId,
-          accountId: accountId || null,
+          accountId,
           contactId: contactId || null,
-          ownerId: ownerId || null,
+          dealNumber: d.dealNumber || `DEAL-${3000 + idx + 1}`,
           dealName: d.title || d.dealName || 'Standard Deal',
           amount: Number(d.amount) || 0,
           currency: d.currency || 'USD',
           stage: d.stage || 'prospecting',
           probability: d.probability !== undefined ? Number(d.probability) : 50,
+          closingDate: d.closingDate ? normalizeTimestamp(d.closingDate) : new Date(Date.now() + 30 * 86400000),
+          assignedUserId: ownerId,
+          createdById: ownerId,
           customFields,
         },
         update: {
@@ -461,17 +476,33 @@ export async function runETLMigration(dataset?: SourceDataset) {
           dealId: dealId || null,
           title: p.title || 'Untitled Project',
           description: p.description || null,
-          budget: Number(p.budget) || 0,
-          actualCost: Number(p.actualCost) || 0,
         },
         update: {
           title: p.title,
           description: p.description,
-          budget: Number(p.budget) || undefined,
-          actualCost: Number(p.actualCost) || undefined,
         },
       });
       mapper.set(p.id, project.id);
+
+      if (p.budget !== undefined || p.actualCost !== undefined) {
+        const allocatedBudget = Number(p.budget) || 0;
+        const actualSpend = Number(p.actualCost) || 0;
+        await prisma.projectBudget.upsert({
+          where: { projectId: project.id },
+          create: {
+            projectId: project.id,
+            tenantId,
+            allocatedBudget,
+            actualSpend,
+            variance: allocatedBudget - actualSpend,
+          },
+          update: {
+            allocatedBudget,
+            actualSpend,
+            variance: allocatedBudget - actualSpend,
+          },
+        });
+      }
 
       // If deal is closed_won and linked, ensure deal.linkedProjectId is set
       if (dealId) {
@@ -534,7 +565,8 @@ export async function runETLMigration(dataset?: SourceDataset) {
     console.log('🛡️  [8/8] Migrating PPM Risk Register Items...');
     for (const r of data.riskItems) {
       const tenantId = mapper.getOrFallback(r.tenantId, 'tenant-enterprise-root');
-      const projectId = mapper.get(r.projectId) || r.projectId;
+      const projectId = mapper.get(r.projectId) || r.projectId || 'proj-legacy-401';
+      const ownerId = mapper.get(r.ownerId) || r.ownerId || mapper.get('usr-pm-01') || 'usr-admin-01';
       const probability = Number(r.probability) || 1;
       const impact = Number(r.impact) || 1;
 
@@ -543,20 +575,22 @@ export async function runETLMigration(dataset?: SourceDataset) {
         create: {
           id: r.id,
           tenantId,
-          projectId: projectId || null,
+          projectId,
+          ownerId,
           title: r.title,
           probability,
           impact,
-          score: probability * impact,
-          status: r.status || 'identified',
-          department: r.department || 'Engineering',
+          riskScore: probability * impact,
+          status: r.status || 'open',
+          category: r.category || r.department || 'technical',
         },
         update: {
           title: r.title,
           probability,
           impact,
-          score: probability * impact,
+          riskScore: probability * impact,
           status: r.status,
+          category: r.category || r.department,
         },
       });
       mapper.set(r.id, risk.id);

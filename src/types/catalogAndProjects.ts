@@ -84,6 +84,7 @@ export interface Quote {
   marginAmount?: number;
   marginPercent?: number;
   validUntil?: string;
+  currency?: string;
   notes?: string;
   createdAt: string;
   updatedAt: string;

@@ -17,6 +17,7 @@ import {
   Barcode
 } from 'lucide-react';
 import { ProductOrService, ProductOrServiceType, BillingFrequency } from '../../types';
+import { useCurrency } from '../../context/CurrencyContext';
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   onSave,
   editingItem,
 }) => {
+  const { currencySymbol, formatCurrency } = useCurrency();
   const [type, setType] = useState<ProductOrServiceType>('product');
   const [sku, setSku] = useState<string>('');
   const [name, setName] = useState<string>('');
@@ -283,7 +285,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-400">Margin:</span>
                 <span className={`text-xs font-bold font-mono px-2 py-0.5 rounded ${Number(marginPercent) >= 30 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : Number(marginPercent) > 0 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}`}>
-                  ${marginAmount.toLocaleString()} ({marginPercent}%)
+                  {formatCurrency(marginAmount)} ({marginPercent}%)
                 </span>
               </div>
             </div>
@@ -291,7 +293,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-[11px] font-medium text-slate-300 mb-1">
-                  Unit Sell Price ($) <span className="text-rose-400">*</span>
+                  Unit Sell Price ({currencySymbol}) <span className="text-rose-400">*</span>
                 </label>
                 <input
                   type="number"
@@ -305,7 +307,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
               <div>
                 <label className="block text-[11px] font-medium text-slate-300 mb-1">
-                  Cost / Supply Price ($)
+                  Cost / Supply Price ({currencySymbol})
                 </label>
                 <input
                   type="number"

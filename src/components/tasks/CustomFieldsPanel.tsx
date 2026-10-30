@@ -12,6 +12,7 @@ import {
   SlidersHorizontal 
 } from 'lucide-react';
 import { CustomFieldDefinition, CustomFieldType } from '../../types';
+import { useCurrency } from '../../context/CurrencyContext';
 
 interface CustomFieldsPanelProps {
   customFields?: Record<string, any>;
@@ -63,6 +64,7 @@ export const CustomFieldsPanel: React.FC<CustomFieldsPanelProps> = ({
   onChange,
   availableDefinitions = DEFAULT_DEFINITIONS,
 }) => {
+  const { currencySymbol } = useCurrency();
   const [fields, setFields] = useState<Record<string, any>>(customFields);
   const [isAddingField, setIsAddingField] = useState(false);
   const [newFieldName, setNewFieldName] = useState('');
@@ -159,7 +161,7 @@ export const CustomFieldsPanel: React.FC<CustomFieldsPanelProps> = ({
             >
               <option value="text">Text</option>
               <option value="number">Number</option>
-              <option value="currency">Currency ($)</option>
+              <option value="currency">Currency ({currencySymbol})</option>
               <option value="date">Date</option>
               <option value="checkbox">Checkbox (Boolean)</option>
               <option value="rating">Rating (1-5)</option>
@@ -258,7 +260,7 @@ export const CustomFieldsPanel: React.FC<CustomFieldsPanelProps> = ({
               ) : def.type === 'currency' ? (
                 <div className="relative">
                   <span className="absolute left-2.5 top-1.5 text-xs text-slate-400 font-mono">
-                    {def.currencySymbol || '$'}
+                    {def.currencySymbol || currencySymbol}
                   </span>
                   <input
                     type="number"

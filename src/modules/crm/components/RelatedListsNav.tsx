@@ -20,9 +20,11 @@ import {
   Calendar,
   LayoutGrid,
   FileText,
+  Radio,
 } from 'lucide-react';
+import { ContextualBookingsPanel } from '../../scheduler/components/ContextualBookingsPanel';
 
-export type SubPanelTab = 'summary' | 'details' | 'projects' | 'tasks' | 'activities';
+export type SubPanelTab = 'summary' | 'details' | 'projects' | 'tasks' | 'activities' | 'social' | 'bookings';
 
 export interface RelatedListsNavProps {
   moduleName: EntityModuleName;
@@ -48,8 +50,10 @@ export const RelatedListsNav: React.FC<RelatedListsNavProps> = ({
   // Linked Data States
   const [linkedProjects, setLinkedProjects] = useState<any[]>([]);
   const [linkedTasks, setLinkedTasks] = useState<any[]>([]);
+  const [socialInteractions, setSocialInteractions] = useState<any[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [loadingTasks, setLoadingTasks] = useState(false);
+  const [loadingSocial, setLoadingSocial] = useState(false);
 
   // New Task Form Drawer / Inline Modal
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -57,6 +61,20 @@ export const RelatedListsNav: React.FC<RelatedListsNavProps> = ({
   const [taskPriority, setTaskPriority] = useState('medium');
   const [taskDueDate, setTaskDueDate] = useState('');
   const [isSavingTask, setIsSavingTask] = useState(false);
+
+  // Fetch Linked Social Interactions
+  useEffect(() => {
+    if (!recordId) return;
+    const filterParam = moduleName === 'contacts' ? { contactId: recordId } : { accountId: recordId };
+    setLoadingSocial(true);
+    apiClient
+      .get<any>('/v1/social/interactions', { params: filterParam })
+      .then((res) => {
+        setSocialInteractions(res?.data || []);
+      })
+      .catch(() => setSocialInteractions([]))
+      .finally(() => setLoadingSocial(false));
+  }, [recordId, moduleName]);
 
   // 1. Fetch Linked Projects
   useEffect(() => {
@@ -250,6 +268,39 @@ export const RelatedListsNav: React.FC<RelatedListsNavProps> = ({
           <Activity className="w-3.5 h-3.5" />
           Activity Stream
         </button>
+
+        <button
+          onClick={() => onTabChange('social')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+            activeTab === 'social'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+          }`}
+        >
+          <Radio className="w-3.5 h-3.5" />
+          Social Activity
+          <span
+            className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+              activeTab === 'social'
+                ? 'bg-white/20 text-white'
+                : 'bg-slate-800 text-slate-400'
+            }`}
+          >
+            {socialInteractions.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => onTabChange('bookings')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+            activeTab === 'bookings'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+          }`}
+        >
+          <Calendar className="w-3.5 h-3.5" />
+          Bookings & Meetings
+        </button>
       </div>
 
       {/* 2. Projects Sub-Panel Content */}
@@ -263,7 +314,7 @@ export const RelatedListsNav: React.FC<RelatedListsNavProps> = ({
               </p>
             </div>
             <button
-              onClick={() => navigate('/projects/new')}
+              onClick={() => navigate('/projects')}
               className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-all shadow"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -461,6 +512,77 @@ export const RelatedListsNav: React.FC<RelatedListsNavProps> = ({
               </div>
             </form>
           )}
+        </div>
+      )}
+
+      {/* 5. Social Activity Sub-Panel Content */}
+      {activeTab === 'social' && (
+        <div className="bg-slate-900/70 border border-slate-800/90 rounded-2xl p-6 shadow-xl space-y-4 animate-fadeIn">
+          <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
+                <Radio className="w-4 h-4 text-indigo-400" />
+                Linked Social Interactions & Mentions
+              </h3>
+              <p className="text-xs text-slate-400">
+                Inbound brand mentions, support issues, and posts associated with this {moduleName.slice(0, -1)}.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/social')}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-all shadow"
+            >
+              <span>Social Hub</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {loadingSocial ? (
+            <div className="py-12 text-center text-xs text-slate-400">Loading social mentions...</div>
+          ) : socialInteractions.length === 0 ? (
+            <div className="p-8 text-center border border-dashed border-slate-800 rounded-xl text-xs text-slate-500">
+              No social mentions or interactions linked to this record.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {socialInteractions.map((item) => (
+                <div
+                  key={item.id}
+                  className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 text-xs space-y-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-white">
+                      {item.authorName} (@{item.authorHandle})
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
+                        {item.platform}
+                      </span>
+                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
+                        {item.sentiment}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">{item.content}</p>
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-800/60">
+                    <span className="capitalize">Intent: {item.intent?.replace('_', ' ')}</span>
+                    <span>{new Date(item.publishedAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 6. Bookings Sub-Panel Content */}
+      {activeTab === 'bookings' && (
+        <div className="animate-fadeIn">
+          <ContextualBookingsPanel
+            contactId={moduleName === 'contacts' ? recordId : undefined}
+            accountId={moduleName === 'accounts' ? recordId : undefined}
+            title={`${record.accountName || record.firstName || 'CRM Entity'} Scheduled Meetings`}
+          />
         </div>
       )}
     </div>

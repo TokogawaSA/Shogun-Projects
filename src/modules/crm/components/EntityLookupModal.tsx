@@ -7,6 +7,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { apiClient } from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import { EntityModuleName } from '../../../types/crmEntities';
+import { useCurrency } from '../../../context/CurrencyContext';
 import {
   Search,
   X,
@@ -33,6 +34,7 @@ export const EntityLookupModal: React.FC<EntityLookupModalProps> = ({
   title,
   onSelect,
 }) => {
+  const { formatCurrency } = useCurrency();
   const { user } = useAuth();
   const tenantId = user?.tenantId || 'tenant-default';
 
@@ -173,7 +175,7 @@ export const EntityLookupModal: React.FC<EntityLookupModalProps> = ({
                   : targetModule === 'accounts'
                   ? item.industry || item.domain
                   : targetModule === 'deals'
-                  ? `$${Number(item.amount || 0).toLocaleString()} • ${item.stage || ''}`
+                  ? `${formatCurrency(Number(item.amount || 0))} • ${item.stage || ''}`
                   : item.company || item.email;
 
               return (

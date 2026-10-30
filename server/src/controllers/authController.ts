@@ -186,7 +186,10 @@ export async function register(req: Request, res: Response): Promise<void> {
     });
   } catch (err: any) {
     console.error('[Register Error]:', err);
-    res.status(500).json({ error: 'Registration failed due to server error.', details: err.message });
+    res.status(500).json({
+      error: 'Registration failed due to server error.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -260,7 +263,10 @@ export async function login(req: Request, res: Response): Promise<void> {
     });
   } catch (err: any) {
     console.error('[Login Error]:', err);
-    res.status(500).json({ error: 'Login failed due to internal error.', details: err.message });
+    res.status(500).json({
+      error: 'Login failed due to internal error.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -328,7 +334,10 @@ export async function getMe(req: Request, res: Response): Promise<void> {
     });
   } catch (err: any) {
     console.error('[GetMe Error]:', err);
-    res.status(500).json({ error: 'Failed to retrieve profile.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to retrieve profile.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -393,6 +402,9 @@ export async function inviteUser(req: Request, res: Response): Promise<void> {
     });
   } catch (err: any) {
     console.error('[Invite User Error]:', err);
-    res.status(500).json({ error: 'Failed to create team member.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to create team member.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }

@@ -9,7 +9,7 @@ import { apiClient } from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import { EntityModuleName } from '../../../types/crmEntities';
 import {
-  DollarSign,
+  Coins,
   Briefcase,
   Layers,
   Activity,
@@ -22,6 +22,7 @@ import {
   Calendar,
   Sparkles,
 } from 'lucide-react';
+import { useCurrency } from '../../../context/CurrencyContext';
 
 export interface EntitySummaryWidgetProps {
   moduleName: EntityModuleName;
@@ -46,6 +47,7 @@ export const EntitySummaryWidget: React.FC<EntitySummaryWidgetProps> = ({
   className = '',
 }) => {
   const { user } = useAuth();
+  const { currencyCode, formatCurrency } = useCurrency();
   const tenantId = user?.tenantId || 'tenant-default';
 
   const [activities, setActivities] = useState<ActivityItem[]>([]);
@@ -132,12 +134,12 @@ export const EntitySummaryWidget: React.FC<EntitySummaryWidgetProps> = ({
             <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-500/20 shadow-md">
               <div className="flex items-center justify-between text-slate-400 text-xs mb-1">
                 <span>Deal Value</span>
-                <DollarSign className="w-4 h-4 text-emerald-400" />
+                <Coins className="w-4 h-4 text-emerald-400" />
               </div>
-              <div className="text-xl font-bold text-emerald-400">
-                ${Number(record.amount || 0).toLocaleString()}
+              <div className="text-xl font-bold text-emerald-400 font-mono">
+                {formatCurrency(record.amount)}
               </div>
-              <div className="text-[11px] text-slate-500 mt-0.5">Currency: {record.currency || 'USD'}</div>
+              <div className="text-[11px] text-slate-500 mt-0.5 font-mono">Currency: {currencyCode}</div>
             </div>
 
             <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-500/20 shadow-md">
@@ -196,10 +198,10 @@ export const EntitySummaryWidget: React.FC<EntitySummaryWidgetProps> = ({
             <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-500/20 shadow-md">
               <div className="flex items-center justify-between text-slate-400 text-xs mb-1">
                 <span>Annual Revenue</span>
-                <DollarSign className="w-4 h-4 text-emerald-400" />
+                <Coins className="w-4 h-4 text-emerald-400" />
               </div>
-              <div className="text-lg font-bold text-emerald-400">
-                ${Number(record.annualRevenue || 0).toLocaleString()}
+              <div className="text-lg font-bold text-emerald-400 font-mono">
+                {formatCurrency(record.annualRevenue)}
               </div>
               <div className="text-[11px] text-slate-500 mt-0.5">Est. Budget Pool</div>
             </div>
@@ -247,10 +249,10 @@ export const EntitySummaryWidget: React.FC<EntitySummaryWidgetProps> = ({
             <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-500/20 shadow-md">
               <div className="flex items-center justify-between text-slate-400 text-xs mb-1">
                 <span>Annual Revenue</span>
-                <DollarSign className="w-4 h-4 text-emerald-400" />
+                <Coins className="w-4 h-4 text-emerald-400" />
               </div>
-              <div className="text-lg font-bold text-emerald-400">
-                ${Number(record.annualRevenue || 0).toLocaleString()}
+              <div className="text-lg font-bold text-emerald-400 font-mono">
+                {formatCurrency(record.annualRevenue)}
               </div>
               <div className="text-[11px] text-slate-500 mt-0.5">Industry: {record.industry || 'Tech'}</div>
             </div>

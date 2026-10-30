@@ -196,7 +196,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const signInWithGoogle = async () => {
-    // For REST stack, Google OAuth or demo login
+    if (import.meta.env.PROD) {
+      throw new Error('Google OAuth is not configured for this environment.');
+    }
+    // Development convenience fallback
     return login('admin@shogunate.solutions', 'AdminPassword@2026');
   };
 

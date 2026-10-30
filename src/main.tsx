@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
+import { CurrencyProvider } from './context/CurrencyContext';
 import { ProjectProvider } from './context/ProjectContext';
 import { HierarchyProvider } from './context/HierarchyContext';
 import './index.css';
@@ -21,11 +22,13 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ProjectProvider>
-          <HierarchyProvider>
-            <App />
-          </HierarchyProvider>
-        </ProjectProvider>
+        <CurrencyProvider>
+          <ProjectProvider>
+            <HierarchyProvider>
+              <App />
+            </HierarchyProvider>
+          </ProjectProvider>
+        </CurrencyProvider>
       </AuthProvider>
     </QueryClientProvider>
   </React.StrictMode>

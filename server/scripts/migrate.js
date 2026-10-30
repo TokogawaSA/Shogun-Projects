@@ -57,11 +57,23 @@ try {
 
   // 3. Push schema to PostgreSQL database (creating missing tables, RLS readiness, and relational constraints)
   console.log('🚀 [Prisma] Pushing schema to PostgreSQL...');
-  execSync('npx prisma db push --skip-generate --accept-data-loss', {
+  execSync('npx prisma db push --skip-generate', {
     cwd: serverDir,
     stdio: 'inherit',
     env: { ...process.env, DATABASE_URL: dbUrl },
   });
+
+  // 4. Enforce Row Level Security (RLS) tenant isolation policies
+  try {
+    console.log('🔒 [RLS] Applying multi-tenant row level security policies...');
+    execSync('npx tsx scripts/apply-rls-social.ts', {
+      cwd: serverDir,
+      stdio: 'inherit',
+      env: { ...process.env, DATABASE_URL: dbUrl },
+    });
+  } catch (rlsErr) {
+    console.warn('⚠️ [RLS Notice] Could not execute RLS policies directly, proceeding:', rlsErr.message);
+  }
 
   console.log('\n======================================================');
   console.log('✅ [PostgreSQL Database Migration Complete]');

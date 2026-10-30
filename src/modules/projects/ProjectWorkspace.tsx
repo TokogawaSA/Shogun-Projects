@@ -12,7 +12,8 @@ import {
   List, 
   Layers, 
   BarChart3, 
-  Loader2
+  Loader2,
+  Calendar as CalendarIcon
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useProject } from '../../context/ProjectContext';
@@ -25,8 +26,9 @@ import { ProjectOverview } from './components/ProjectOverview';
 import { TaskDetailModal } from './components/TaskDetailModal';
 import { CreateTaskModal } from './components/CreateTaskModal';
 import { ColumnConfigModal } from './components/ColumnConfigModal';
+import { ContextualBookingsPanel } from '../scheduler/components/ContextualBookingsPanel';
 
-type WorkspaceTab = 'board' | 'list' | 'milestones' | 'overview';
+type WorkspaceTab = 'board' | 'list' | 'milestones' | 'overview' | 'bookings';
 
 export const ProjectWorkspace: React.FC = () => {
   const { id: urlProjectId } = useParams<{ id: string }>();
@@ -42,7 +44,7 @@ export const ProjectWorkspace: React.FC = () => {
 
   // Core State
   const [activeTab, setActiveTab] = useState<WorkspaceTab>(() => {
-    if (tabParam && ['board', 'list', 'milestones', 'overview'].includes(tabParam)) {
+    if (tabParam && ['board', 'list', 'milestones', 'overview', 'bookings'].includes(tabParam)) {
       return tabParam;
     }
     return 'board';
@@ -416,6 +418,19 @@ export const ProjectWorkspace: React.FC = () => {
             <BarChart3 className="w-3.5 h-3.5" />
             <span>Overview & Vitals</span>
           </button>
+
+          <button
+            onClick={() => handleTabChange('bookings')}
+            className={clsx(
+              'flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all duration-150',
+              activeTab === 'bookings'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-semibold ring-1 ring-indigo-400/40'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            )}
+          >
+            <CalendarIcon className="w-3.5 h-3.5" />
+            <span>Meetings & Bookings</span>
+          </button>
         </div>
       </div>
 
@@ -484,7 +499,14 @@ export const ProjectWorkspace: React.FC = () => {
                 setProject((prev) => ({ ...prev, ...updates }));
                 await projectService.updateProject(activeProjectId, updates);
               }}
-              onNavigateTab={(tab) => handleTabChange(tab)}
+              onNavigateTab={(tab) => handleTabChange(tab as WorkspaceTab)}
+            />
+          )}
+
+          {activeTab === 'bookings' && (
+            <ContextualBookingsPanel
+              projectId={activeProjectId}
+              title="Project Review Sessions & Consultations"
             />
           )}
         </div>

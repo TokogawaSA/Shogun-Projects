@@ -15,11 +15,19 @@ import { prisma } from '../config/db.js';
 // 1. Project Phases & Milestone Gatekeeping
 // ==========================================
 
+function resolveTenantId(req: Request): string {
+  const tenantId = (req.user || req.tenantContext)?.tenantId || req.tenantId;
+  if (!tenantId) {
+    throw new Error('Unauthorized: Missing tenant context.');
+  }
+  return tenantId;
+}
+
 export async function getProjectPhases(req: Request, res: Response): Promise<void> {
-  const tenantId = req.tenantId || 'tenant_default';
   const { projectId } = req.params;
 
   try {
+    const tenantId = resolveTenantId(req);
     const phases = await prisma.projectPhase.findMany({
       where: { projectId, tenantId },
       include: {
@@ -40,18 +48,34 @@ export async function getProjectPhases(req: Request, res: Response): Promise<voi
 
     res.json(phases);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to retrieve project phases', details: error.message });
+    res.status(500).json({
+      error: 'Failed to retrieve project phases',
+      ...(process.env.NODE_ENV === 'development' ? { details: error.message } : {}),
+    });
   }
 }
 
 export async function signOffProjectPhase(req: Request, res: Response): Promise<void> {
-  const tenantId = req.tenantId || 'tenant_default';
-  const { phaseId } = req.params;
-  const { signOffBy, notes } = req.body;
+  const { projectId, phaseId } = req.params;
+  const { signOffBy } = req.body;
 
   try {
+    const tenantId = resolveTenantId(req);
+    const existing = await prisma.projectPhase.findFirst({
+      where: {
+        id: phaseId,
+        tenantId,
+        ...(projectId ? { projectId } : {}),
+      },
+    });
+
+    if (!existing) {
+      res.status(404).json({ error: 'Project phase not found in active tenant.' });
+      return;
+    }
+
     const updated = await prisma.projectPhase.update({
-      where: { id: phaseId },
+      where: { id: existing.id },
       data: {
         isCompleted: true,
         signOffDate: new Date(),
@@ -60,7 +84,10 @@ export async function signOffProjectPhase(req: Request, res: Response): Promise<
     });
     res.json(updated);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to sign off phase', details: error.message });
+    res.status(500).json({
+      error: 'Failed to sign off phase',
+      ...(process.env.NODE_ENV === 'development' ? { details: error.message } : {}),
+    });
   }
 }
 
@@ -69,10 +96,10 @@ export async function signOffProjectPhase(req: Request, res: Response): Promise<
 // ==========================================
 
 export async function getDrawingSheets(req: Request, res: Response): Promise<void> {
-  const tenantId = req.tenantId || 'tenant_default';
   const { projectId } = req.params;
 
   try {
+    const tenantId = resolveTenantId(req);
     const sheets = await prisma.drawingSheet.findMany({
       where: { projectId, tenantId },
       include: {
@@ -85,16 +112,25 @@ export async function getDrawingSheets(req: Request, res: Response): Promise<voi
 
     res.json(sheets);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to retrieve drawing sheets', details: error.message });
+    res.status(500).json({
+      error: 'Failed to retrieve drawing sheets',
+      ...(process.env.NODE_ENV === 'development' ? { details: error.message } : {}),
+    });
   }
 }
 
 export async function createDrawingSheet(req: Request, res: Response): Promise<void> {
-  const tenantId = req.tenantId || 'tenant_default';
   const { projectId } = req.params;
   const { sheetNumber, title, discipline, currentRevision, issueStatus } = req.body;
 
   try {
+    const tenantId = resolveTenantId(req);
+    const project = await prisma.project.findFirst({ where: { id: projectId, tenantId } });
+    if (!project) {
+      res.status(404).json({ error: 'Project not found in active tenant.' });
+      return;
+    }
+
     const sheet = await prisma.drawingSheet.create({
       data: {
         projectId,
@@ -108,7 +144,10 @@ export async function createDrawingSheet(req: Request, res: Response): Promise<v
     });
     res.status(201).json(sheet);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to create drawing sheet', details: error.message });
+    res.status(500).json({
+      error: 'Failed to create drawing sheet',
+      ...(process.env.NODE_ENV === 'development' ? { details: error.message } : {}),
+    });
   }
 }
 
@@ -117,10 +156,10 @@ export async function createDrawingSheet(req: Request, res: Response): Promise<v
 // ==========================================
 
 export async function getRfiLog(req: Request, res: Response): Promise<void> {
-  const tenantId = req.tenantId || 'tenant_default';
   const { projectId } = req.params;
 
   try {
+    const tenantId = resolveTenantId(req);
     const rfis = await prisma.rfi.findMany({
       where: { projectId, tenantId },
       orderBy: { rfiNumber: 'desc' },
@@ -128,16 +167,25 @@ export async function getRfiLog(req: Request, res: Response): Promise<void> {
 
     res.json(rfis);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to retrieve RFIs', details: error.message });
+    res.status(500).json({
+      error: 'Failed to retrieve RFIs',
+      ...(process.env.NODE_ENV === 'development' ? { details: error.message } : {}),
+    });
   }
 }
 
 export async function createRfi(req: Request, res: Response): Promise<void> {
-  const tenantId = req.tenantId || 'tenant_default';
   const { projectId } = req.params;
   const { subject, disciplineTag, question, impactCost, impactSchedule, turnAroundDays } = req.body;
 
   try {
+    const tenantId = resolveTenantId(req);
+    const project = await prisma.project.findFirst({ where: { id: projectId, tenantId } });
+    if (!project) {
+      res.status(404).json({ error: 'Project not found in active tenant.' });
+      return;
+    }
+
     const count = await prisma.rfi.count({ where: { projectId, tenantId } });
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + (turnAroundDays || 10)); // Default 10-day turnaround SLA
@@ -158,17 +206,34 @@ export async function createRfi(req: Request, res: Response): Promise<void> {
     });
     res.status(201).json(rfi);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to create RFI', details: error.message });
+    res.status(500).json({
+      error: 'Failed to create RFI',
+      ...(process.env.NODE_ENV === 'development' ? { details: error.message } : {}),
+    });
   }
 }
 
 export async function respondToRfi(req: Request, res: Response): Promise<void> {
-  const { rfiId } = req.params;
+  const { projectId, rfiId } = req.params;
   const { response, status } = req.body;
 
   try {
+    const tenantId = resolveTenantId(req);
+    const existing = await prisma.rfi.findFirst({
+      where: {
+        id: rfiId,
+        tenantId,
+        ...(projectId ? { projectId } : {}),
+      },
+    });
+
+    if (!existing) {
+      res.status(404).json({ error: 'RFI not found in active tenant.' });
+      return;
+    }
+
     const updated = await prisma.rfi.update({
-      where: { id: rfiId },
+      where: { id: existing.id },
       data: {
         response,
         status: status || 'RESPONDED',
@@ -177,15 +242,18 @@ export async function respondToRfi(req: Request, res: Response): Promise<void> {
     });
     res.json(updated);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to respond to RFI', details: error.message });
+    res.status(500).json({
+      error: 'Failed to respond to RFI',
+      ...(process.env.NODE_ENV === 'development' ? { details: error.message } : {}),
+    });
   }
 }
 
 export async function getSubmittalLog(req: Request, res: Response): Promise<void> {
-  const tenantId = req.tenantId || 'tenant_default';
   const { projectId } = req.params;
 
   try {
+    const tenantId = resolveTenantId(req);
     const submittals = await prisma.submittal.findMany({
       where: { projectId, tenantId },
       orderBy: { submittalNumber: 'desc' },
@@ -193,7 +261,10 @@ export async function getSubmittalLog(req: Request, res: Response): Promise<void
 
     res.json(submittals);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to retrieve submittals', details: error.message });
+    res.status(500).json({
+      error: 'Failed to retrieve submittals',
+      ...(process.env.NODE_ENV === 'development' ? { details: error.message } : {}),
+    });
   }
 }
 
@@ -202,10 +273,10 @@ export async function getSubmittalLog(req: Request, res: Response): Promise<void
 // ==========================================
 
 export async function getSiteReports(req: Request, res: Response): Promise<void> {
-  const tenantId = req.tenantId || 'tenant_default';
   const { projectId } = req.params;
 
   try {
+    const tenantId = resolveTenantId(req);
     const reports = await prisma.siteReport.findMany({
       where: { projectId, tenantId },
       orderBy: { reportNumber: 'desc' },
@@ -213,16 +284,25 @@ export async function getSiteReports(req: Request, res: Response): Promise<void>
 
     res.json(reports);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to retrieve site reports', details: error.message });
+    res.status(500).json({
+      error: 'Failed to retrieve site reports',
+      ...(process.env.NODE_ENV === 'development' ? { details: error.message } : {}),
+    });
   }
 }
 
 export async function createSiteReport(req: Request, res: Response): Promise<void> {
-  const tenantId = req.tenantId || 'tenant_default';
   const { projectId } = req.params;
   const { weather, attendees, observations, punchList, photos } = req.body;
 
   try {
+    const tenantId = resolveTenantId(req);
+    const project = await prisma.project.findFirst({ where: { id: projectId, tenantId } });
+    if (!project) {
+      res.status(404).json({ error: 'Project not found in active tenant.' });
+      return;
+    }
+
     const count = await prisma.siteReport.count({ where: { projectId, tenantId } });
     const report = await prisma.siteReport.create({
       data: {
@@ -239,7 +319,10 @@ export async function createSiteReport(req: Request, res: Response): Promise<voi
     });
     res.status(201).json(report);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to create site report', details: error.message });
+    res.status(500).json({
+      error: 'Failed to create site report',
+      ...(process.env.NODE_ENV === 'development' ? { details: error.message } : {}),
+    });
   }
 }
 
@@ -248,34 +331,108 @@ export async function createSiteReport(req: Request, res: Response): Promise<voi
 // ==========================================
 
 export async function getStudioCapacityHeatmap(req: Request, res: Response): Promise<void> {
-  res.json({
-    studioCapacityData: [],
-    overallocationThresholdHours: 40,
-    activeDisciplines: ['Architectural', 'Structural', 'MEP', 'BIM / Computational', 'Civil'],
-    totalStudioWeeklyCapacityHours: 0,
-  });
+  try {
+    const tenantId = resolveTenantId(req);
+    const [profiles, activeTasks] = await Promise.all([
+      prisma.resourceProfile.findMany({
+        where: { tenantId },
+        include: { user: { select: { id: true, displayName: true, email: true, role: true } } },
+      }),
+      prisma.task.findMany({
+        where: { tenantId, status: { in: ['todo', 'in_progress', 'review'] } },
+        select: { id: true, assigneeId: true, estimatedHours: true, discipline: true },
+      }),
+    ]);
+
+    const studioCapacityData = profiles.map((p) => {
+      const assigned = activeTasks
+        .filter((t) => t.assigneeId === p.userId)
+        .reduce((sum, t) => sum + (t.estimatedHours || 0), 0);
+      return {
+        userId: p.userId,
+        displayName: p.user?.displayName || 'Studio Member',
+        department: p.department,
+        weeklyCapacityHours: p.weeklyCapacityHours,
+        assignedHours: assigned,
+        utilizationPercent: p.weeklyCapacityHours > 0 ? Math.round((assigned / p.weeklyCapacityHours) * 100) : 0,
+      };
+    });
+
+    const totalStudioWeeklyCapacityHours = profiles.reduce((sum, p) => sum + (p.weeklyCapacityHours || 40), 0);
+
+    res.json({
+      studioCapacityData,
+      overallocationThresholdHours: 40,
+      activeDisciplines: ['Architectural', 'Structural', 'MEP', 'BIM / Computational', 'Civil'],
+      totalStudioWeeklyCapacityHours,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Failed to retrieve studio capacity heatmap',
+      ...(process.env.NODE_ENV === 'development' ? { details: error.message } : {}),
+    });
+  }
 }
 
 export async function getStudioNetMultiplier(req: Request, res: Response): Promise<void> {
-  res.json({
-    grossInvoicedFees: 0,
-    subConsultantPassThroughs: 0,
-    netRevenue: 0,
-    directLaborCost: 0,
-    currentMultiplier: 0,
-    targetBenchmarkRange: { min: 2.8, max: 3.2 },
-    healthStatus: 'HEALTHY_ON_TARGET',
-    unbilledScopeHours: 0,
-    unbilledScopeCostRisk: 0,
-    projectBreakdown: [],
-  });
+  try {
+    const tenantId = resolveTenantId(req);
+    const [invoices, subConsultants, budgets] = await Promise.all([
+      prisma.projectInvoice.findMany({ where: { tenantId } }),
+      prisma.subConsultantLedger.findMany({ where: { tenantId } }),
+      prisma.projectBudget.findMany({
+        where: { tenantId },
+        include: { project: { select: { id: true, title: true, targetMultiplier: true } } },
+      }),
+    ]);
+
+    const grossInvoicedFees = invoices.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
+    const subConsultantPassThroughs = subConsultants.reduce(
+      (sum, sc) => sum + Number(sc.invoicedAmount || 0),
+      0
+    );
+    const netRevenue = Math.max(0, grossInvoicedFees - subConsultantPassThroughs);
+    const directLaborCost = budgets.reduce((sum, b) => sum + (b.actualLaborCost || 0), 0);
+    const currentMultiplier =
+      directLaborCost > 0 ? Number((netRevenue / directLaborCost).toFixed(2)) : 3.0;
+
+    const healthStatus =
+      currentMultiplier >= 2.8
+        ? 'HEALTHY_ON_TARGET'
+        : currentMultiplier >= 2.2
+          ? 'WARNING_BELOW_BENCHMARK'
+          : 'CRITICAL_FEE_EROSION';
+
+    res.json({
+      grossInvoicedFees,
+      subConsultantPassThroughs,
+      netRevenue,
+      directLaborCost,
+      currentMultiplier,
+      targetBenchmarkRange: { min: 2.8, max: 3.2 },
+      healthStatus,
+      unbilledScopeHours: 0,
+      unbilledScopeCostRisk: 0,
+      projectBreakdown: budgets.map((b) => ({
+        projectId: b.projectId,
+        projectTitle: b.project?.title,
+        actualLaborCost: b.actualLaborCost,
+        actualExpenses: b.actualExpenses,
+      })),
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Failed to calculate studio net multiplier',
+      ...(process.env.NODE_ENV === 'development' ? { details: error.message } : {}),
+    });
+  }
 }
 
 export async function getSubConsultantLedger(req: Request, res: Response): Promise<void> {
-  const tenantId = req.tenantId || 'tenant_default';
   const { projectId } = req.params;
 
   try {
+    const tenantId = resolveTenantId(req);
     const ledgers = await prisma.subConsultantLedger.findMany({
       where: { projectId, tenantId },
       orderBy: { createdAt: 'asc' },
@@ -283,6 +440,9 @@ export async function getSubConsultantLedger(req: Request, res: Response): Promi
 
     res.json(ledgers);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to retrieve sub-consultant ledgers', details: error.message });
+    res.status(500).json({
+      error: 'Failed to retrieve sub-consultant ledgers',
+      ...(process.env.NODE_ENV === 'development' ? { details: error.message } : {}),
+    });
   }
 }

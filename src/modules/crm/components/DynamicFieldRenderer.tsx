@@ -12,7 +12,7 @@ import {
   ExternalLink, 
   Building2, 
   User as UserIcon, 
-  DollarSign, 
+  Coins,
   Calendar, 
   Percent,
   CheckCircle2,
@@ -20,6 +20,7 @@ import {
   Hash
 } from 'lucide-react';
 import { FieldDefinition, PicklistOption } from '../../../types/crmEntities';
+import { useCurrency, parseCurrency } from '../../../context/CurrencyContext';
 import { InlineEditWrapper } from './InlineEditWrapper';
 
 export interface DynamicFieldRendererProps {
@@ -139,6 +140,7 @@ export const DynamicFieldRenderer: React.FC<DynamicFieldRendererProps> = ({
   isReadOnly = false,
   className = '',
 }) => {
+  const { currencyCode, formatCurrency } = useCurrency();
   const [draftValue, setDraftValue] = useState<any>(value);
 
   // Sync draft value when incoming prop changes
@@ -266,11 +268,12 @@ export const DynamicFieldRenderer: React.FC<DynamicFieldRendererProps> = ({
                 </div>
               );
 
-            case 'currency':
+            case 'currency': {
+              const parsedCur = parseCurrency(currencyCode);
               return (
                 <div className="relative flex items-center">
-                  <span className="absolute left-2 text-xs text-slate-400 pointer-events-none">
-                    {record.currency === 'EUR' ? '€' : record.currency === 'GBP' ? '£' : record.currency === 'ZAR' ? 'R' : '$'}
+                  <span className="absolute left-2 text-xs text-slate-400 pointer-events-none font-mono font-medium">
+                    {parsedCur.symbol}
                   </span>
                   <input
                     type="number"
@@ -284,6 +287,7 @@ export const DynamicFieldRenderer: React.FC<DynamicFieldRendererProps> = ({
                   />
                 </div>
               );
+            }
 
             case 'date':
               return (
@@ -424,15 +428,11 @@ export const DynamicFieldRenderer: React.FC<DynamicFieldRendererProps> = ({
           case 'currency': {
             const num = Number(value);
             if (isNaN(num)) return <span className="text-xs text-slate-300">{value}</span>;
-            const formatted = new Intl.NumberFormat('en-US', {
-              style: 'currency',
-              currency: record.currency || 'USD',
-              maximumFractionDigits: 2,
-            }).format(num);
+            const formatted = formatCurrency(num);
 
             return (
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-400">
-                <DollarSign className="w-3 h-3 text-emerald-500" />
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 font-mono">
+                <Coins className="w-3.5 h-3.5 text-emerald-500" />
                 {formatted}
               </span>
             );

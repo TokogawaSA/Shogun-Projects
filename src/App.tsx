@@ -14,6 +14,9 @@ import { renderPmRoutes } from './routes/projectManagementRoutes';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { PublicWebFormPage } from './pages/PublicWebFormPage';
+import { PublicBookingPage } from './pages/PublicBookingPage';
+import { SchedulerPage } from './modules/scheduler/pages/SchedulerPage';
+import { SocialListeningHub } from './modules/social';
 import { useAuth } from './context/AuthContext';
 import { Loader2 } from 'lucide-react';
 
@@ -115,6 +118,12 @@ const AppLayout: React.FC = () => {
         subtitle: 'Hardware inventory, billable services, recurring SLA subscriptions & SKUs',
       };
     }
+    if (path.startsWith('/social')) {
+      return { 
+        title: 'Organic Social Engagement & Listening', 
+        subtitle: 'Brand sentiment intelligence, multi-platform mention triage, thread replies & CRM escalation' 
+      };
+    }
     if (path.startsWith('/settings/automation/forms')) {
       return { 
         title: 'Web Forms & Workflow Routing', 
@@ -127,6 +136,12 @@ const AppLayout: React.FC = () => {
         subtitle: 'Tenant-isolated VTiger administration, workflows, schemas & access control' 
       };
     }
+    if (path === '/scheduler') {
+      return {
+        title: 'Scheduler & Bookings',
+        subtitle: 'Interactive team calendar, client appointment booking & CRM/Project sync',
+      };
+    }
     return { 
       title: 'System Overview', 
       subtitle: 'Antigravity 2.0 dual-wield command center' 
@@ -134,8 +149,18 @@ const AppLayout: React.FC = () => {
   };
 
   const isPublicFormRoute = location.pathname.startsWith('/forms/') || location.pathname.startsWith('/public/forms/');
+  const isPublicBookingRoute = location.pathname.startsWith('/book/');
 
   const { title, subtitle } = getPageInfo();
+
+  if (isPublicBookingRoute) {
+    return (
+      <Routes>
+        <Route path="/book/:hostId/:slug" element={<PublicBookingPage />} />
+        <Route path="/book/:slug" element={<PublicBookingPage />} />
+      </Routes>
+    );
+  }
 
   if (isPublicFormRoute) {
     return (
@@ -194,6 +219,8 @@ const AppLayout: React.FC = () => {
             {/* Products & Services Catalog Routes */}
             {renderCatalogRoutes()}
             
+            <Route path="/scheduler" element={<SchedulerPage />} />
+            <Route path="/social" element={<SocialListeningHub />} />
             <Route path="/mcp" element={<McpServersPage />} />
             <Route path="/forms" element={<Navigate to="/settings/automation/forms" replace />} />
             

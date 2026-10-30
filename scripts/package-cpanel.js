@@ -61,16 +61,26 @@ if (fs.existsSync(serverJs)) {
   fs.copyFileSync(serverJs, path.join(backendStaging, 'server.js'));
 }
 
-// Copy server/.env.example -> staging/.env.example
+// Copy server/.env.example and server/.env.cpanel.example -> staging
 const serverEnv = path.join(rootDir, 'server', '.env.example');
 if (fs.existsSync(serverEnv)) {
   fs.copyFileSync(serverEnv, path.join(backendStaging, '.env.example'));
+}
+const serverCpanelEnv = path.join(rootDir, 'server', '.env.cpanel.example');
+if (fs.existsSync(serverCpanelEnv)) {
+  fs.copyFileSync(serverCpanelEnv, path.join(backendStaging, '.env.cpanel.example'));
 }
 
 // Copy server/prisma -> staging/prisma
 const serverPrisma = path.join(rootDir, 'server', 'prisma');
 if (fs.existsSync(serverPrisma)) {
   fs.cpSync(serverPrisma, path.join(backendStaging, 'prisma'), { recursive: true });
+}
+
+// Copy server/scripts -> staging/scripts (required for `npm run migrate` on cPanel)
+const serverScripts = path.join(rootDir, 'server', 'scripts');
+if (fs.existsSync(serverScripts)) {
+  fs.cpSync(serverScripts, path.join(backendStaging, 'scripts'), { recursive: true });
 }
 
 // 3. Zip Archives
@@ -84,17 +94,17 @@ const isWindows = process.platform === 'win32';
 
 try {
   if (isWindows) {
-    // Compress Frontend
-    console.log('📦 Compressing frontend_cpanel.zip...');
+    // Compress Frontend (ensuring hidden files like .htaccess are included with Get-ChildItem -Force)
+    console.log('📦 Compressing frontend_cpanel.zip (including .htaccess)...');
     execSync(
-      `powershell -NoProfile -Command "Compress-Archive -Path '${clientDist}\\*' -DestinationPath '${frontendZip}' -Force"`,
+      `powershell -NoProfile -Command "Get-ChildItem -Path '${clientDist}' -Force | Compress-Archive -DestinationPath '${frontendZip}' -Force"`,
       { stdio: 'inherit' }
     );
 
     // Compress Backend
     console.log('📦 Compressing backend_cpanel.zip...');
     execSync(
-      `powershell -NoProfile -Command "Compress-Archive -Path '${backendStaging}\\*' -DestinationPath '${backendZip}' -Force"`,
+      `powershell -NoProfile -Command "Get-ChildItem -Path '${backendStaging}' -Force | Compress-Archive -DestinationPath '${backendZip}' -Force"`,
       { stdio: 'inherit' }
     );
   } else {

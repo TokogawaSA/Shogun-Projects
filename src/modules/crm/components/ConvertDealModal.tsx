@@ -8,6 +8,7 @@ import {
   Coins
 } from 'lucide-react';
 import { Deal, Organization } from '../../../types';
+import { useCurrency } from '../../../context/CurrencyContext';
 
 interface ConvertDealModalProps {
   deal: Deal | null;
@@ -25,6 +26,7 @@ export const ConvertDealModal: React.FC<ConvertDealModalProps> = ({
   onConvert,
 }) => {
   const navigate = useNavigate();
+  const { formatCurrency } = useCurrency();
 
   const [projectTitle, setProjectTitle] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
@@ -37,7 +39,7 @@ export const ConvertDealModal: React.FC<ConvertDealModalProps> = ({
       const org = organizations.find((o) => o.id === (deal.organizationId || deal.accountId));
       const amountVal = deal.amount ?? deal.value ?? 0;
       setProjectDescription(
-        `Project delivered for ${org?.name || 'Client'}. Deal amount: $${amountVal.toLocaleString()}. Managed via Antigravity 2.0 multi-agent pipelines.`
+        `Project delivered for ${org?.name || 'Client'}. Deal amount: ${formatCurrency(amountVal)}. Managed via Antigravity 2.0 multi-agent pipelines.`
       );
       setOrganizationId(deal.organizationId || deal.accountId || organizations[0]?.id || 'org-shogunate-root');
     }
@@ -88,7 +90,7 @@ export const ConvertDealModal: React.FC<ConvertDealModalProps> = ({
                 </span>
                 <span className="text-xs text-slate-400 font-mono flex items-center gap-1">
                   <Coins className="w-3 h-3 text-amber-400" />
-                  ${(deal.amount ?? deal.value ?? 0).toLocaleString()}
+                  {formatCurrency(deal.amount ?? deal.value ?? 0)}
                 </span>
               </div>
               <h3 className="text-lg font-bold text-white tracking-tight mt-1">

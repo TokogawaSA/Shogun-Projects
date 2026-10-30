@@ -9,6 +9,7 @@ export const QUEUE_NAMES = {
   WORKFLOW: 'shogun-workflow-queue',
   EMAIL: 'shogun-email-queue',
   SCHEDULED_JOBS: 'shogun-scheduled-jobs-queue',
+  SOCIAL_ANALYSIS: 'shogun-social-analysis-queue',
 } as const;
 
 // Default job options with exponential backoff & retention policies
@@ -34,6 +35,7 @@ const defaultJobOptions: JobsOptions = {
 let _workflowQueue: Queue | null = null;
 let _emailQueue: Queue | null = null;
 let _scheduledJobsQueue: Queue | null = null;
+let _socialAnalysisQueue: Queue | null = null;
 
 export function getWorkflowQueue(): Queue {
   if (!_workflowQueue) {
@@ -68,6 +70,17 @@ export function getScheduledJobsQueue(): Queue {
   return _scheduledJobsQueue;
 }
 
+export function getSocialAnalysisQueue(): Queue {
+  if (!_socialAnalysisQueue) {
+    _socialAnalysisQueue = new Queue(QUEUE_NAMES.SOCIAL_ANALYSIS, {
+      connection: createRedisConnection(),
+      defaultJobOptions,
+    });
+    _socialAnalysisQueue.on('error', (err) => console.warn('[SocialAnalysisQueue Warning]:', err.message));
+  }
+  return _socialAnalysisQueue;
+}
+
 // Proxies for direct backward compatibility
 export const workflowQueue = new Proxy({} as Queue, {
   get: (_target, prop) => (getWorkflowQueue() as any)[prop],
@@ -80,6 +93,21 @@ export const emailQueue = new Proxy({} as Queue, {
 export const scheduledJobsQueue = new Proxy({} as Queue, {
   get: (_target, prop) => (getScheduledJobsQueue() as any)[prop],
 });
+
+export const socialAnalysisQueue = new Proxy({} as Queue, {
+  get: (_target, prop) => (getSocialAnalysisQueue() as any)[prop],
+});
+
+export async function queueSocialInteraction(payload: any): Promise<void> {
+  try {
+    const queue = getSocialAnalysisQueue();
+    await queue.add('social.inbound_interaction', payload, {
+      priority: payload.urgency === 'critical' ? 1 : payload.urgency === 'high' ? 2 : 3,
+    });
+  } catch (err: any) {
+    console.warn('[SocialQueue Warning] Failed to enqueue to Redis, fallback directly:', err.message);
+  }
+}
 
 // ============================================================================
 // 3. TYPED EVENT PAYLOADS
@@ -176,8 +204,11 @@ export async function closeQueues(): Promise<void> {
   if (_workflowQueue) closers.push(_workflowQueue.close());
   if (_emailQueue) closers.push(_emailQueue.close());
   if (_scheduledJobsQueue) closers.push(_scheduledJobsQueue.close());
+  if (_socialAnalysisQueue) closers.push(_socialAnalysisQueue.close());
   await Promise.all(closers);
   _workflowQueue = null;
   _emailQueue = null;
   _scheduledJobsQueue = null;
+  _socialAnalysisQueue = null;
 }
+

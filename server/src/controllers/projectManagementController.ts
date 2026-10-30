@@ -1,10 +1,19 @@
 import { Request, Response } from 'express';
 import { prisma } from '../config/db.js';
 
-const DEFAULT_TENANT_ID = 'tenant_default_shogun';
-
 function getTenantId(req: Request): string {
-  return (req.user || req.tenantContext)?.tenantId || (req.headers['x-tenant-id'] as string) || DEFAULT_TENANT_ID;
+  const tenantId = (req.user || req.tenantContext)?.tenantId || req.tenantId;
+  if (!tenantId) {
+    throw new Error('Unauthorized: Missing verified tenant context.');
+  }
+  return tenantId;
+}
+
+function sendControllerError(res: Response, fallbackMessage: string, error: any): void {
+  res.status(500).json({
+    success: false,
+    error: process.env.NODE_ENV === 'production' ? fallbackMessage : (error?.message || fallbackMessage),
+  });
 }
 
 /**
@@ -74,7 +83,7 @@ export async function getWbsItems(req: Request, res: Response): Promise<void> {
       total: tasks.length,
     });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    sendControllerError(res, 'Failed to fetch WBS items.', error);
   }
 }
 
@@ -122,7 +131,7 @@ export async function getCriticalPath(req: Request, res: Response): Promise<void
       totalTasks: tasks.length,
     });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    sendControllerError(res, 'Failed to compute critical path.', error);
   }
 }
 
@@ -168,7 +177,7 @@ export async function getResourceWorkload(req: Request, res: Response): Promise<
       data: workloadMap,
     });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    sendControllerError(res, 'Failed to fetch resource workload.', error);
   }
 }
 
@@ -198,7 +207,7 @@ export async function getTimesheets(req: Request, res: Response): Promise<void> 
 
     res.json({ success: true, data: timesheets });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    sendControllerError(res, 'Failed to fetch timesheets.', error);
   }
 }
 
@@ -206,11 +215,12 @@ export async function submitTimesheet(req: Request, res: Response): Promise<void
   try {
     const tenantId = getTenantId(req);
     const { userId, weekStartDate, totalHours, billableHours, logIds } = req.body;
+    const resolvedUserId = userId || req.user?.userId;
 
     const timesheet = await prisma.timesheet.create({
       data: {
         tenantId,
-        userId,
+        userId: resolvedUserId,
         weekStartDate: new Date(weekStartDate),
         totalHours: Number(totalHours || 0),
         billableHours: Number(billableHours || 0),
@@ -220,34 +230,47 @@ export async function submitTimesheet(req: Request, res: Response): Promise<void
 
     if (Array.isArray(logIds) && logIds.length > 0) {
       await prisma.timeLog.updateMany({
-        where: { id: { in: logIds } },
+        where: {
+          id: { in: logIds },
+          task: { tenantId },
+        },
         data: { timesheetId: timesheet.id },
       });
     }
 
     res.json({ success: true, data: timesheet });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    sendControllerError(res, 'Failed to submit timesheet.', error);
   }
 }
 
 export async function updateTimesheetStatus(req: Request, res: Response): Promise<void> {
   try {
+    const tenantId = getTenantId(req);
     const { id } = req.params;
     const { status, approverId, rejectionNote } = req.body;
 
+    const existing = await prisma.timesheet.findFirst({
+      where: { id, tenantId },
+    });
+
+    if (!existing) {
+      res.status(404).json({ success: false, error: 'Timesheet not found in active tenant.' });
+      return;
+    }
+
     const timesheet = await prisma.timesheet.update({
-      where: { id },
+      where: { id: existing.id },
       data: {
         status,
-        approverId,
+        approverId: approverId || req.user?.userId || null,
         rejectionNote,
       },
     });
 
     res.json({ success: true, data: timesheet });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    sendControllerError(res, 'Failed to update timesheet status.', error);
   }
 }
 
@@ -270,7 +293,7 @@ export async function getInvoices(req: Request, res: Response): Promise<void> {
 
     res.json({ success: true, data: invoices });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    sendControllerError(res, 'Failed to fetch invoices.', error);
   }
 }
 
@@ -278,6 +301,12 @@ export async function generateInvoice(req: Request, res: Response): Promise<void
   try {
     const tenantId = getTenantId(req);
     const { projectId, invoiceNumber, dueDate, lineItems, subtotal, taxTotal, totalAmount, notes } = req.body;
+
+    const project = await prisma.project.findFirst({ where: { id: projectId, tenantId } });
+    if (!project) {
+      res.status(404).json({ success: false, error: 'Project not found in active tenant.' });
+      return;
+    }
 
     const invoice = await prisma.projectInvoice.create({
       data: {
@@ -296,23 +325,33 @@ export async function generateInvoice(req: Request, res: Response): Promise<void
 
     res.json({ success: true, data: invoice });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    sendControllerError(res, 'Failed to generate invoice.', error);
   }
 }
 
 export async function updateInvoiceStatus(req: Request, res: Response): Promise<void> {
   try {
+    const tenantId = getTenantId(req);
     const { id } = req.params;
     const { status } = req.body; // requested | accepted | paid
 
+    const existing = await prisma.projectInvoice.findFirst({
+      where: { id, tenantId },
+    });
+
+    if (!existing) {
+      res.status(404).json({ success: false, error: 'Invoice not found in active tenant.' });
+      return;
+    }
+
     const invoice = await prisma.projectInvoice.update({
-      where: { id },
+      where: { id: existing.id },
       data: { status },
     });
 
     res.json({ success: true, data: invoice });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    sendControllerError(res, 'Failed to update invoice status.', error);
   }
 }
 
@@ -335,7 +374,7 @@ export async function getDocuments(req: Request, res: Response): Promise<void> {
 
     res.json({ success: true, data: documents });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    sendControllerError(res, 'Failed to fetch documents.', error);
   }
 }
 
@@ -343,6 +382,12 @@ export async function createDocument(req: Request, res: Response): Promise<void>
   try {
     const tenantId = getTenantId(req);
     const { projectId, fileName, fileUrl, fileCategory, fileSize, version, uploadedById } = req.body;
+
+    const project = await prisma.project.findFirst({ where: { id: projectId, tenantId } });
+    if (!project) {
+      res.status(404).json({ success: false, error: 'Project not found in active tenant.' });
+      return;
+    }
 
     const doc = await prisma.projectDocument.create({
       data: {
@@ -353,13 +398,13 @@ export async function createDocument(req: Request, res: Response): Promise<void>
         fileCategory: fileCategory || 'general',
         fileSize: Number(fileSize || 1024),
         version: version || '1.0',
-        uploadedById,
+        uploadedById: uploadedById || req.user?.userId,
       },
     });
 
     res.json({ success: true, data: doc });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    sendControllerError(res, 'Failed to create document.', error);
   }
 }
 
@@ -382,7 +427,7 @@ export async function getWikiPages(req: Request, res: Response): Promise<void> {
 
     res.json({ success: true, data: wikis });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    sendControllerError(res, 'Failed to fetch wiki pages.', error);
   }
 }
 
@@ -392,12 +437,27 @@ export async function upsertWikiPage(req: Request, res: Response): Promise<void>
     const { id, projectId, title, slug, contentMarkdown, authorId, tags } = req.body;
 
     if (id) {
+      const existing = await prisma.projectWikiPage.findFirst({
+        where: { id, tenantId },
+      });
+
+      if (!existing) {
+        res.status(404).json({ success: false, error: 'Wiki page not found in active tenant.' });
+        return;
+      }
+
       const updated = await prisma.projectWikiPage.update({
-        where: { id },
+        where: { id: existing.id },
         data: { title, slug, contentMarkdown, tags },
       });
       res.json({ success: true, data: updated });
     } else {
+      const project = await prisma.project.findFirst({ where: { id: projectId, tenantId } });
+      if (!project) {
+        res.status(404).json({ success: false, error: 'Project not found in active tenant.' });
+        return;
+      }
+
       const created = await prisma.projectWikiPage.create({
         data: {
           tenantId,
@@ -405,14 +465,14 @@ export async function upsertWikiPage(req: Request, res: Response): Promise<void>
           title,
           slug: slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
           contentMarkdown,
-          authorId,
+          authorId: authorId || req.user?.userId,
           tags: tags || [],
         },
       });
       res.json({ success: true, data: created });
     }
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    sendControllerError(res, 'Failed to save wiki page.', error);
   }
 }
 
@@ -424,8 +484,8 @@ export async function getClientPortalData(req: Request, res: Response): Promise<
     const { projectId } = req.params;
     const tenantId = getTenantId(req);
 
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
+    const project = await prisma.project.findFirst({
+      where: { id: projectId, tenantId },
       include: {
         milestones: true,
         deliverables: true,
@@ -434,12 +494,17 @@ export async function getClientPortalData(req: Request, res: Response): Promise<
       },
     });
 
+    if (!project) {
+      res.status(404).json({ success: false, error: 'Project not found in active tenant.' });
+      return;
+    }
+
     res.json({
       success: true,
       data: project,
     });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    sendControllerError(res, 'Failed to fetch client portal data.', error);
   }
 }
 
@@ -447,6 +512,12 @@ export async function createChangeRequest(req: Request, res: Response): Promise<
   try {
     const tenantId = getTenantId(req);
     const { projectId, title, description, costImpact, scheduleDaysImpact, clientNotes } = req.body;
+
+    const project = await prisma.project.findFirst({ where: { id: projectId, tenantId } });
+    if (!project) {
+      res.status(404).json({ success: false, error: 'Project not found in active tenant.' });
+      return;
+    }
 
     const cr = await prisma.clientChangeRequest.create({
       data: {
@@ -463,23 +534,33 @@ export async function createChangeRequest(req: Request, res: Response): Promise<
 
     res.json({ success: true, data: cr });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    sendControllerError(res, 'Failed to create change request.', error);
   }
 }
 
 export async function updateChangeRequestStatus(req: Request, res: Response): Promise<void> {
   try {
+    const tenantId = getTenantId(req);
     const { id } = req.params;
     const { status } = req.body; // pending | approved | rejected
 
+    const existing = await prisma.clientChangeRequest.findFirst({
+      where: { id, tenantId },
+    });
+
+    if (!existing) {
+      res.status(404).json({ success: false, error: 'Change request not found in active tenant.' });
+      return;
+    }
+
     const cr = await prisma.clientChangeRequest.update({
-      where: { id },
+      where: { id: existing.id },
       data: { status },
     });
 
     res.json({ success: true, data: cr });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    sendControllerError(res, 'Failed to update change request status.', error);
   }
 }
 
@@ -492,7 +573,7 @@ export async function getAnalyticsMetrics(req: Request, res: Response): Promise<
     const { projectId } = req.params;
 
     const tasks = await prisma.task.findMany({ where: { projectId, tenantId } });
-    const budget = await prisma.projectBudget.findUnique({ where: { projectId } });
+    const budget = await prisma.projectBudget.findFirst({ where: { projectId, tenantId } });
 
     const totalTasks = tasks.length || 1;
     const completedTasks = tasks.filter((t) => t.status === 'done').length;
@@ -525,7 +606,7 @@ export async function getAnalyticsMetrics(req: Request, res: Response): Promise<
       },
     });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    sendControllerError(res, 'Failed to compute analytics metrics.', error);
   }
 }
 
@@ -535,7 +616,7 @@ export async function getAnalyticsMetrics(req: Request, res: Response): Promise<
 export async function evaluateWorkflowRules(req: Request, res: Response): Promise<void> {
   try {
     const tenantId = getTenantId(req);
-    const { eventType, entityType, entityData } = req.body;
+    const { eventType, entityType } = req.body;
 
     const rules = await prisma.workflowRule.findMany({
       where: { tenantId, targetModule: entityType, isActive: true },
@@ -555,6 +636,6 @@ export async function evaluateWorkflowRules(req: Request, res: Response): Promis
       actionStatus: 'executed',
     });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    sendControllerError(res, 'Failed to evaluate workflow rules.', error);
   }
 }

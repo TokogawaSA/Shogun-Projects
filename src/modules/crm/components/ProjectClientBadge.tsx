@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Building2, 
-  User, 
-  DollarSign
+  User 
 } from 'lucide-react';
 import clsx from 'clsx';
 import { Project } from '../../../types';
@@ -11,6 +10,7 @@ import { useContacts } from '../hooks/useContacts';
 import { useDeals } from '../hooks/useDeals';
 import { Account360Drawer } from './Account360Drawer';
 import { Account } from '../../../types/crm';
+import { useCurrency } from '../../../context/CurrencyContext';
 
 interface ProjectClientBadgeProps {
   project: Project | null;
@@ -18,6 +18,7 @@ interface ProjectClientBadgeProps {
 }
 
 export const ProjectClientBadge: React.FC<ProjectClientBadgeProps> = ({ project, className }) => {
+  const { formatCurrency } = useCurrency();
   const { accounts } = useAccounts();
   const { contacts } = useContacts();
   const { deals } = useDeals();
@@ -85,8 +86,7 @@ export const ProjectClientBadge: React.FC<ProjectClientBadgeProps> = ({ project,
         {/* Budget / Deal Link */}
         {deal && (
           <div className="flex items-center gap-1 text-emerald-400 font-mono font-bold border-l border-slate-800 pl-3">
-            <DollarSign className="w-3 h-3 text-emerald-500" />
-            <span>${(deal.value || deal.amount || 0).toLocaleString()}</span>
+            <span>{formatCurrency(deal.value || deal.amount || 0)}</span>
           </div>
         )}
       </div>

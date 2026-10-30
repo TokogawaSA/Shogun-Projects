@@ -15,7 +15,9 @@ import {
   Boxes,
   BookOpen,
   FileSpreadsheet,
-  LogOut
+  LogOut,
+  Radio,
+  Calendar,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -24,6 +26,8 @@ export const Sidebar: React.FC = () => {
   const { user, tenant, logout } = useAuth();
   const workspaceItems = [
     { to: '/', label: 'Overview', icon: LayoutDashboard },
+    { to: '/scheduler', label: 'Scheduler & Bookings', icon: Calendar },
+    { to: '/social', label: 'Social Listening', icon: Radio },
   ];
 
   const projectPortfolioItems = [

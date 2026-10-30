@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { apiClient } from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
+import { useCurrency } from '../../../context/CurrencyContext';
 import { Quote, Project, Task } from '../../../types';
 
 interface QuoteToProjectModalProps {
@@ -34,6 +35,7 @@ export const QuoteToProjectModal: React.FC<QuoteToProjectModalProps> = ({
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { formatCurrency } = useCurrency();
   const tenantId = user?.tenantId || 'tenant-default';
 
   const [mode, setMode] = useState<'create_new' | 'link_existing'>('create_new');
@@ -168,7 +170,7 @@ export const QuoteToProjectModal: React.FC<QuoteToProjectModalProps> = ({
       }
 
       onClose();
-      navigate(`/projects/${targetProjectId}/costing`);
+      navigate(`/projects/${targetProjectId}?tab=overview`);
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to convert quote into project scope.');
     } finally {
@@ -298,7 +300,7 @@ export const QuoteToProjectModal: React.FC<QuoteToProjectModalProps> = ({
           <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700 space-y-2.5">
             <div className="text-xs font-bold text-slate-300 uppercase tracking-wider font-mono flex items-center justify-between">
               <span>Conversion Summary</span>
-              <span className="text-emerald-400 font-bold">${quote.grandTotal.toLocaleString()}</span>
+              <span className="text-emerald-400 font-bold">{formatCurrency(quote.grandTotal, quote.currency)}</span>
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-xs font-mono">

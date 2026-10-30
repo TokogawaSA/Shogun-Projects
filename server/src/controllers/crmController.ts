@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../config/db.js';
 import { updateDealWithEvents } from '../services/dealService.js';
+import { getTenantCurrency } from '../utils/tenantConfig.js';
 
 async function resolveAssignedUserId(tenantId: string, assignedUserId: any, defaultUserId: string): Promise<string> {
   if (typeof assignedUserId === 'string' && assignedUserId && !assignedUserId.startsWith('usr-')) {
@@ -309,7 +310,7 @@ export async function convertLead(req: Request, res: Response): Promise<void> {
             accountId: accountId!,
             contactId: contactId || null,
             amount: options.dealAmount !== undefined ? Number(options.dealAmount) : 0,
-            currency: options.currency || 'USD',
+            currency: options.currency || await getTenantCurrency(tenantId),
             closingDate: options.dealClosingDate ? new Date(options.dealClosingDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
             stage: options.dealStage || 'qualification',
             probability: options.probability !== undefined ? Number(options.probability) : 20,
@@ -743,6 +744,7 @@ export async function deleteContact(req: Request, res: Response): Promise<void> 
 export async function getDeals(req: Request, res: Response): Promise<void> {
   try {
     const tenantId = req.user!.tenantId;
+    const tenantCurrency = await getTenantCurrency(tenantId);
     const deals = await prisma.deal.findMany({
       where: { tenantId },
       orderBy: { createdAt: 'desc' },
@@ -752,7 +754,11 @@ export async function getDeals(req: Request, res: Response): Promise<void> {
         assignedUser: { select: { id: true, displayName: true, email: true } },
       },
     });
-    res.json(deals);
+    const normalizedDeals = deals.map((d) => ({
+      ...d,
+      currency: tenantCurrency || d.currency || 'USD',
+    }));
+    res.json(normalizedDeals);
   } catch (err: any) {
     res.status(500).json({
       error: 'Failed to fetch deals.',
@@ -764,6 +770,7 @@ export async function getDeals(req: Request, res: Response): Promise<void> {
 export async function getDealById(req: Request, res: Response): Promise<void> {
   try {
     const tenantId = req.user!.tenantId;
+    const tenantCurrency = await getTenantCurrency(tenantId);
     const { id } = req.params;
 
     const deal = await prisma.deal.findFirst({
@@ -782,7 +789,10 @@ export async function getDealById(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    res.json(deal);
+    res.json({
+      ...deal,
+      currency: tenantCurrency || deal.currency || 'USD',
+    });
   } catch (err: any) {
     res.status(500).json({
       error: 'Failed to fetch deal.',
@@ -813,7 +823,7 @@ export async function createDeal(req: Request, res: Response): Promise<void> {
         accountId: data.accountId,
         contactId: data.contactId || null,
         amount: data.amount !== undefined ? Number(data.amount) : 0,
-        currency: data.currency || 'USD',
+        currency: data.currency || await getTenantCurrency(tenantId),
         closingDate: data.closingDate ? new Date(data.closingDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         stage: data.stage || 'prospecting',
         probability: data.probability !== undefined ? Number(data.probability) : 10,

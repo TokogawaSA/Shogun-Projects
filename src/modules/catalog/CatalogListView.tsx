@@ -25,9 +25,11 @@ import {
 import { useCatalog } from './hooks/useCatalog';
 import { ProductModal } from './ProductModal';
 import { ProductOrService } from '../../types';
+import { useCurrency } from '../../context/CurrencyContext';
 
 export const CatalogListView: React.FC = () => {
   const navigate = useNavigate();
+  const { formatCurrency } = useCurrency();
   const { 
     items, 
     stats, 
@@ -202,7 +204,7 @@ export const CatalogListView: React.FC = () => {
             </div>
           </div>
           <div className="text-2xl font-black text-slate-100 font-mono tracking-tight">
-            ${stats.totalInventoryValuation.toLocaleString()}
+            {formatCurrency(stats.totalInventoryValuation)}
           </div>
           <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-1.5 font-mono">
             <span>On-hand physical asset value</span>
@@ -449,11 +451,11 @@ export const CatalogListView: React.FC = () => {
                       </td>
 
                       <td className="py-3.5 px-3 text-right font-mono font-bold text-slate-100">
-                        ${item.unitPrice.toLocaleString()}
+                        {formatCurrency(item.unitPrice)}
                       </td>
 
                       <td className="py-3.5 px-3 text-right font-mono text-slate-400">
-                        ${item.costPrice.toLocaleString()}
+                        {formatCurrency(item.costPrice)}
                       </td>
 
                       <td className="py-3.5 px-3 text-right font-mono">

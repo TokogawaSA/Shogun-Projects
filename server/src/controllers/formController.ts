@@ -6,8 +6,12 @@ import {
 import { findMatchingRoutingRule } from '../utils/formConditionalEngine.js';
 
 function getTenantId(req: Request): string {
-  const userTenant = (req.user || (req as any).tenantContext)?.tenantId;
-  return userTenant || (req.headers['x-tenant-id'] as string) || 'tenant-default';
+  const userTenant = (req.user || (req as any).tenantContext)?.tenantId || (req as any).tenantId;
+  if (userTenant) return userTenant;
+  if (process.env.NODE_ENV !== 'production') {
+    return (req.headers['x-tenant-id'] as string) || 'tenant-default';
+  }
+  return '';
 }
 
 // In-memory tenant web forms storage (persisted alongside tenant workflows)
@@ -338,7 +342,10 @@ export async function getForms(req: Request, res: Response): Promise<void> {
     const forms = getTenantForms(tenantId);
     res.json(forms);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to retrieve forms.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to retrieve forms.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -355,7 +362,10 @@ export async function getFormById(req: Request, res: Response): Promise<void> {
     }
     res.json(form);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to retrieve form.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to retrieve form.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -390,7 +400,10 @@ export async function createForm(req: Request, res: Response): Promise<void> {
     forms.unshift(newForm);
     res.status(201).json(newForm);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to create form.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to create form.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -417,7 +430,10 @@ export async function updateForm(req: Request, res: Response): Promise<void> {
 
     res.json(forms[index]);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to update form.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to update form.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -430,7 +446,10 @@ export async function deleteForm(req: Request, res: Response): Promise<void> {
     formsStore.set(tenantId, updated);
     res.json({ success: true, message: 'Web form deleted successfully.' });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to delete form.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to delete form.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -441,7 +460,10 @@ export async function getFormSubmissions(req: Request, res: Response): Promise<v
     const submissions = getFormSubmissionsFromStore(id, tenantId);
     res.json(submissions);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to retrieve submissions.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to retrieve submissions.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -467,7 +489,10 @@ export async function simulateFormRoute(req: Request, res: Response): Promise<vo
       simulatedOutcome: `Will route submission to [${(selectedRoute?.targetModule || 'leads').toUpperCase()}] module with ${Object.keys(selectedRoute?.fieldMappings || {}).length} mapped fields.`,
     });
   } catch (err: any) {
-    res.status(500).json({ error: 'Simulation failed.', details: err.message });
+    res.status(500).json({
+      error: 'Simulation failed.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -515,7 +540,10 @@ export async function getPublicForm(req: Request, res: Response): Promise<void> 
       styling: matchedForm.styling,
     });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to load public form.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to load public form.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }
 
@@ -567,6 +595,9 @@ export async function submitPublicForm(req: Request, res: Response): Promise<voi
       redirectUrl: matchedForm.redirectUrl,
     });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to process form submission.', details: err.message });
+    res.status(500).json({
+      error: 'Failed to process form submission.',
+      ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
+    });
   }
 }

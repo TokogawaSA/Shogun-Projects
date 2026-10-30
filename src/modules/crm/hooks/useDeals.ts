@@ -4,6 +4,7 @@ import { Deal, PipelineStage } from '../../../types/crm';
 import { Project, Task } from '../../../types';
 import { useAuth } from '../../../context/AuthContext';
 import { useProject } from '../../../context/ProjectContext';
+import { useCurrency } from '../../../context/CurrencyContext';
 
 const fallbackDeals: Deal[] = [
   {
@@ -58,6 +59,7 @@ export interface UseDealsResult {
 export const useDeals = (): UseDealsResult => {
   const { user } = useAuth();
   const { setProjects, setCurrentProjectId } = useProject();
+  const { currencyCode } = useCurrency();
 
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -81,7 +83,7 @@ export const useDeals = (): UseDealsResult => {
             primaryContactId: d.contactId || d.primaryContactId || 'cnt-101',
             pipelineStage: stage,
             value: val,
-            currency: d.currency || 'USD',
+            currency: currencyCode || d.currency || 'USD',
             winProbability: Number(d.probability) || (stage === 'closed_won' ? 100 : 25),
             expectedCloseDate: typeof d.closingDate === 'string' ? d.closingDate.slice(0, 10) : 'Q4 2026',
             linkedProjectId: d.linkedProjectId || null,
@@ -92,16 +94,16 @@ export const useDeals = (): UseDealsResult => {
         });
         setDeals(mapped);
       } else {
-        setDeals(fallbackDeals);
+        setDeals(fallbackDeals.map((fd) => ({ ...fd, currency: currencyCode || fd.currency })));
       }
     } catch (err: any) {
       console.warn('[useDeals] REST fetch failed, using fallback:', err);
-      setDeals(fallbackDeals);
+      setDeals(fallbackDeals.map((fd) => ({ ...fd, currency: currencyCode || fd.currency })));
       setError(err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currencyCode]);
 
   useEffect(() => {
     fetchDeals();

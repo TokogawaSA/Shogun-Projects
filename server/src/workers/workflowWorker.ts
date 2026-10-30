@@ -3,6 +3,7 @@ import { createRedisConnection } from '../config/redis.js';
 import { QUEUE_NAMES, DealStageUpdatedPayload, TaskStatusChangedPayload } from '../queues/index.js';
 import { withTenantTx } from '../utils/tenantTx.js';
 import { prisma } from '../config/db.js';
+import { getTenantCurrency } from '../utils/tenantConfig.js';
 
 /**
  * Handle `deal.stage_updated` event:
@@ -60,11 +61,12 @@ export async function processDealStageUpdated(payload: DealStageUpdatedPayload):
     }
 
     // 2. Create Project
+    const dealCurrency = deal.currency || await getTenantCurrency(tenantId);
     const project = await tx.project.create({
       data: {
         tenantId,
         title: projectTitle,
-        description: `Project provisioned automatically from Closed-Won deal "${deal.dealName}" (Amount: ${deal.amount || 0} ${deal.currency || 'USD'}).`,
+        description: `Project provisioned automatically from Closed-Won deal "${deal.dealName}" (Amount: ${deal.amount || 0} ${dealCurrency}).`,
         accountId: deal.accountId,
         dealId: deal.id,
         primaryContactId: deal.contactId,

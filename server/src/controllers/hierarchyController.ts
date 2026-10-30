@@ -209,6 +209,12 @@ export async function createFolder(req: Request, res: Response): Promise<void> {
       return;
     }
 
+    const project = await prisma.project.findFirst({ where: { id: spaceId, tenantId } });
+    if (!project) {
+      res.status(404).json({ error: 'Associated space not found in active tenant.' });
+      return;
+    }
+
     const milestone = await prisma.projectMilestone.create({
       data: {
         tenantId,

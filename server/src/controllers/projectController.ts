@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../config/db.js';
 import { updateTaskWithEvents } from '../services/taskService.js';
+import { getTenantCurrency } from '../utils/tenantConfig.js';
 
 // ============================================================================
 // 1. PROJECTS CRUD
@@ -102,7 +103,7 @@ export async function createProject(req: Request, res: Response): Promise<void> 
           capexBudget: data.capexBudget ? Number(data.capexBudget) : 0,
           opexBudget: data.opexBudget ? Number(data.opexBudget) : 0,
           laborBudget: data.laborBudget ? Number(data.laborBudget) : 0,
-          currency: data.currency || 'USD',
+          currency: data.currency || await getTenantCurrency(tenantId),
           profitMarginPercent: data.profitMarginPercent ? Number(data.profitMarginPercent) : 20,
         },
       });

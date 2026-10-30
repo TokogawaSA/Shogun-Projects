@@ -19,6 +19,7 @@ import {
 import { useCatalog } from '../hooks/useCatalog';
 import { LineItem, Quote, QuoteStatus } from '../../../types';
 import { QuoteToProjectModal } from './QuoteToProjectModal';
+import { useCurrency } from '../../../context/CurrencyContext';
 
 interface LineItemEditorProps {
   initialQuote?: Quote | null;
@@ -35,6 +36,8 @@ export const LineItemEditor: React.FC<LineItemEditorProps> = ({
   onSaveQuote,
   readOnly = false,
 }) => {
+  const { currencyCode, currencySymbol, formatCurrency } = useCurrency();
+  const activeCurrency = initialQuote?.currency || currencyCode;
   const { items: catalogItems, priceBooks } = useCatalog();
 
   const [quoteNumber] = useState<string>(
@@ -225,6 +228,7 @@ export const LineItemEditor: React.FC<LineItemEditorProps> = ({
       totalCost: Number(totalCost.toFixed(2)),
       marginAmount,
       marginPercent,
+      currency: activeCurrency,
       validUntil,
       notes,
       createdAt: initialQuote?.createdAt || new Date().toISOString(),
@@ -379,7 +383,7 @@ export const LineItemEditor: React.FC<LineItemEditorProps> = ({
             </option>
             {catalogItems.map((item) => (
               <option key={item.id} value={item.id}>
-                [{item.type.toUpperCase()}] {item.name} (${item.unitPrice})
+                [{item.type.toUpperCase()}] {item.name} ({formatCurrency(item.unitPrice, activeCurrency)})
               </option>
             ))}
           </select>
@@ -395,8 +399,8 @@ export const LineItemEditor: React.FC<LineItemEditorProps> = ({
                 <th className="py-3.5 px-4 w-1/3">Item Deliverable / Description</th>
                 <th className="py-3.5 px-3 text-center">Type</th>
                 <th className="py-3.5 px-3 text-center w-20">Qty</th>
-                <th className="py-3.5 px-3 text-right w-32">Unit Price ($)</th>
-                <th className="py-3.5 px-3 text-right w-28">Discount ($)</th>
+                <th className="py-3.5 px-3 text-right w-32">Unit Price ({currencySymbol})</th>
+                <th className="py-3.5 px-3 text-right w-28">Discount ({currencySymbol})</th>
                 <th className="py-3.5 px-3 text-right w-24">Tax (%)</th>
                 <th className="py-3.5 px-4 text-right w-32">Line Total</th>
                 {!readOnly && <th className="py-3.5 px-3 w-10"></th>}
@@ -489,7 +493,7 @@ export const LineItemEditor: React.FC<LineItemEditorProps> = ({
                     </td>
 
                     <td className="py-3 px-4 text-right font-mono font-bold text-slate-100">
-                      ${item.totalPrice.toLocaleString()}
+                      {formatCurrency(item.totalPrice, activeCurrency)}
                     </td>
 
                     {!readOnly && (
@@ -533,28 +537,28 @@ export const LineItemEditor: React.FC<LineItemEditorProps> = ({
         <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl backdrop-blur-md space-y-3.5">
           <div className="text-xs font-bold text-slate-300 uppercase tracking-wider font-mono border-b border-slate-800 pb-2 flex items-center justify-between">
             <span>Financial Rollup</span>
-            <span className="text-[10px] text-slate-400">USD</span>
+            <span className="text-[10px] text-slate-400 font-bold">{activeCurrency}</span>
           </div>
 
           <div className="space-y-2 text-xs font-mono">
             <div className="flex items-center justify-between text-slate-400">
               <span>Gross Subtotal:</span>
-              <span className="text-slate-200">${subtotal.toLocaleString()}</span>
+              <span className="text-slate-200">{formatCurrency(subtotal, activeCurrency)}</span>
             </div>
 
             <div className="flex items-center justify-between text-slate-400">
               <span>Total Discounts:</span>
-              <span className="text-emerald-400">-${discountTotal.toLocaleString()}</span>
+              <span className="text-emerald-400">-{formatCurrency(discountTotal, activeCurrency)}</span>
             </div>
 
             <div className="flex items-center justify-between text-slate-400">
               <span>Sales Tax Total:</span>
-              <span className="text-slate-200">+${taxTotal.toLocaleString()}</span>
+              <span className="text-slate-200">+{formatCurrency(taxTotal, activeCurrency)}</span>
             </div>
 
             <div className="flex items-center justify-between text-sm font-bold text-slate-100 pt-2 border-t border-slate-800">
               <span>Net Grand Total:</span>
-              <span className="text-indigo-400 text-base">${grandTotal.toLocaleString()}</span>
+              <span className="text-indigo-400 text-base">{formatCurrency(grandTotal, activeCurrency)}</span>
             </div>
           </div>
 
@@ -566,11 +570,11 @@ export const LineItemEditor: React.FC<LineItemEditorProps> = ({
                 Est. Profit Margin:
               </span>
               <span className="font-bold text-emerald-400">
-                ${marginAmount.toLocaleString()} ({marginPercent}%)
+                {formatCurrency(marginAmount, activeCurrency)} ({marginPercent}%)
               </span>
             </div>
             <div className="text-[10px] text-slate-500 font-mono">
-              Est. Supply & Labor Cost: ${totalCost.toLocaleString()}
+              Est. Supply & Labor Cost: {formatCurrency(totalCost, activeCurrency)}
             </div>
           </div>
         </div>

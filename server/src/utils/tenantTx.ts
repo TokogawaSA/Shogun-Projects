@@ -35,7 +35,14 @@ export async function withTenantTx<T>(
         throw new Error(`Tenant with ID "${tenantId}" does not exist.`);
       }
 
-      // 2. Execute callback within transaction boundary
+      // 2. Bind active tenant context into PostgreSQL session for RLS policies
+      try {
+        await tx.$executeRaw`SELECT set_config('app.current_tenant_id', ${tenantId}, true)`;
+      } catch {
+        // Non-PostgreSQL or mock transaction environment fallback
+      }
+
+      // 3. Execute callback within transaction boundary
       return callback(tx, tenantId);
     },
     {

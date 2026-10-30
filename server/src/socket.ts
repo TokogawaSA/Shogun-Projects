@@ -2,6 +2,7 @@ import { Server as HttpServer } from 'node:http';
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import jwt from 'jsonwebtoken';
+import { prisma } from './config/db.js';
 import { createRedisConnection } from './config/redis.js';
 import { AuthUserClaims } from './types/auth.js';
 
@@ -27,9 +28,30 @@ export function initSocketServer(httpServer: HttpServer): SocketIOServer {
 
   console.log('⚡ [Socket.io Gateway] Initializing Real-Time WebSocket Server...');
 
+  const rawOrigins = [
+    ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : []),
+    ...(process.env.CLIENT_ORIGIN ? process.env.CLIENT_ORIGIN.split(',') : []),
+  ].map((o) => o.trim()).filter(Boolean);
+
+  const isProd = process.env.NODE_ENV === 'production';
+  const defaultDevOrigins = ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000', 'http://127.0.0.1:5173'];
+  const allowedOrigins = isProd
+    ? rawOrigins
+    : Array.from(new Set([...rawOrigins, ...defaultDevOrigins]));
+
   io = new SocketIOServer(httpServer, {
     cors: {
-      origin: process.env.CORS_ORIGIN || '*',
+      origin: (origin, callback) => {
+        if (
+          !origin ||
+          allowedOrigins.includes(origin) ||
+          (!isProd && (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')))
+        ) {
+          callback(null, true);
+        } else {
+          callback(new Error('WebSocket CORS rejected'));
+        }
+      },
       credentials: true,
     },
     transports: ['websocket', 'polling'],
@@ -86,11 +108,23 @@ export function initSocketServer(httpServer: HttpServer): SocketIOServer {
     console.log(`🔌 [Socket.io] User ${user.email} (${user.userId}) connected to ${tenantRoom}`);
 
     // Join specific project room for live collaborative Kanban & Gantt
-    socket.on('join_project_room', (projectId: string) => {
+    socket.on('join_project_room', async (projectId: string) => {
       if (!projectId) return;
-      const projectRoom = `tenant:${user.tenantId}:project:${projectId}`;
-      socket.join(projectRoom);
-      console.log(`📍 [Socket.io] User ${user.email} joined project room: ${projectRoom}`);
+      try {
+        const project = await prisma.project.findFirst({
+          where: { id: projectId, tenantId: user.tenantId },
+          select: { id: true },
+        });
+        if (!project) {
+          console.warn(`⚠️ [Socket.io] User ${user.email} denied access to project room ${projectId}`);
+          return;
+        }
+        const projectRoom = `tenant:${user.tenantId}:project:${projectId}`;
+        socket.join(projectRoom);
+        console.log(`📍 [Socket.io] User ${user.email} joined project room: ${projectRoom}`);
+      } catch (err: any) {
+        console.error('[Socket.io] Failed to verify project room ownership:', err.message);
+      }
     });
 
     // Leave project room

@@ -22,12 +22,24 @@ console.log(`🔌 [cPanel Port/Socket] Assigned PORT: ${process.env.PORT || '500
 // Import the compiled Express application from dist
 import app from './dist/app.js';
 import { disconnectDatabase } from './dist/config/db.js';
+import { initSocketServer } from './dist/socket.js';
+import { startWorkers, stopWorkers } from './dist/workers/index.js';
 
 const PORT = process.env.PORT || 5000;
 
 // Bind HTTP server listener dynamically
 const server = app.listen(PORT, () => {
   console.log(`✅ [Shogun Server] Multi-Tenant Express REST API active on port/socket: ${PORT}`);
+  try {
+    initSocketServer(server);
+  } catch (err) {
+    console.warn('[Shogun Server] Socket.io gateway initialization notice:', err.message);
+  }
+  if (process.env.ENABLE_WORKERS !== 'false') {
+    startWorkers().catch((err) => {
+      console.warn('[Shogun Server] BullMQ Workers running in degraded mode:', err.message);
+    });
+  }
 });
 
 // Graceful shutdown handling
@@ -35,6 +47,7 @@ const handleShutdown = async (signal) => {
   console.log(`\n🛑 [Shogun Server] Received ${signal}. Gracefully closing connections...`);
   server.close(async () => {
     try {
+      await stopWorkers();
       await disconnectDatabase();
     } catch (e) {
       // Ignore disconnect error on exit

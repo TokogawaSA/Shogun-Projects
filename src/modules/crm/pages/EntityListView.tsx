@@ -13,6 +13,7 @@ import {
   EntityModuleName,
   FieldDefinition,
 } from '../../../types/crmEntities';
+import { useCurrency } from '../../../context/CurrencyContext';
 import { MassEditModal } from '../components/MassEditModal';
 import {
   Search,
@@ -200,6 +201,7 @@ const MODULE_SCHEMAS: Record<EntityModuleName, { title: string; singular: string
 
 
 export const EntityListView: React.FC = () => {
+  const { formatCurrency } = useCurrency();
   const { module: routeModule } = useParams<{ module: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -832,10 +834,9 @@ export const EntityListView: React.FC = () => {
                           }
 
                           if (field.type === 'currency') {
-                            const num = Number(val);
                             return (
-                              <td key={field.name} className="px-4 py-3 text-emerald-400 font-medium">
-                                ${isNaN(num) ? val : num.toLocaleString()}
+                              <td key={field.name} className="px-4 py-3 text-emerald-400 font-medium font-mono">
+                                {formatCurrency(val)}
                               </td>
                             );
                           }

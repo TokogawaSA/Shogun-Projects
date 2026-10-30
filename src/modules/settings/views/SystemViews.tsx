@@ -9,11 +9,13 @@ import {
 } from 'lucide-react';
 import { apiClient } from '../../../services/api';
 import { CompanyDetails } from '../../../types/settings';
+import { useCurrency, SUPPORTED_CURRENCIES, parseCurrency } from '../../../context/CurrencyContext';
 
 // =========================================================================
 // 1. Company Branding View
 // =========================================================================
 export const CompanyBrandingView: React.FC = () => {
+  const { updateCurrency } = useCurrency();
   const [details, setDetails] = useState<CompanyDetails>({
     name: 'Shogunate Solutions LLC',
     domain: 'shogunate.dev',
@@ -42,6 +44,9 @@ export const CompanyBrandingView: React.FC = () => {
       await apiClient.post('/settings/system', {
         companyDetails: details,
       });
+      if (details.currency) {
+        updateCurrency(details.currency, details.fiscalYearStart);
+      }
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
@@ -134,8 +139,9 @@ export const CompanyBrandingView: React.FC = () => {
 // 2. Currency & Fiscal Settings View
 // =========================================================================
 export const CurrencyFiscalView: React.FC = () => {
-  const [currency, setCurrency] = useState('USD ($)');
-  const [fiscalYearStart, setFiscalYearStart] = useState('January');
+  const { currency: contextCurrency, fiscalYearStart: contextFiscal, updateCurrency, formatCurrency } = useCurrency();
+  const [currency, setCurrency] = useState(contextCurrency);
+  const [fiscalYearStart, setFiscalYearStart] = useState(contextFiscal);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -150,6 +156,14 @@ export const CurrencyFiscalView: React.FC = () => {
     return () => { isMounted = false; };
   }, []);
 
+  useEffect(() => {
+    if (contextCurrency) setCurrency(contextCurrency);
+  }, [contextCurrency]);
+
+  useEffect(() => {
+    if (contextFiscal) setFiscalYearStart(contextFiscal);
+  }, [contextFiscal]);
+
   const handleSave = async () => {
     setSaving(true);
     setSaveSuccess(false);
@@ -160,6 +174,8 @@ export const CurrencyFiscalView: React.FC = () => {
           fiscalYearStart,
         },
       });
+      // Synchronously propagate across entire application via Context & Storage
+      updateCurrency(currency, fiscalYearStart);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
@@ -168,6 +184,8 @@ export const CurrencyFiscalView: React.FC = () => {
       setSaving(false);
     }
   };
+
+  const previewParsed = parseCurrency(currency);
 
   return (
     <div className="space-y-6">
@@ -184,7 +202,7 @@ export const CurrencyFiscalView: React.FC = () => {
         <div className="flex items-center gap-3">
           {saveSuccess && (
             <span className="text-xs text-emerald-400 flex items-center gap-1 font-semibold">
-              <CheckCircle2 className="w-4 h-4" /> Fiscal Settings Saved!
+              <CheckCircle2 className="w-4 h-4" /> Fiscal Settings Saved & Applied Globally!
             </span>
           )}
           <button
@@ -200,18 +218,26 @@ export const CurrencyFiscalView: React.FC = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-          <h3 className="text-xs font-bold text-slate-100 uppercase font-mono">Corporate Base Currency</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-slate-100 uppercase font-mono">Corporate Base Currency</h3>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 font-bold">
+              {previewParsed.code} ({previewParsed.symbol})
+            </span>
+          </div>
           <select
             value={currency}
             onChange={(e) => setCurrency(e.target.value)}
-            className="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-lg text-slate-100"
+            className="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-lg text-slate-100 font-medium"
           >
-            <option value="USD ($)">USD ($) - United States Dollar</option>
-            <option value="EUR (€)">EUR (€) - Euro</option>
-            <option value="GBP (£)">GBP (£) - British Pound</option>
-            <option value="JPY (¥)">JPY (¥) - Japanese Yen</option>
-            <option value="ZAR (R)">ZAR (R) - South African Rand</option>
+            {SUPPORTED_CURRENCIES.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
           </select>
+          <p className="text-[11px] text-slate-500">
+            All CRM deals, catalog price books, invoices, pipeline analytics, and custom fields will format using this base currency.
+          </p>
         </div>
 
         <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
@@ -226,6 +252,48 @@ export const CurrencyFiscalView: React.FC = () => {
             <option value="July">July 1st</option>
             <option value="October">October 1st</option>
           </select>
+          <p className="text-[11px] text-slate-500">
+            Determines quarter boundaries (Q1-Q4) for forecasting, quota calculations, and fiscal year revenue rollups.
+          </p>
+        </div>
+      </div>
+
+      {/* Live Visual Formatting Preview Card */}
+      <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950/20 to-slate-900 border border-slate-800/80 shadow-md space-y-3">
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+          <span className="text-xs font-bold text-slate-300 uppercase tracking-wider font-mono flex items-center gap-1.5">
+            <Coins className="w-3.5 h-3.5 text-emerald-400" />
+            Live Currency Formatting Preview
+          </span>
+          <span className="text-[10px] text-slate-400 font-mono">
+            Active System Standard: <strong className="text-emerald-400">{currency}</strong>
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+          <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
+            <span className="text-[10px] text-slate-400 font-mono block">Sample Deal Value</span>
+            <span className="text-lg font-black text-emerald-400 font-mono mt-0.5 block">
+              {formatCurrency(145000, currency)}
+            </span>
+            <span className="text-[10px] text-slate-500 font-mono">Standard CRM Deal</span>
+          </div>
+
+          <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
+            <span className="text-[10px] text-slate-400 font-mono block">Sample Pipeline Rollup</span>
+            <span className="text-lg font-black text-indigo-300 font-mono mt-0.5 block">
+              {formatCurrency(2450000, currency)}
+            </span>
+            <span className="text-[10px] text-slate-500 font-mono">Kanban / Account 360</span>
+          </div>
+
+          <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
+            <span className="text-[10px] text-slate-400 font-mono block">Catalog Unit Price</span>
+            <span className="text-lg font-black text-amber-400 font-mono mt-0.5 block">
+              {formatCurrency(3200.5, currency)}
+            </span>
+            <span className="text-[10px] text-slate-500 font-mono">Line Items & Price Books</span>
+          </div>
         </div>
       </div>
     </div>

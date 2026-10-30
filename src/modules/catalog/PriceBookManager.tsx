@@ -15,9 +15,11 @@ import {
   Wrench
 } from 'lucide-react';
 import { useCatalog } from './hooks/useCatalog';
+import { useCurrency } from '../../context/CurrencyContext';
 
 export const PriceBookManager: React.FC = () => {
   const navigate = useNavigate();
+  const { currencySymbol, formatCurrency } = useCurrency();
   const { 
     items, 
     priceBooks, 
@@ -242,7 +244,7 @@ export const PriceBookManager: React.FC = () => {
                       <th className="pb-3 px-2">Catalog Item</th>
                       <th className="pb-3 px-3">Type</th>
                       <th className="pb-3 px-3 text-right">Standard Price</th>
-                      <th className="pb-3 px-4 text-right">Tier Override Price ($)</th>
+                      <th className="pb-3 px-4 text-right">Tier Override Price ({currencySymbol})</th>
                       <th className="pb-3 px-3 text-right">Effective Savings</th>
                     </tr>
                   </thead>
@@ -275,12 +277,12 @@ export const PriceBookManager: React.FC = () => {
                           </td>
 
                           <td className="py-3 px-3 text-right font-mono text-slate-400">
-                            ${item.unitPrice.toLocaleString()}
+                            {formatCurrency(item.unitPrice)}
                           </td>
 
                           <td className="py-3 px-4 text-right">
                             <div className="flex items-center justify-end gap-1.5">
-                              <span className="text-slate-400 font-mono text-xs">$</span>
+                              <span className="text-slate-400 font-mono text-xs">{currencySymbol}</span>
                               <input
                                 type="number"
                                 min="0"
@@ -305,7 +307,7 @@ export const PriceBookManager: React.FC = () => {
                           <td className="py-3 px-3 text-right font-mono">
                             {hasOverride ? (
                               <span className={`text-xs font-semibold ${savings >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                {savings >= 0 ? `-${savingsPercent}% ($${savings})` : `+${Math.abs(Number(savingsPercent))}%`}
+                                {savings >= 0 ? `-${savingsPercent}% (${formatCurrency(savings)})` : `+${Math.abs(Number(savingsPercent))}%`}
                               </span>
                             ) : (
                               <span className="text-slate-500 text-[11px]">List Price</span>

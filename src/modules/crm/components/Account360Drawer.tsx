@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   X, 
@@ -9,12 +9,18 @@ import {
   FolderKanban, 
   ArrowRight, 
   CreditCard, 
-  Plus
+  Plus,
+  Radio,
+  MessageSquare,
+  Loader2
 } from 'lucide-react';
 import clsx from 'clsx';
 import { Account, Contact, Deal } from '../../../types/crm';
 import { Project } from '../../../types';
 import { useProject } from '../../../context/ProjectContext';
+import { apiClient } from '../../../services/api';
+import { SocialInteraction } from '../../../types/social';
+import { useCurrency } from '../../../context/CurrencyContext';
 
 interface Account360DrawerProps {
   account: Account | null;
@@ -35,7 +41,26 @@ export const Account360Drawer: React.FC<Account360DrawerProps> = ({
   onOpenCreateDeal,
 }) => {
   const navigate = useNavigate();
+  const { currencyCode, formatCurrency } = useCurrency();
   const { projects, setCurrentProjectId } = useProject();
+  const [activeTab, setActiveTab] = useState<'overview' | 'social'>('overview');
+  const [socialInteractions, setSocialInteractions] = useState<SocialInteraction[]>([]);
+  const [loadingSocial, setLoadingSocial] = useState(false);
+
+  useEffect(() => {
+    if (account?.id && activeTab === 'social') {
+      setLoadingSocial(true);
+      apiClient
+        .get<any>('/v1/social/interactions', { params: { accountId: account.id } })
+        .then((res) => {
+          setSocialInteractions(res?.data || []);
+        })
+        .catch((err) => {
+          console.warn('[Account360] Failed to fetch social interactions:', err);
+        })
+        .finally(() => setLoadingSocial(false));
+    }
+  }, [account?.id, activeTab]);
 
   if (!isOpen || !account) return null;
 
@@ -127,12 +152,89 @@ export const Account360Drawer: React.FC<Account360DrawerProps> = ({
               <span>•</span>
               <span>{account.industry}</span>
               <span>•</span>
-              <span className="text-emerald-400 font-bold">${totalDealValue.toLocaleString()} Pipeline</span>
+              <span className="text-emerald-400 font-bold font-mono">{formatCurrency(totalDealValue)} Pipeline</span>
+            </div>
+
+            {/* Tab Bar */}
+            <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-800">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={clsx(
+                  'px-3 py-1.5 rounded-lg text-xs font-semibold transition',
+                  activeTab === 'overview'
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                )}
+              >
+                Overview & CRM
+              </button>
+              <button
+                onClick={() => setActiveTab('social')}
+                className={clsx(
+                  'px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition',
+                  activeTab === 'social'
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                )}
+              >
+                <Radio className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Social Activity</span>
+                {socialInteractions.length > 0 && (
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-900 text-indigo-200">
+                    {socialInteractions.length}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
 
           {/* Body Content */}
           <div className="p-6 space-y-6 flex-1">
+            {activeTab === 'social' ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider">
+                    <Radio className="w-4 h-4 text-indigo-400" />
+                    <span>Brand Mentions & Social Activity ({socialInteractions.length})</span>
+                  </h3>
+                </div>
+
+                {loadingSocial ? (
+                  <div className="flex items-center justify-center py-12 text-xs text-slate-400">
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading account social activity...
+                  </div>
+                ) : socialInteractions.length === 0 ? (
+                  <div className="p-8 rounded-2xl border border-dashed border-slate-800 bg-slate-950/20 text-slate-500 text-xs text-center space-y-2">
+                    <MessageSquare className="w-6 h-6 mx-auto text-slate-600" />
+                    <p>No social mentions or interactions linked to this account yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {socialInteractions.map((item) => (
+                      <div
+                        key={item.id}
+                        className="p-3.5 rounded-xl bg-slate-800/40 border border-slate-800 text-xs space-y-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-200">
+                            {item.authorName} (@{item.authorHandle})
+                          </span>
+                          <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
+                            {item.platform}
+                          </span>
+                        </div>
+                        <p className="text-slate-300 whitespace-pre-wrap">{item.content}</p>
+                        <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-800">
+                          <span className="capitalize">Sentiment: {item.sentiment}</span>
+                          <span>{new Date(item.publishedAt).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
             {/* Firmographics & Billing Card */}
             <div className="glass-panel p-4 rounded-xl border border-slate-800 bg-slate-950/40 space-y-3">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
@@ -151,7 +253,7 @@ export const Account360Drawer: React.FC<Account360DrawerProps> = ({
                   <span className="text-slate-500 block text-[11px]">Currency</span>
                   <span className="font-mono text-slate-300 flex items-center gap-1">
                     <CreditCard className="w-3 h-3 text-indigo-400" />
-                    {account.billingDetails?.currency || 'USD'}
+                    {account.billingDetails?.currency || currencyCode}
                   </span>
                 </div>
                 <div>
@@ -236,7 +338,7 @@ export const Account360Drawer: React.FC<Account360DrawerProps> = ({
                       </div>
                       <div className="text-right flex-shrink-0">
                         <span className="text-sm font-bold text-emerald-400 font-mono">
-                          ${(deal.value || deal.amount || 0).toLocaleString()}
+                          {formatCurrency(deal.value || deal.amount || 0)}
                         </span>
                         <p className="text-[10px] text-slate-500 font-mono">{deal.expectedCloseDate}</p>
                       </div>
@@ -288,6 +390,8 @@ export const Account360Drawer: React.FC<Account360DrawerProps> = ({
                 </div>
               )}
             </div>
+            </>
+            )}
           </div>
 
           {/* Footer */}

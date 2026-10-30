@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../config/db.js';
+import { getTenantCurrency } from '../utils/tenantConfig.js';
 
 // ============================================================================
 // 1. PORTFOLIOS & STRATEGY
@@ -131,6 +132,14 @@ export async function recalculateFinancials(req: Request, res: Response): Promis
     const tenantId = req.user!.tenantId;
     const { projectId } = req.params;
 
+    const project = await prisma.project.findFirst({
+      where: { id: projectId, tenantId },
+    });
+    if (!project) {
+      res.status(404).json({ error: 'Project not found in active tenant.' });
+      return;
+    }
+
     // 1. Get project tasks and sum labor costs from TimeLogs
     const tasks = await prisma.task.findMany({
       where: { projectId, tenantId },
@@ -184,7 +193,7 @@ export async function recalculateFinancials(req: Request, res: Response): Promis
         laborBudget: 0,
         actualLaborCost: totalLaborCost,
         actualExpenses: totalExpenses,
-        currency: 'USD',
+        currency: await getTenantCurrency(tenantId),
         profitMarginPercent: 20,
       },
     });
@@ -271,6 +280,14 @@ export async function createRisk(req: Request, res: Response): Promise<void> {
     const impact = Math.min(5, Math.max(1, Number(data.impact || 1)));
     const riskScore = probability * impact;
     const isCritical = riskScore >= 15;
+
+    const project = await prisma.project.findFirst({
+      where: { id: data.projectId, tenantId },
+    });
+    if (!project) {
+      res.status(404).json({ error: 'Project not found in active tenant.' });
+      return;
+    }
 
     const risk = await prisma.riskItem.create({
       data: {

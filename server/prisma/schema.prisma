@@ -55,6 +55,11 @@ model Tenant {
   documents         ProjectDocument[]
   wikiPages         ProjectWikiPage[]
   changeRequests    ClientChangeRequest[]
+  socialListeningRules SocialListeningRule[]
+  socialInteractions   SocialInteraction[]
+  bookingTypes         BookingType[]
+  userAvailabilities   UserAvailability[]
+  bookings             Booking[]
 
   @@map("tenants")
 }
@@ -98,6 +103,9 @@ model User {
   approvedTimesheets Timesheet[]       @relation("TimesheetApprover")
   uploadedDocuments ProjectDocument[]  @relation("DocumentUploader")
   authoredWikiPages ProjectWikiPage[]  @relation("WikiAuthor")
+  bookingTypes      BookingType[]
+  availability      UserAvailability?
+  hostedBookings    Booking[]          @relation("BookingHost")
 
   @@index([tenantId])
   @@index([email])
@@ -183,6 +191,7 @@ model Project {
   documents        ProjectDocument[]
   wikiPages        ProjectWikiPage[]
   changeRequests   ClientChangeRequest[]
+  bookings         Booking[]
 
   // AEC Architectural Extensions
   phases           ProjectPhase[]
@@ -193,6 +202,7 @@ model Project {
   subConsultants   SubConsultantLedger[]
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([ownerId])
   @@index([accountId])
   @@index([dealId])
@@ -269,9 +279,12 @@ model Task {
   isGatekeeper       Boolean   @default(false)
   phaseId            String?
   projectPhase       ProjectPhase? @relation(fields: [phaseId], references: [id], onDelete: SetNull)
+  socialInteractions SocialInteraction[] @relation("SocialEscalatedTask")
 
   @@index([projectId])
   @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
   @@index([assigneeId])
   @@index([parentTaskId])
   @@index([milestoneId])
@@ -417,6 +430,8 @@ model Account {
   deals              Deal[]
   projects           Project[]
   quotes             Quote[]
+  socialInteractions SocialInteraction[] @relation("SocialLinkedAccount")
+  bookings           Booking[]
 
   @@index([tenantId])
   @@index([assignedUserId])
@@ -461,6 +476,8 @@ model Contact {
   deals              Deal[]
   projects           Project[]
   quotes             Quote[]
+  socialInteractions SocialInteraction[] @relation("SocialLinkedContact")
+  bookings           Booking[]
 
   @@index([tenantId])
   @@index([accountId])
@@ -500,8 +517,11 @@ model Deal {
 
   projects        Project[]
   quotes          Quote[]
+  bookings        Booking[]
 
   @@index([tenantId])
+  @@index([tenantId, stage])
+  @@index([tenantId, createdAt])
   @@index([accountId])
   @@index([contactId])
   @@index([assignedUserId])
@@ -523,6 +543,8 @@ model EntityActivityLog {
   tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
+  @@index([tenantId, moduleName, entityId])
+  @@index([tenantId, timestamp])
   @@index([moduleName, entityId])
   @@map("crm_entity_activity_logs")
 }
@@ -1217,5 +1239,177 @@ model SubConsultantLedger {
   @@index([tenantId])
   @@map("aec_sub_consultant_ledgers")
 }
+
+// ==========================================
+// 15. Organic Social Engagement & Listening
+// ==========================================
+
+model SocialListeningRule {
+  id            String   @id @default(cuid())
+  tenantId      String
+  name          String
+  keywords      Json     // string[] - keywords/phrases to track
+  excludedWords Json?    // string[] - negative exclude-words
+  platforms     Json     // string[] - ['twitter', 'linkedin', 'facebook', 'instagram', 'reddit', 'youtube']
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  interactions  SocialInteraction[]
+
+  @@index([tenantId])
+  @@index([isActive])
+  @@map("social_listening_rules")
+}
+
+model SocialInteraction {
+  id              String    @id @default(cuid())
+  tenantId        String
+  ruleId          String?
+  platform        String    // twitter | linkedin | facebook | instagram | reddit | youtube
+  externalId      String?
+  authorName      String
+  authorHandle    String
+  authorAvatar    String?
+  isVerified      Boolean   @default(false)
+  content         String    @db.Text
+  mediaUrls       Json?     // string[]
+  sentiment       String    @default("neutral") // positive | neutral | negative
+  sentimentScore  Float?    @default(0.0)
+  intent          String    @default("general") // support_issue | purchase_intent | praise | general
+  urgency         String    @default("low")     // low | medium | high | critical
+  status          String    @default("new")     // new | in_progress | replied | escalated | resolved | ignored
+  threadHistory   Json?     // Array<{ id: string, author: string, handle: string, content: string, timestamp: string, isOutbound: boolean }>
+  escalatedTaskId String?
+  linkedContactId String?
+  linkedAccountId String?
+  linkedDealId    String?
+  postUrl         String?
+  publishedAt     DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  tenant          Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  rule            SocialListeningRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  escalatedTask   Task?               @relation("SocialEscalatedTask", fields: [escalatedTaskId], references: [id], onDelete: SetNull)
+  linkedContact   Contact?            @relation("SocialLinkedContact", fields: [linkedContactId], references: [id], onDelete: SetNull)
+  linkedAccount   Account?            @relation("SocialLinkedAccount", fields: [linkedAccountId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([tenantId, publishedAt])
+  @@index([tenantId, status])
+  @@index([platform])
+  @@index([sentiment])
+  @@index([intent])
+  @@index([status])
+  @@index([escalatedTaskId])
+  @@index([linkedContactId])
+  @@index([linkedAccountId])
+  @@map("social_interactions")
+}
+
+// ==========================================
+// 17. Scheduler & Booking System
+// ==========================================
+
+model BookingType {
+  id              String    @id @default(cuid())
+  tenantId        String
+  userId          String
+  title           String
+  slug            String
+  description     String?   @db.Text
+  durationMinutes Int       @default(30)
+  locationType    String    @default("google_meet") // google_meet | zoom | teams | phone | in_person
+  locationUrl     String?
+  bufferBeforeMin Int       @default(0)
+  bufferAfterMin  Int       @default(10)
+  color           String    @default("#6366f1")
+  isActive        Boolean   @default(true)
+  customQuestions Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings        Booking[]
+
+  @@unique([tenantId, userId, slug])
+  @@index([tenantId])
+  @@index([userId])
+  @@map("booking_types")
+}
+
+model UserAvailability {
+  id              String    @id @default(cuid())
+  tenantId        String
+  userId          String    @unique
+  timeZone        String    @default("UTC")
+  weeklySchedule  Json      // { monday: [{ start: "09:00", end: "17:00" }], ... }
+  slotStepMin     Int       @default(30)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("user_availabilities")
+}
+
+model Booking {
+  id                 String    @id @default(cuid())
+  tenantId           String
+  bookingTypeId      String?
+  hostUserId         String
+  title              String
+  description        String?   @db.Text
+  startTime          DateTime
+  endTime            DateTime
+  durationMinutes    Int
+  status             String    @default("scheduled") // scheduled | confirmed | completed | cancelled | rescheduled | no_show
+  locationType       String    @default("google_meet")
+  locationUrl        String?
+
+  // Guest Details
+  guestName          String
+  guestEmail         String
+  guestPhone         String?
+  guestNotes         String?   @db.Text
+  customAnswers      Json?
+
+  // Linked CRM & Project Entities (Activity Linkage)
+  projectId          String?
+  accountId          String?
+  contactId          String?
+  dealId             String?
+
+  cancellationReason String?
+  rescheduledFromId  String?
+
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  tenant             Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  hostUser           User          @relation("BookingHost", fields: [hostUserId], references: [id], onDelete: Cascade)
+  bookingType        BookingType?  @relation(fields: [bookingTypeId], references: [id], onDelete: SetNull)
+  project            Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  account            Account?      @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  contact            Contact?      @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  deal               Deal?         @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, startTime])
+  @@index([hostUserId])
+  @@index([startTime])
+  @@index([projectId])
+  @@index([contactId])
+  @@index([accountId])
+  @@index([guestEmail])
+  @@map("bookings")
+}
+
 
 
