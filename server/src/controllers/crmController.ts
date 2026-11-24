@@ -2,6 +2,75 @@ import { Request, Response } from 'express';
 import { prisma } from '../config/db.js';
 import { updateDealWithEvents } from '../services/dealService.js';
 import { getTenantCurrency } from '../utils/tenantConfig.js';
+import {
+  validateSaVatNumber,
+  validateCipcNumber,
+  validateCsdNumber,
+  validateBbbeeLevel,
+} from '../services/saTaxService.js';
+
+function validateAndExtractSaFirmographics(data: Record<string, any>) {
+  const cipc =
+    data.cipcRegistrationNumber !== undefined && data.cipcRegistrationNumber !== null && String(data.cipcRegistrationNumber).trim() !== ''
+      ? String(data.cipcRegistrationNumber).trim()
+      : data.cipcRegistrationNumber === '' || data.cipcRegistrationNumber === null
+      ? null
+      : undefined;
+
+  if (cipc && !validateCipcNumber(cipc)) {
+    throw new Error(`Invalid CIPC Registration Number "${cipc}". Expected format YYYY/NNNNNN/NN (e.g. 2021/123456/07).`);
+  }
+
+  const vat =
+    data.vatRegistrationNumber !== undefined && data.vatRegistrationNumber !== null && String(data.vatRegistrationNumber).trim() !== ''
+      ? String(data.vatRegistrationNumber).trim()
+      : data.vatRegistrationNumber === '' || data.vatRegistrationNumber === null
+      ? null
+      : undefined;
+
+  if (vat && !validateSaVatNumber(vat)) {
+    throw new Error(`Invalid SARS VAT Registration Number "${vat}". Expected 10 digits starting with 4.`);
+  }
+
+  const csd =
+    data.csdSupplierNumber !== undefined && data.csdSupplierNumber !== null && String(data.csdSupplierNumber).trim() !== ''
+      ? String(data.csdSupplierNumber).trim().toUpperCase()
+      : data.csdSupplierNumber === '' || data.csdSupplierNumber === null
+      ? null
+      : undefined;
+
+  if (csd && !validateCsdNumber(csd)) {
+    throw new Error(`Invalid CSD Supplier Number "${csd}". Expected MAAA followed by 7 digits (e.g. MAAA0123456).`);
+  }
+
+  let bbbeeLevel: number | null | undefined = undefined;
+  if (data.bbbeeLevel !== undefined) {
+    if (data.bbbeeLevel === null || data.bbbeeLevel === '') {
+      bbbeeLevel = null;
+    } else {
+      const parsedLevel = Number(data.bbbeeLevel);
+      if (!validateBbbeeLevel(parsedLevel)) {
+        throw new Error('Invalid B-BBEE Level. Expected integer 1–8 or 0 for Non-Compliant.');
+      }
+      bbbeeLevel = parsedLevel;
+    }
+  }
+
+  const bbbeeExpiryDate =
+    data.bbbeeExpiryDate !== undefined
+      ? data.bbbeeExpiryDate
+        ? new Date(data.bbbeeExpiryDate)
+        : null
+      : undefined;
+
+  return {
+    cipcRegistrationNumber: cipc,
+    vatRegistrationNumber: vat,
+    csdSupplierNumber: csd,
+    bbbeeLevel,
+    bbbeeExpiryDate,
+  };
+}
 
 async function resolveAssignedUserId(tenantId: string, assignedUserId: any, defaultUserId: string): Promise<string> {
   if (typeof assignedUserId === 'string' && assignedUserId && !assignedUserId.startsWith('usr-')) {
@@ -454,6 +523,7 @@ export async function createAccount(req: Request, res: Response): Promise<void> 
     const count = await prisma.account.count({ where: { tenantId } });
     const accountNumber = `ACC-${String(count + 1001).padStart(5, '0')}`;
     const assignedUserId = await resolveAssignedUserId(tenantId, data.assignedUserId, userId);
+    const saFields = validateAndExtractSaFirmographics(data);
 
     const account = await prisma.account.create({
       data: {
@@ -480,6 +550,11 @@ export async function createAccount(req: Request, res: Response): Promise<void> 
         shippingPostalCode: data.shippingPostalCode,
         shippingCountry: data.shippingCountry,
         description: data.description,
+        cipcRegistrationNumber: saFields.cipcRegistrationNumber ?? null,
+        vatRegistrationNumber: saFields.vatRegistrationNumber ?? null,
+        bbbeeLevel: saFields.bbbeeLevel ?? null,
+        bbbeeExpiryDate: saFields.bbbeeExpiryDate ?? null,
+        csdSupplierNumber: saFields.csdSupplierNumber ?? null,
         assignedUserId,
         createdById: userId,
         customFields: data.customFields || {},
@@ -488,6 +563,10 @@ export async function createAccount(req: Request, res: Response): Promise<void> 
 
     res.status(201).json(account);
   } catch (err: any) {
+    if (err.message?.startsWith('Invalid ')) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
     res.status(500).json({
       error: 'Failed to create account.',
       ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),
@@ -506,6 +585,8 @@ export async function updateAccount(req: Request, res: Response): Promise<void> 
       res.status(404).json({ error: 'Account not found.' });
       return;
     }
+
+    const saFields = validateAndExtractSaFirmographics(data);
 
     const updated = await prisma.account.update({
       where: { id },
@@ -531,6 +612,11 @@ export async function updateAccount(req: Request, res: Response): Promise<void> 
         shippingPostalCode: data.shippingPostalCode,
         shippingCountry: data.shippingCountry,
         description: data.description,
+        cipcRegistrationNumber: saFields.cipcRegistrationNumber,
+        vatRegistrationNumber: saFields.vatRegistrationNumber,
+        bbbeeLevel: saFields.bbbeeLevel,
+        bbbeeExpiryDate: saFields.bbbeeExpiryDate,
+        csdSupplierNumber: saFields.csdSupplierNumber,
         assignedUserId: data.assignedUserId,
         customFields: data.customFields,
       },
@@ -538,6 +624,10 @@ export async function updateAccount(req: Request, res: Response): Promise<void> 
 
     res.json(updated);
   } catch (err: any) {
+    if (err.message?.startsWith('Invalid ')) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
     res.status(500).json({
       error: 'Failed to update account.',
       ...(process.env.NODE_ENV === 'development' ? { details: err.message } : {}),

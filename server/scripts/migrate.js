@@ -63,10 +63,35 @@ try {
     env: { ...process.env, DATABASE_URL: dbUrl },
   });
 
-  // 4. Enforce Row Level Security (RLS) tenant isolation policies
+  // 4. Enforce Row Level Security (RLS) tenant isolation policies & POPIA triggers
   try {
     console.log('🔒 [RLS] Applying multi-tenant row level security policies...');
     execSync('npx tsx scripts/apply-rls-social.ts', {
+      cwd: serverDir,
+      stdio: 'inherit',
+      env: { ...process.env, DATABASE_URL: dbUrl },
+    });
+    execSync('npx tsx scripts/apply-rls-popia.ts', {
+      cwd: serverDir,
+      stdio: 'inherit',
+      env: { ...process.env, DATABASE_URL: dbUrl },
+    });
+    execSync('npx tsx scripts/apply-rls-tax-invoices.ts', {
+      cwd: serverDir,
+      stdio: 'inherit',
+      env: { ...process.env, DATABASE_URL: dbUrl },
+    });
+    execSync('npx tsx scripts/apply-rls-payments.ts', {
+      cwd: serverDir,
+      stdio: 'inherit',
+      env: { ...process.env, DATABASE_URL: dbUrl },
+    });
+    execSync('npx tsx scripts/apply-rls-accounting.ts', {
+      cwd: serverDir,
+      stdio: 'inherit',
+      env: { ...process.env, DATABASE_URL: dbUrl },
+    });
+    execSync('npx tsx scripts/apply-rls-calendars.ts', {
       cwd: serverDir,
       stdio: 'inherit',
       env: { ...process.env, DATABASE_URL: dbUrl },

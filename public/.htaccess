@@ -1,19 +1,67 @@
 # ==============================================================================
-# Shogunate Projects - cPanel Apache Production Configuration (.htaccess)
+# Shogunate Projects - HOSTAFRICA / cPanel Apache Production Config (.htaccess)
+# POPIA Section 19 Hardened: HTTPS/HSTS, Brotli/Gzip, .env & Source Map Blocking
 # ==============================================================================
 
-# 1. SPA Deep Routing - Direct all non-file routes to /index.html
+# 1. Disable Directory Browsing
+Options -Indexes
+
+# 2. Block Direct Web Access to .env Files, Source Maps (.map), and Metadata
+<FilesMatch "(^\.env(\..+)?$|\.map$|^\.git|^(package(-lock)?|tsconfig|composer)\.(json|lock)$)">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# 3. Enforce HTTPS Redirect & SPA /index.html Fallback Routing
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
+
+  # Hard-block requests for .env*, *.map, or hidden VCS directories before SPA fallback
+  RewriteRule (^|/)\.env(\.[^/]*)?$ - [F,L,NC]
+  RewriteRule \.map$ - [F,L,NC]
+  RewriteRule (^|/)\.git - [F,L,NC]
+
+  # Redirect all HTTP traffic to HTTPS (supports direct TLS & reverse proxy X-Forwarded-Proto)
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
+  RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)(:\d+)?$ [NC]
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # SPA Deep Routing - Direct all non-file, non-directory, non-API routes to /index.html
   RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_URI} !^/api(/|$)
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteCond %{REQUEST_FILENAME} !-l
   RewriteRule . /index.html [L]
 </IfModule>
 
-# 2. GZIP / Deflate Compression
+# 4. Brotli Compression (Preferred on HOSTAFRICA LiteSpeed / Apache 2.4+)
+<IfModule mod_brotli.c>
+  AddOutputFilterByType BROTLI_COMPRESS text/plain
+  AddOutputFilterByType BROTLI_COMPRESS text/html
+  AddOutputFilterByType BROTLI_COMPRESS text/xml
+  AddOutputFilterByType BROTLI_COMPRESS text/css
+  AddOutputFilterByType BROTLI_COMPRESS text/javascript
+  AddOutputFilterByType BROTLI_COMPRESS application/javascript
+  AddOutputFilterByType BROTLI_COMPRESS application/x-javascript
+  AddOutputFilterByType BROTLI_COMPRESS application/json
+  AddOutputFilterByType BROTLI_COMPRESS application/xml
+  AddOutputFilterByType BROTLI_COMPRESS application/xhtml+xml
+  AddOutputFilterByType BROTLI_COMPRESS application/rss+xml
+  AddOutputFilterByType BROTLI_COMPRESS application/wasm
+  AddOutputFilterByType BROTLI_COMPRESS image/svg+xml
+  AddOutputFilterByType BROTLI_COMPRESS font/ttf
+  AddOutputFilterByType BROTLI_COMPRESS font/otf
+</IfModule>
+
+# 5. GZIP / Deflate Compression Fallback
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/plain
   AddOutputFilterByType DEFLATE text/html
@@ -26,10 +74,13 @@
   AddOutputFilterByType DEFLATE application/javascript
   AddOutputFilterByType DEFLATE application/x-javascript
   AddOutputFilterByType DEFLATE application/json
+  AddOutputFilterByType DEFLATE application/wasm
   AddOutputFilterByType DEFLATE image/svg+xml
+  AddOutputFilterByType DEFLATE font/ttf
+  AddOutputFilterByType DEFLATE font/otf
 </IfModule>
 
-# 3. Browser Cache-Control & Expiration
+# 6. Browser Cache-Control & Expiration
 <IfModule mod_expires.c>
   ExpiresActive On
   ExpiresDefault "access plus 1 month"
@@ -42,9 +93,12 @@
   ExpiresByType font/woff2 "access plus 1 year"
 </IfModule>
 
-# 4. HTTP Headers & Caching Strategy
+# 7. HTTP Security Headers & HSTS (POPIA Section 19 Safeguards)
 <IfModule mod_headers.c>
-  # 1-year immutable cache for fingerprinted static assets in /assets/
+  # Enforce HTTPS via HSTS (1 year, includeSubDomains, preload)
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+  # 1-year immutable cache for fingerprinted static assets
   <FilesMatch "\.(js|css|woff2?|png|jpe?g|svg|webp|avif|ico)$">
     Header set Cache-Control "max-age=31536000, public, immutable"
   </FilesMatch>
@@ -57,11 +111,9 @@
   </FilesMatch>
 
   # Essential Security Headers
-  Header set X-Content-Type-Options "nosniff"
-  Header set X-Frame-Options "SAMEORIGIN"
-  Header set X-XSS-Protection "1; mode=block"
-  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set X-XSS-Protection "1; mode=block"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
 </IfModule>
-
-# 5. Disable Directory Browsing
-Options -Indexes

@@ -10,6 +10,9 @@ export const QUEUE_NAMES = {
   EMAIL: 'shogun-email-queue',
   SCHEDULED_JOBS: 'shogun-scheduled-jobs-queue',
   SOCIAL_ANALYSIS: 'shogun-social-analysis-queue',
+  POPIA_RETENTION: 'shogun-popia-retention-queue',
+  BBBEE_EXPIRY: 'shogun-bbbee-expiry-queue',
+  ACCOUNTING_SYNC: 'shogun-accounting-sync-queue',
 } as const;
 
 // Default job options with exponential backoff & retention policies
@@ -36,6 +39,7 @@ let _workflowQueue: Queue | null = null;
 let _emailQueue: Queue | null = null;
 let _scheduledJobsQueue: Queue | null = null;
 let _socialAnalysisQueue: Queue | null = null;
+let _accountingSyncQueue: Queue | null = null;
 
 export function getWorkflowQueue(): Queue {
   if (!_workflowQueue) {
@@ -81,6 +85,24 @@ export function getSocialAnalysisQueue(): Queue {
   return _socialAnalysisQueue;
 }
 
+export function getAccountingSyncQueue(): Queue {
+  if (!_accountingSyncQueue) {
+    _accountingSyncQueue = new Queue(QUEUE_NAMES.ACCOUNTING_SYNC, {
+      connection: createRedisConnection(),
+      defaultJobOptions: {
+        ...defaultJobOptions,
+        attempts: 5,
+        backoff: {
+          type: 'exponential',
+          delay: 2000,
+        },
+      },
+    });
+    _accountingSyncQueue.on('error', (err) => console.warn('[AccountingSyncQueue Warning]:', err.message));
+  }
+  return _accountingSyncQueue;
+}
+
 // Proxies for direct backward compatibility
 export const workflowQueue = new Proxy({} as Queue, {
   get: (_target, prop) => (getWorkflowQueue() as any)[prop],
@@ -96,6 +118,10 @@ export const scheduledJobsQueue = new Proxy({} as Queue, {
 
 export const socialAnalysisQueue = new Proxy({} as Queue, {
   get: (_target, prop) => (getSocialAnalysisQueue() as any)[prop],
+});
+
+export const accountingSyncQueue = new Proxy({} as Queue, {
+  get: (_target, prop) => (getAccountingSyncQueue() as any)[prop],
 });
 
 export async function queueSocialInteraction(payload: any): Promise<void> {
@@ -144,6 +170,26 @@ export interface ScheduledJobPayload {
   tenantId?: string;
   jobType: 'daily_client_health' | 'recurring_tasks_generation';
   triggeredAt: string;
+}
+
+export type AccountingDomainEventName =
+  | 'invoice.issued'
+  | 'invoice.paid'
+  | 'expense.approved'
+  | 'sync_invoice_payment';
+
+export interface AccountingSyncJobPayload {
+  eventType?: AccountingDomainEventName;
+  tenantId: string;
+  taxInvoiceId?: string;
+  invoiceNumber?: string;
+  paymentTransactionId?: string;
+  merchantTransactionId?: string;
+  projectId?: string;
+  amountPaid?: number;
+  currency?: string;
+  provider?: 'SAGE_ZA' | 'XERO' | null;
+  settledAt?: string;
 }
 
 // ============================================================================
@@ -199,16 +245,40 @@ export async function enqueueScheduledJob(
   }
 }
 
+export async function enqueueAccountingSyncJob(
+  payload: AccountingSyncJobPayload,
+  customJobId?: string
+) {
+  const queue = getAccountingSyncQueue();
+  const eventName: AccountingDomainEventName = payload.eventType || 'invoice.paid';
+  const jobId =
+    customJobId ||
+    `accounting-${eventName}-${
+      payload.merchantTransactionId || payload.taxInvoiceId || payload.projectId || Date.now()
+    }`;
+  return await queue.add(
+    eventName,
+    { ...payload, eventType: eventName },
+    {
+      jobId,
+      attempts: 5,
+      backoff: { type: 'exponential', delay: 2000 },
+    }
+  );
+}
+
 export async function closeQueues(): Promise<void> {
   const closers = [];
   if (_workflowQueue) closers.push(_workflowQueue.close());
   if (_emailQueue) closers.push(_emailQueue.close());
   if (_scheduledJobsQueue) closers.push(_scheduledJobsQueue.close());
   if (_socialAnalysisQueue) closers.push(_socialAnalysisQueue.close());
+  if (_accountingSyncQueue) closers.push(_accountingSyncQueue.close());
   await Promise.all(closers);
   _workflowQueue = null;
   _emailQueue = null;
   _scheduledJobsQueue = null;
   _socialAnalysisQueue = null;
+  _accountingSyncQueue = null;
 }
 

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   getWbsItems,
   getCriticalPath,
+  cascadeProjectSchedule,
   getResourceWorkload,
   getTimesheets,
   submitTimesheet,
@@ -27,6 +28,7 @@ projectManagementRouter.get('/wbs', getWbsItems);
 
 // 2. Gantt & Critical Path
 projectManagementRouter.get('/projects/:projectId/critical-path', getCriticalPath);
+projectManagementRouter.post('/projects/:projectId/schedule/cascade', cascadeProjectSchedule);
 
 // 3. Resource Workload & Capacity
 projectManagementRouter.get('/resources/workload', getResourceWorkload);

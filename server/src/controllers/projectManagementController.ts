@@ -1,5 +1,12 @@
 import { Request, Response } from 'express';
 import { prisma } from '../config/db.js';
+import {
+  calculateAvailableTeamCapacity,
+  cascadeProjectGanttTasks,
+  computeProjectCpm,
+  getIsoWeekBounds,
+} from '../services/schedulingEngine.js';
+import { addCalendarDaysUtc } from '../services/saCalendarService.js';
 
 function getTenantId(req: Request): string {
   const tenantId = (req.user || req.tenantContext)?.tenantId || req.tenantId;
@@ -88,74 +95,133 @@ export async function getWbsItems(req: Request, res: Response): Promise<void> {
 }
 
 /**
- * 2. Project Scheduling & Critical Path Analysis
+ * 2. Project Scheduling & Critical Path Analysis (SA Working Calendar & CPM)
  */
 export async function getCriticalPath(req: Request, res: Response): Promise<void> {
   try {
     const { projectId } = req.params;
     const tenantId = getTenantId(req);
 
-    const tasks = await prisma.task.findMany({
-      where: { projectId, tenantId },
-      include: { milestone: true },
-    });
+    const [project, tasks] = await Promise.all([
+      prisma.project.findFirst({
+        where: { id: projectId, tenantId },
+        select: { id: true, calendarId: true, createdAt: true },
+      }),
+      prisma.task.findMany({
+        where: { projectId, tenantId },
+        include: { milestone: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+    ]);
 
-    // CPM Logic calculation
-    const criticalTaskIds: string[] = [];
-    const maxDurationTask = tasks.reduce(
-      (max, t) => ((t.estimatedHours || 0) > (max.estimatedHours || 0) ? t : max),
-      tasks[0] || null
-    );
-
-    if (maxDurationTask) {
-      criticalTaskIds.push(maxDurationTask.id);
-    }
-
-    // Add tasks with predecessor dependencies or urgent priorities
-    tasks.forEach((t) => {
-      if (
-        t.priority === 'urgent' ||
-        (Array.isArray(t.predecessorTaskIds) && (t.predecessorTaskIds as string[]).length > 0)
-      ) {
-        if (!criticalTaskIds.includes(t.id)) {
-          criticalTaskIds.push(t.id);
-        }
+    const cpm = await computeProjectCpm(
+      tasks.map((t) => {
+        const cf =
+          typeof t.customFields === 'object' && t.customFields !== null
+            ? (t.customFields as Record<string, any>)
+            : {};
+        return {
+          id: t.id,
+          title: t.title,
+          startDate: cf.startDate || null,
+          dueDate: t.dueDate,
+          durationDays: typeof cf.durationDays === 'number' ? cf.durationDays : null,
+          estimatedHours: t.estimatedHours,
+          predecessorTaskIds: Array.isArray(t.predecessorTaskIds)
+            ? (t.predecessorTaskIds as string[])
+            : [],
+          priority: t.priority,
+          status: t.status,
+        };
+      }),
+      {
+        calendarId: project?.calendarId || (req.query.calendarId ? String(req.query.calendarId) : undefined),
+        tenantId,
+        projectStartDate: project?.createdAt,
       }
-    });
+    );
 
     res.json({
       success: true,
       projectId,
-      criticalTaskIds,
-      criticalPathLengthHours: tasks.reduce((acc, t) => acc + (t.estimatedHours || 8), 0),
+      criticalTaskIds: cpm.criticalTaskIds,
+      criticalPathLengthHours: cpm.criticalPathLengthHours,
       totalTasks: tasks.length,
+      calendarId: cpm.calendarId,
+      calendarName: cpm.calendarName,
+      projectStartDate: cpm.projectStartDate,
+      projectFinishDate: cpm.projectFinishDate,
+      projectDurationWorkingDays: cpm.projectDurationWorkingDays,
+      tasks: cpm.tasks,
+      holidaysInSpan: cpm.holidaysInSpan,
     });
   } catch (error: any) {
     sendControllerError(res, 'Failed to compute critical path.', error);
   }
 }
 
+export async function cascadeProjectSchedule(req: Request, res: Response): Promise<void> {
+  try {
+    const { projectId } = req.params;
+    const tenantId = getTenantId(req);
+    const calendarId = req.body?.calendarId ? String(req.body.calendarId) : undefined;
+
+    const cpm = await cascadeProjectGanttTasks(tenantId, projectId, calendarId);
+    res.json({
+      success: true,
+      projectId,
+      ...cpm,
+    });
+  } catch (error: any) {
+    sendControllerError(res, 'Failed to cascade Finish-to-Start schedule.', error);
+  }
+}
+
 /**
- * 3. Resource & Capacity Management
+ * 3. Resource & Capacity Management (Adjusted for SA Public Holidays & Working Days)
  */
 export async function getResourceWorkload(req: Request, res: Response): Promise<void> {
   try {
     const tenantId = getTenantId(req);
+    const refDate = req.query.weekStart ? String(req.query.weekStart) : new Date();
+    const { mondayIso, sundayIso, monday } = getIsoWeekBounds(refDate);
+    const year = monday.getUTCFullYear();
+    const monthIndex = monday.getUTCMonth();
+    const monthStartIso = `${year}-${String(monthIndex + 1).padStart(2, '0')}-01`;
+    const monthEndIso = new Date(Date.UTC(year, monthIndex + 1, 0)).toISOString().slice(0, 10);
 
-    const profiles = await prisma.resourceProfile.findMany({
-      where: { tenantId },
-      include: { user: true },
-    });
-
-    const activeTasks = await prisma.task.findMany({
-      where: { tenantId, status: { in: ['todo', 'in_progress', 'review'] } },
-    });
+    const [profiles, activeTasks, baseWeekCap, monthCap, annualCap] = await Promise.all([
+      prisma.resourceProfile.findMany({
+        where: { tenantId },
+        include: { user: true },
+      }),
+      prisma.task.findMany({
+        where: { tenantId, status: { in: ['todo', 'in_progress', 'review'] } },
+      }),
+      calculateAvailableTeamCapacity({ startDate: mondayIso, endDate: sundayIso, tenantId }),
+      calculateAvailableTeamCapacity({ startDate: monthStartIso, endDate: monthEndIso, tenantId }),
+      calculateAvailableTeamCapacity({
+        startDate: `${year}-01-01`,
+        endDate: `${year}-12-31`,
+        tenantId,
+      }),
+    ]);
 
     const workloadMap = profiles.map((p) => {
       const userTasks = activeTasks.filter((t) => t.assigneeId === p.userId);
       const assignedHours = userTasks.reduce((sum, t) => sum + (t.estimatedHours || 5), 0);
-      const capacityHours = p.weeklyCapacityHours || 40;
-      const utilizationPercent = Math.round((assignedHours / capacityHours) * 100);
+      const baseWeeklyHours = p.weeklyCapacityHours || 40;
+      const dailyHours = baseWeeklyHours / 5;
+      // Scale available capacity by actual SA working days in the week so public holidays
+      // are never flagged as under-utilization
+      const effectiveWeeklyCapacityHours = Number(
+        (baseWeekCap.workingDays * dailyHours).toFixed(2)
+      );
+      const monthlyAvailableHours = Number((monthCap.workingDays * dailyHours).toFixed(2));
+      const annualAvailableHours = Number((annualCap.workingDays * dailyHours).toFixed(2));
+
+      const denom = effectiveWeeklyCapacityHours > 0 ? effectiveWeeklyCapacityHours : baseWeeklyHours;
+      const utilizationPercent = denom > 0 ? Math.round((assignedHours / denom) * 100) : 0;
 
       return {
         userId: p.userId,
@@ -163,17 +229,41 @@ export async function getResourceWorkload(req: Request, res: Response): Promise<
         email: p.user?.email,
         department: p.department,
         skills: p.skills,
-        weeklyCapacityHours: capacityHours,
+        weeklyCapacityHours: effectiveWeeklyCapacityHours,
+        nominalWeeklyCapacityHours: baseWeeklyHours,
+        monthlyAvailableHours,
+        annualAvailableHours,
+        workingDaysInWeek: baseWeekCap.workingDays,
+        workingDaysInMonth: monthCap.workingDays,
+        workingDaysInYear: annualCap.workingDays,
         assignedHours,
         utilizationPercent,
         hourlyCostRate: p.hourlyCostRate,
         hourlyBillingRate: p.hourlyBillingRate,
-        status: utilizationPercent > 100 ? 'overallocated' : utilizationPercent > 80 ? 'optimal' : 'underallocated',
+        status:
+          effectiveWeeklyCapacityHours === 0
+            ? 'optimal'
+            : utilizationPercent > 100
+              ? 'overallocated'
+              : utilizationPercent >= 75
+                ? 'optimal'
+                : 'underallocated',
       };
     });
 
     res.json({
       success: true,
+      calendar: {
+        id: baseWeekCap.calendarId,
+        name: baseWeekCap.calendarName,
+        weekStart: mondayIso,
+        weekEnd: sundayIso,
+        workingDaysInWeek: baseWeekCap.workingDays,
+        workingDaysInMonth: monthCap.workingDays,
+        workingDaysInYear: annualCap.workingDays,
+        holidaysInWeek: baseWeekCap.holidaysInPeriod,
+        holidaysInMonth: monthCap.holidaysInPeriod,
+      },
       data: workloadMap,
     });
   } catch (error: any) {
@@ -205,7 +295,24 @@ export async function getTimesheets(req: Request, res: Response): Promise<void> 
       orderBy: { weekStartDate: 'desc' },
     });
 
-    res.json({ success: true, data: timesheets });
+    const enriched = await Promise.all(
+      timesheets.map(async (ts) => {
+        const weekEnd = addCalendarDaysUtc(ts.weekStartDate, 6);
+        const cap = await calculateAvailableTeamCapacity({
+          startDate: ts.weekStartDate,
+          endDate: weekEnd,
+          tenantId,
+        });
+        return {
+          ...ts,
+          expectedCapacityHours: cap.availableHoursPerMember,
+          workingDaysInWeek: cap.workingDays,
+          holidaysInWeek: cap.holidaysInPeriod,
+        };
+      })
+    );
+
+    res.json({ success: true, data: enriched });
   } catch (error: any) {
     sendControllerError(res, 'Failed to fetch timesheets.', error);
   }

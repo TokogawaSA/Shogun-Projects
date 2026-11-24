@@ -8,6 +8,10 @@ import {
   getPriceBooks,
   createPriceBook,
   fulfillDeliverable,
+  getQuotes,
+  upsertQuote,
+  getTaxInvoices,
+  createTaxInvoice,
 } from '../controllers/catalogController.js';
 
 export const catalogRouter = Router();
@@ -22,6 +26,13 @@ catalogRouter.delete('/products/:id', deleteProduct);
 // Price Books
 catalogRouter.get('/price-books', getPriceBooks);
 catalogRouter.post('/price-books', createPriceBook);
+
+// SARS VAT Multi-Currency Quotes & Tax Invoices
+catalogRouter.get('/quotes', getQuotes);
+catalogRouter.post('/quotes', upsertQuote);
+catalogRouter.put('/quotes/:id', upsertQuote);
+catalogRouter.get('/tax-invoices', getTaxInvoices);
+catalogRouter.post('/tax-invoices', createTaxInvoice);
 
 // Deliverable Fulfillment & Inventory Deduction
 catalogRouter.post('/deliverables/:id/fulfill', fulfillDeliverable);

@@ -3,10 +3,12 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import './config/env.js';
 import { prisma } from './config/db.js';
 import { authenticateTenant } from './middleware/auth.js';
 
 // Route Modules
+import { healthRouter } from './routes/healthRoutes.js';
 import { authRouter } from './routes/authRoutes.js';
 import { crmRouter } from './routes/crmRoutes.js';
 import { projectRouter } from './routes/projectRoutes.js';
@@ -20,6 +22,10 @@ import { hierarchyRouter } from './routes/hierarchyRoutes.js';
 import { formRouter } from './routes/formRoutes.js';
 import { socialRouter } from './routes/socialRoutes.js';
 import { bookingRouter, publicBookingRouter } from './routes/bookingRoutes.js';
+import { popiaRouter } from './routes/popiaRoutes.js';
+import { peachWebhookRouter, portalPaymentRouter } from './routes/paymentRoutes.js';
+import { accountingRouter } from './routes/accountingRoutes.js';
+import { calendarRouter } from './routes/calendarRoutes.js';
 
 dotenv.config();
 
@@ -56,7 +62,13 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json());
+app.use(
+  express.json({
+    verify: (req: any, _res, buf) => {
+      req.rawBody = buf.toString('utf8');
+    },
+  })
+);
 app.use(express.urlencoded({ extended: true }));
 
 // Rate limiting for auth endpoints (prevents brute-force)
@@ -69,6 +81,10 @@ const authLimiter = rateLimit({
     error: 'Too many authentication attempts from this IP, please try again after 15 minutes.',
   },
 });
+
+// South African POPIA Data Residency & Encryption Health Probe
+app.use('/api/v1/health', healthRouter);
+app.use('/api/health', healthRouter);
 
 // Health check endpoint with database probe
 app.get('/api/health', async (_req: Request, res: Response) => {
@@ -95,6 +111,9 @@ app.get('/api/health', async (_req: Request, res: Response) => {
 // Public Authentication Routes
 app.use('/api/auth', authLimiter, authRouter);
 
+// Public Peach Payments V2 Inbound Webhooks (HMAC-SHA256 verified)
+app.use('/api/v1/webhooks', peachWebhookRouter);
+
 // cPanel Scheduled Worker / Cron Routes (guarded by X-Cron-Secret)
 app.use('/api/cron', cronRouter);
 
@@ -112,6 +131,14 @@ app.use('/api/public/bookings', publicBookingRouter);
 app.use('/api/bookings', authenticateTenant, bookingRouter);
 app.use('/api/v1/social', authenticateTenant, socialRouter);
 app.use('/api/social', authenticateTenant, socialRouter);
+app.use('/api/v1/compliance/popia', authenticateTenant, popiaRouter);
+app.use('/api/compliance/popia', authenticateTenant, popiaRouter);
+app.use('/api/v1/portal', authenticateTenant, portalPaymentRouter);
+app.use('/api/portal', authenticateTenant, portalPaymentRouter);
+app.use('/api/v1/accounting', authenticateTenant, accountingRouter);
+app.use('/api/accounting', authenticateTenant, accountingRouter);
+app.use('/api/v1/calendars', authenticateTenant, calendarRouter);
+app.use('/api/calendars', authenticateTenant, calendarRouter);
 
 // 404 Route Catch-All
 app.use((_req: Request, res: Response) => {

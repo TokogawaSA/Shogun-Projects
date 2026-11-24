@@ -14,6 +14,7 @@ import { RelatedListsNav, SubPanelTab } from '../components/RelatedListsNav';
 import { EntitySummaryWidget } from '../components/EntitySummaryWidget';
 import { EntityBlocksViewer } from '../components/EntityBlocksViewer';
 import { ConvertLeadModal } from '../components/ConvertLeadModal';
+import { SaComplianceBadgeBar } from '../components/SaComplianceBadgeBar';
 import { Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
 
 export const EntityDetailView: React.FC = () => {
@@ -80,6 +81,9 @@ export const EntityDetailView: React.FC = () => {
           setActiveTab('tasks');
         }}
       />
+
+      {/* South African B2B Compliance Badge Bar for Juristic Client Accounts */}
+      {currentModule === 'accounts' && <SaComplianceBadgeBar record={record} />}
 
       {/* 2. Sub-Panel Navigation Tabs */}
       <RelatedListsNav

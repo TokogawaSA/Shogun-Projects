@@ -52,6 +52,10 @@ model Tenant {
   emailTemplates    EmailTemplate[]
   timesheets        Timesheet[]
   invoices          ProjectInvoice[]
+  taxInvoices       TaxInvoice[]
+  paymentTransactions PaymentTransaction[]
+  accountingConnections TenantAccountingConnection[]
+  workingCalendars  WorkingCalendar[]
   documents         ProjectDocument[]
   wikiPages         ProjectWikiPage[]
   changeRequests    ClientChangeRequest[]
@@ -177,8 +181,11 @@ model Project {
   portfolio        Portfolio?        @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
 
   code             String?
+  calendarId       String?
   estimatedCost    Decimal?          @db.Decimal(14, 2)
   targetMultiplier Decimal           @default(3.0) @db.Decimal(4, 2)
+
+  workingCalendar  WorkingCalendar?  @relation(fields: [calendarId], references: [id], onDelete: SetNull)
 
   tasks            Task[]
   milestones       ProjectMilestone[]
@@ -188,6 +195,7 @@ model Project {
   risks            RiskItem[]
   quotes           Quote[]
   invoices         ProjectInvoice[]
+  taxInvoices      TaxInvoice[]
   documents        ProjectDocument[]
   wikiPages        ProjectWikiPage[]
   changeRequests   ClientChangeRequest[]
@@ -416,6 +424,14 @@ model Account {
   shippingPostalCode String?
   shippingCountry    String?
   description        String?   @db.Text
+
+  // South African B2B Procurement & Statutory Firmographics
+  cipcRegistrationNumber String?   // e.g. 2021/123456/07
+  vatRegistrationNumber  String?   // 10-digit SARS VAT number starting with 4
+  bbbeeLevel             Int?      // 1-8 Contributor Level, or 0 for Non-Compliant
+  bbbeeExpiryDate        DateTime?
+  csdSupplierNumber      String?   // National Treasury CSD e.g. MAAA0123456
+
   assignedUserId     String
   createdById        String
   customFields       Json?
@@ -430,11 +446,15 @@ model Account {
   deals              Deal[]
   projects           Project[]
   quotes             Quote[]
+  taxInvoices        TaxInvoice[]
   socialInteractions SocialInteraction[] @relation("SocialLinkedAccount")
   bookings           Booking[]
 
   @@index([tenantId])
   @@index([assignedUserId])
+  @@index([tenantId, bbbeeExpiryDate])
+  @@index([vatRegistrationNumber])
+  @@index([cipcRegistrationNumber])
   @@map("crm_accounts")
 }
 
@@ -581,57 +601,165 @@ model ProductOrService {
 }
 
 model PriceBook {
-  id           String   @id @default(cuid())
-  tenantId     String
-  name         String
-  description  String?  @db.Text
-  pricingRules Json     // Record<productId, overridePrice>
-  isDefault    Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                String    @id @default(cuid())
+  tenantId          String
+  name              String
+  description       String?   @db.Text
+  pricingRules      Json      // Record<productId, overridePrice>
+  isDefault         Boolean   @default(false)
 
-  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  quotes       Quote[]
+  // Multi-Currency & SARS 15% VAT Configuration
+  currency          String    @default("ZAR")
+  exchangeRateToZar Decimal   @default(1.000000) @db.Decimal(14, 6)
+  rateLockedAt      DateTime?
+  taxMode           String    @default("EXCLUSIVE") // 'EXCLUSIVE' | 'INCLUSIVE' | 'ZERO_RATED' | 'EXEMPT'
+  vatRate           Decimal   @default(0.1500) @db.Decimal(6, 4)
+  subtotalExclVat   Decimal   @default(0) @db.Decimal(14, 2)
+  vatAmount         Decimal   @default(0) @db.Decimal(14, 2)
+  totalInclVat      Decimal   @default(0) @db.Decimal(14, 2)
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  quotes            Quote[]
 
   @@index([tenantId])
   @@map("catalog_price_books")
 }
 
 model Quote {
-  id            String    @id @default(cuid())
-  tenantId      String
-  quoteNumber   String
-  title         String
-  dealId        String?
-  accountId     String?
-  contactId     String?
-  projectId     String?
-  priceBookId   String?
-  status        String    @default("draft") // draft | presented | approved | rejected | converted
-  subtotal      Float     @default(0)
-  discountTotal Float     @default(0)
-  taxTotal      Float     @default(0)
-  grandTotal    Float     @default(0)
-  totalCost     Float     @default(0)
-  marginAmount  Float     @default(0)
-  marginPercent Float     @default(0)
-  validUntil    DateTime?
-  notes         String?   @db.Text
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                String    @id @default(cuid())
+  tenantId          String
+  quoteNumber       String
+  title             String
+  dealId            String?
+  accountId         String?
+  contactId         String?
+  projectId         String?
+  priceBookId       String?
+  status            String    @default("draft") // draft | presented | approved | rejected | converted
+  subtotal          Float     @default(0)
+  discountTotal     Float     @default(0)
+  taxTotal          Float     @default(0)
+  grandTotal        Float     @default(0)
+  totalCost         Float     @default(0)
+  marginAmount      Float     @default(0)
+  marginPercent     Float     @default(0)
 
-  tenant        Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  deal          Deal?      @relation(fields: [dealId], references: [id], onDelete: SetNull)
-  account       Account?   @relation(fields: [accountId], references: [id], onDelete: SetNull)
-  contact       Contact?   @relation(fields: [contactId], references: [id], onDelete: SetNull)
-  project       Project?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  priceBook     PriceBook? @relation(fields: [priceBookId], references: [id], onDelete: SetNull)
+  // Multi-Currency & SARS 15% VAT Fields
+  currency          String    @default("ZAR")
+  exchangeRateToZar Decimal   @default(1.000000) @db.Decimal(14, 6)
+  rateLockedAt      DateTime?
+  taxMode           String    @default("EXCLUSIVE") // 'EXCLUSIVE' | 'INCLUSIVE' | 'ZERO_RATED' | 'EXEMPT'
+  vatRate           Decimal   @default(0.1500) @db.Decimal(6, 4)
+  subtotalExclVat   Decimal   @default(0) @db.Decimal(14, 2)
+  vatAmount         Decimal   @default(0) @db.Decimal(14, 2)
+  totalInclVat      Decimal   @default(0) @db.Decimal(14, 2)
 
-  lineItems     LineItem[]
+  validUntil        DateTime?
+  notes             String?   @db.Text
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  tenant            Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  deal              Deal?        @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  account           Account?     @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  contact           Contact?     @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  project           Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  priceBook         PriceBook?   @relation(fields: [priceBookId], references: [id], onDelete: SetNull)
+
+  lineItems         LineItem[]
+  taxInvoices       TaxInvoice[]
 
   @@index([tenantId])
   @@index([quoteNumber])
   @@map("financial_quotes")
+}
+
+model TaxInvoice {
+  id                         String    @id @default(cuid())
+  tenantId                   String
+  invoiceNumber              String    // e.g. INV-0001 via tenant auto-numbering
+  accountId                  String?
+  projectId                  String?
+  quoteId                    String?
+  status                     String    @default("DRAFT") // 'DRAFT' | 'ISSUED' | 'PARTIALLY_PAID' | 'PAID' | 'VOID'
+  currency                   String    @default("ZAR")
+  subtotalExclVat            Decimal   @default(0) @db.Decimal(14, 2)
+  vatAmount                  Decimal   @default(0) @db.Decimal(14, 2)
+  totalInclVat               Decimal   @default(0) @db.Decimal(14, 2)
+  amountPaid                 Decimal   @default(0) @db.Decimal(14, 2)
+  dueDate                    DateTime
+  externalAccountingProvider String?   // 'SAGE_ZA' | 'XERO' | null
+  externalAccountingId       String?
+  lastSyncedAt               DateTime?
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime  @updatedAt
+
+  tenant                     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  account                    Account?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  project                    Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  quote                      Quote?    @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  paymentTransactions        PaymentTransaction[]
+
+  @@unique([tenantId, invoiceNumber])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([accountId])
+  @@index([projectId])
+  @@index([quoteId])
+  @@map("tax_invoices")
+}
+
+model PaymentTransaction {
+  id                    String    @id @default(cuid())
+  tenantId              String
+  taxInvoiceId          String
+  provider              String    @default("PEACH_V2")
+  checkoutId            String?
+  merchantTransactionId String    @unique // Unique 8-16 char idempotency reference
+  amount                Decimal   @db.Decimal(14, 2)
+  currency              String    @default("ZAR")
+  paymentMethod         String?   // 'CARD' | 'PAYSHAP' | 'CAPITECPAY' | 'PAYBYBANK'
+  status                String    @default("PENDING") // 'PENDING' | 'SUCCEEDED' | 'FAILED' | 'CANCELLED'
+  resultCode            String?
+  registrationId        String?
+  rawResponse           Json      @db.JsonB
+  settledAt             DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  tenant                Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  taxInvoice            TaxInvoice @relation(fields: [taxInvoiceId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([taxInvoiceId])
+  @@index([checkoutId])
+  @@index([tenantId, status])
+  @@map("payment_transactions")
+}
+
+model TenantAccountingConnection {
+  id                      String    @id @default(cuid())
+  tenantId                String
+  provider                String    // 'SAGE_ZA' | 'XERO'
+  isActive                Boolean   @default(true)
+  encryptedCredentials    String    @db.Text // AES-256-GCM encrypted JSON credentials
+  defaultSalesAccountCode String    @default("200")
+  defaultVatTaxTypeId     String    @default("OUTPUT3")
+  lastSyncStatus          String?   @default("IDLE") // 'IDLE' | 'SYNCING' | 'SUCCEEDED' | 'FAILED'
+  lastSyncError           String?   @db.Text
+  lastSyncedAt            DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  tenant                  Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, provider])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@map("tenant_accounting_connections")
 }
 
 model LineItem {
@@ -1410,6 +1538,107 @@ model Booking {
   @@index([guestEmail])
   @@map("bookings")
 }
+
+// ==========================================
+// 18. POPIA Governance Engine (South Africa Act 4 of 2013)
+// ==========================================
+
+model PopiaConsentRecord {
+  id          String    @id @default(uuid()) @db.Uuid
+  tenantId    String    @db.Uuid
+  subjectType String    // 'contact' | 'lead' | 'account' | 'user'
+  subjectId   String
+  purpose     String    // 'crm_processing' | 'marketing' | 'ai_mcp_processing' | 'cross_border_sync'
+  lawfulBasis String    // 'consent' | 'contract' | 'legitimate_interest' | 'legal_obligation'
+  granted     Boolean   @default(true)
+  capturedAt  DateTime  @default(now())
+  withdrawnAt DateTime?
+  sourceIp    String?
+  evidenceUrl String?
+
+  @@index([tenantId])
+  @@index([tenantId, subjectType, subjectId])
+  @@index([tenantId, purpose])
+  @@map("popia_consent_records")
+}
+
+model PopiaRetentionPolicy {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @db.Uuid
+  moduleName     String   // 'leads' | 'contacts' | 'accounts' | 'deals' | 'audit_logs'
+  retentionDays  Int      @default(1095)
+  actionOnExpiry String   @default("anonymize") // 'anonymize' | 'hard_delete'
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([tenantId, moduleName])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@map("popia_retention_policies")
+}
+
+model PopiaAuditLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @db.Uuid
+  actorUserId    String?
+  actorAgent     String   @default("human") // 'human' | 'Sentinel' | 'Worker' | 'Auditor'
+  action         String   // 'READ_PII' | 'EXPORT_PII' | 'ANONYMIZE' | 'DELETE' | 'CONSENT_CHANGE'
+  entityType     String
+  entityId       String
+  fieldsAccessed Json     @db.JsonB
+  ipAddress      String?
+  createdAt      DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, entityType, entityId])
+  @@index([tenantId, action])
+  @@map("popia_audit_logs")
+}
+
+// ==========================================
+// 19. South African Working Calendar & Statutory Public Holidays (Act 36 of 1994)
+// ==========================================
+
+model WorkingCalendar {
+  id             String   @id @default(cuid())
+  tenantId       String?
+  name           String   @default("South Africa Standard (SAST)")
+  countryCode    String   @default("ZA")
+  workDays       Int[]    @default([1, 2, 3, 4, 5]) // ISO / JS Mon=1 .. Fri=5
+  dailyWorkHours Decimal  @default(8.00) @db.Decimal(5, 2)
+  isDefault      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tenant         Tenant?         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  holidays       PublicHoliday[]
+  projects       Project[]
+
+  @@index([tenantId])
+  @@index([countryCode, isDefault])
+  @@map("working_calendars")
+}
+
+model PublicHoliday {
+  id               String          @id @default(cuid())
+  calendarId       String
+  date             DateTime        @db.Date
+  name             String
+  isObservedMonday Boolean         @default(false)
+  isAdHocDeclared  Boolean         @default(false)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  calendar         WorkingCalendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+
+  @@unique([calendarId, date])
+  @@index([calendarId, date])
+  @@map("public_holidays")
+}
+
+
 
 
 

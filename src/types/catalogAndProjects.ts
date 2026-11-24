@@ -36,6 +36,9 @@ export interface ProductOrService {
 // 2. Price Books & Line Items
 // ==========================================
 
+export type SaTaxMode = 'EXCLUSIVE' | 'INCLUSIVE' | 'ZERO_RATED' | 'EXEMPT';
+export type SupportedQuoteCurrency = 'ZAR' | 'USD' | 'EUR' | 'GBP' | string;
+
 export interface PriceBook {
   id: string;
   tenantId: string;
@@ -43,6 +46,14 @@ export interface PriceBook {
   description?: string;
   pricingRules: Record<string, number>;
   isDefault: boolean;
+  currency?: SupportedQuoteCurrency;
+  exchangeRateToZar?: number;
+  rateLockedAt?: string | null;
+  taxMode?: SaTaxMode;
+  vatRate?: number;
+  subtotalExclVat?: number;
+  vatAmount?: number;
+  totalInclVat?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -55,6 +66,9 @@ export interface LineItem {
   quantity: number;
   unitPrice: number;
   costPrice?: number;
+  sourceCurrency?: SupportedQuoteCurrency;
+  baseForeignUnitPrice?: number;
+  baseForeignCostPrice?: number;
   discountAmount: number;
   taxAmount: number;
   taxRatePercent?: number;
@@ -83,9 +97,39 @@ export interface Quote {
   totalCost?: number;
   marginAmount?: number;
   marginPercent?: number;
+  currency?: SupportedQuoteCurrency;
+  exchangeRateToZar?: number;
+  rateLockedAt?: string | null;
+  taxMode?: SaTaxMode;
+  vatRate?: number;
+  subtotalExclVat?: number;
+  vatAmount?: number;
+  totalInclVat?: number;
   validUntil?: string;
-  currency?: string;
   notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type TaxInvoiceStatus = 'DRAFT' | 'ISSUED' | 'PARTIALLY_PAID' | 'PAID' | 'VOID';
+
+export interface TaxInvoice {
+  id: string;
+  tenantId: string;
+  invoiceNumber: string;
+  accountId?: string | null;
+  projectId?: string | null;
+  quoteId?: string | null;
+  status: TaxInvoiceStatus;
+  currency: SupportedQuoteCurrency;
+  subtotalExclVat: number;
+  vatAmount: number;
+  totalInclVat: number;
+  amountPaid: number;
+  dueDate: string;
+  externalAccountingProvider?: 'SAGE_ZA' | 'XERO' | null;
+  externalAccountingId?: string | null;
+  lastSyncedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }

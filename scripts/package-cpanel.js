@@ -7,7 +7,53 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-console.log('🚀 [cPanel Packager] Starting Full-Stack Packaging...');
+console.log('🚀 [HOSTAFRICA / cPanel Packager] Starting POPIA-Hardened Full-Stack Packaging...');
+
+/**
+ * Recursively remove any accidental .env* or *.map artifacts from a public web bundle directory.
+ */
+function purgeSensitiveFrontendArtifacts(dirPath) {
+  if (!fs.existsSync(dirPath)) return;
+  for (const entry of fs.readdirSync(dirPath, { withFileTypes: true })) {
+    const fullPath = path.join(dirPath, entry.name);
+    if (entry.isDirectory()) {
+      purgeSensitiveFrontendArtifacts(fullPath);
+    } else if (
+      entry.name === '.env' ||
+      entry.name.startsWith('.env.') ||
+      entry.name.endsWith('.map')
+    ) {
+      fs.unlinkSync(fullPath);
+      console.log(`🔒 Removed sensitive artifact from frontend bundle: ${entry.name}`);
+    }
+  }
+}
+
+/**
+ * Verify that the packaged .htaccess enforces HTTPS/HSTS, Brotli/Gzip compression,
+ * SPA /index.html fallback routing, and blocks direct access to .env and source maps.
+ */
+function assertHardenedHtaccess(htaccessFilePath) {
+  if (!fs.existsSync(htaccessFilePath)) {
+    throw new Error(`Missing required .htaccess at ${htaccessFilePath}`);
+  }
+  const content = fs.readFileSync(htaccessFilePath, 'utf8');
+  const checks = [
+    { name: 'HTTPS Redirect', pattern: /https:\/\/%\{HTTP_HOST\}%\{REQUEST_URI\}/ },
+    { name: 'Strict-Transport-Security (HSTS)', pattern: /Strict-Transport-Security/ },
+    { name: 'Brotli Compression', pattern: /BROTLI_COMPRESS/ },
+    { name: 'Gzip/Deflate Compression', pattern: /DEFLATE/ },
+    { name: 'SPA /index.html Fallback Routing', pattern: /RewriteRule\s+\.\s+\/index\.html\s+\[L\]/ },
+    { name: '.env Web Access Block', pattern: /\\\.env/ },
+    { name: 'Source Map (.map) Web Access Block', pattern: /\\\.map\$/ },
+  ];
+
+  for (const check of checks) {
+    if (!check.pattern.test(content)) {
+      throw new Error(`[POPIA Packaging Gate Failed] .htaccess is missing required guardrail: ${check.name}`);
+    }
+  }
+}
 
 // 1. Ensure dist directories exist
 const clientDist = path.join(rootDir, 'dist');
@@ -23,15 +69,18 @@ if (!fs.existsSync(serverDist)) {
   execSync('npm run build', { cwd: path.join(rootDir, 'server'), stdio: 'inherit' });
 }
 
-// Ensure .htaccess exists in client dist
+// Strip any stray source maps or .env files from dist/
+purgeSensitiveFrontendArtifacts(clientDist);
+
+// Always synchronize hardened public/.htaccess into client dist/.htaccess and verify guardrails
+const publicHtaccess = path.join(rootDir, 'public', '.htaccess');
 const htaccessPath = path.join(clientDist, '.htaccess');
-if (!fs.existsSync(htaccessPath)) {
-  const publicHtaccess = path.join(rootDir, 'public', '.htaccess');
-  if (fs.existsSync(publicHtaccess)) {
-    fs.copyFileSync(publicHtaccess, htaccessPath);
-    console.log('✅ Copied .htaccess to dist/');
-  }
+if (!fs.existsSync(publicHtaccess)) {
+  throw new Error('public/.htaccess template is missing.');
 }
+fs.copyFileSync(publicHtaccess, htaccessPath);
+assertHardenedHtaccess(htaccessPath);
+console.log('✅ Synced and verified POPIA-hardened .htaccess in dist/');
 
 // 2. Prepare Backend Staging Directory
 const backendStaging = path.join(rootDir, 'temp_backend_cpanel');
@@ -83,6 +132,24 @@ if (fs.existsSync(serverScripts)) {
   fs.cpSync(serverScripts, path.join(backendStaging, 'scripts'), { recursive: true });
 }
 
+// Write defense-in-depth deny-all .htaccess in backend staging directory (protects .env if placed near webroot)
+fs.writeFileSync(
+  path.join(backendStaging, '.htaccess'),
+  [
+    '# Block all direct web traffic to Node.js backend directory & .env files',
+    'Options -Indexes',
+    '<IfModule mod_authz_core.c>',
+    '  Require all denied',
+    '</IfModule>',
+    '<IfModule !mod_authz_core.c>',
+    '  Order allow,deny',
+    '  Deny from all',
+    '</IfModule>',
+    '',
+  ].join('\n'),
+  'utf8'
+);
+
 // 3. Zip Archives
 const frontendZip = path.join(rootDir, 'frontend_cpanel.zip');
 const backendZip = path.join(rootDir, 'backend_cpanel.zip');
@@ -95,7 +162,7 @@ const isWindows = process.platform === 'win32';
 try {
   if (isWindows) {
     // Compress Frontend (ensuring hidden files like .htaccess are included with Get-ChildItem -Force)
-    console.log('📦 Compressing frontend_cpanel.zip (including .htaccess)...');
+    console.log('📦 Compressing frontend_cpanel.zip (including hardened .htaccess)...');
     execSync(
       `powershell -NoProfile -Command "Get-ChildItem -Path '${clientDist}' -Force | Compress-Archive -DestinationPath '${frontendZip}' -Force"`,
       { stdio: 'inherit' }
@@ -119,7 +186,7 @@ try {
   fs.rmSync(backendStaging, { recursive: true, force: true });
 
   console.log('\n======================================================');
-  console.log('🎉 [cPanel Packaging Complete]');
+  console.log('🎉 [HOSTAFRICA / cPanel SA Packaging Complete]');
   console.log(`1. Frontend Bundle: ${frontendZip}`);
   console.log(`   -> Upload and extract into cPanel: /public_html/`);
   console.log(`2. Backend Bundle:  ${backendZip}`);

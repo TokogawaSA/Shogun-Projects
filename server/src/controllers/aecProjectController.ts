@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../config/db.js';
+import { calculateAvailableTeamCapacity, getIsoWeekBounds } from '../services/schedulingEngine.js';
 
 /**
  * Controller: AEC Architectural Project Management Engine
@@ -333,7 +334,14 @@ export async function createSiteReport(req: Request, res: Response): Promise<voi
 export async function getStudioCapacityHeatmap(req: Request, res: Response): Promise<void> {
   try {
     const tenantId = resolveTenantId(req);
-    const [profiles, activeTasks] = await Promise.all([
+    const refDate = req.query.weekStart ? String(req.query.weekStart) : new Date();
+    const { mondayIso, sundayIso, monday } = getIsoWeekBounds(refDate);
+    const year = monday.getUTCFullYear();
+    const monthIdx = monday.getUTCMonth();
+    const monthStartIso = `${year}-${String(monthIdx + 1).padStart(2, '0')}-01`;
+    const monthEndIso = new Date(Date.UTC(year, monthIdx + 1, 0)).toISOString().slice(0, 10);
+
+    const [profiles, activeTasks, weekCap, monthCap, annualCap] = await Promise.all([
       prisma.resourceProfile.findMany({
         where: { tenantId },
         include: { user: { select: { id: true, displayName: true, email: true, role: true } } },
@@ -342,29 +350,58 @@ export async function getStudioCapacityHeatmap(req: Request, res: Response): Pro
         where: { tenantId, status: { in: ['todo', 'in_progress', 'review'] } },
         select: { id: true, assigneeId: true, estimatedHours: true, discipline: true },
       }),
+      calculateAvailableTeamCapacity({ startDate: mondayIso, endDate: sundayIso, tenantId }),
+      calculateAvailableTeamCapacity({ startDate: monthStartIso, endDate: monthEndIso, tenantId }),
+      calculateAvailableTeamCapacity({
+        startDate: `${year}-01-01`,
+        endDate: `${year}-12-31`,
+        tenantId,
+      }),
     ]);
 
     const studioCapacityData = profiles.map((p) => {
       const assigned = activeTasks
         .filter((t) => t.assigneeId === p.userId)
         .reduce((sum, t) => sum + (t.estimatedHours || 0), 0);
+      const baseWeekly = p.weeklyCapacityHours || 40;
+      const dailyHours = baseWeekly / 5;
+      const effectiveWeeklyCapacityHours = Number((weekCap.workingDays * dailyHours).toFixed(2));
+      const monthlyAvailableHours = Number((monthCap.workingDays * dailyHours).toFixed(2));
+      const denom = effectiveWeeklyCapacityHours > 0 ? effectiveWeeklyCapacityHours : baseWeekly;
+
       return {
         userId: p.userId,
         displayName: p.user?.displayName || 'Studio Member',
         department: p.department,
-        weeklyCapacityHours: p.weeklyCapacityHours,
+        weeklyCapacityHours: effectiveWeeklyCapacityHours,
+        nominalWeeklyCapacityHours: baseWeekly,
+        monthlyAvailableHours,
+        workingDaysInWeek: weekCap.workingDays,
+        workingDaysInMonth: monthCap.workingDays,
+        workingDaysInYear: annualCap.workingDays,
         assignedHours: assigned,
-        utilizationPercent: p.weeklyCapacityHours > 0 ? Math.round((assigned / p.weeklyCapacityHours) * 100) : 0,
+        utilizationPercent: denom > 0 ? Math.round((assigned / denom) * 100) : 0,
       };
     });
 
-    const totalStudioWeeklyCapacityHours = profiles.reduce((sum, p) => sum + (p.weeklyCapacityHours || 40), 0);
+    const totalStudioWeeklyCapacityHours = studioCapacityData.reduce(
+      (sum, p) => sum + p.weeklyCapacityHours,
+      0
+    );
 
     res.json({
       studioCapacityData,
-      overallocationThresholdHours: 40,
+      overallocationThresholdHours: weekCap.availableHoursPerMember || 40,
       activeDisciplines: ['Architectural', 'Structural', 'MEP', 'BIM / Computational', 'Civil'],
       totalStudioWeeklyCapacityHours,
+      workingCalendar: {
+        calendarId: weekCap.calendarId,
+        calendarName: weekCap.calendarName,
+        workingDaysInWeek: weekCap.workingDays,
+        workingDaysInMonth: monthCap.workingDays,
+        workingDaysInYear: annualCap.workingDays,
+        holidaysInWeek: weekCap.holidaysInPeriod,
+      },
     });
   } catch (error: any) {
     res.status(500).json({

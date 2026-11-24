@@ -67,6 +67,7 @@ export interface Task {
   // Hierarchies & Milestones
   parentTaskId?: string;
   milestoneId?: string;
+  predecessorTaskIds?: string[];
   subtasks?: Subtask[];
 
   // Collaboration & Extensibility

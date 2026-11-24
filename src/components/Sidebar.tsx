@@ -46,6 +46,7 @@ export const Sidebar: React.FC = () => {
     { to: '/catalog', label: 'Products & Services', icon: Boxes },
     { to: '/catalog/price-books', label: 'Price Books & Tiers', icon: BookOpen },
     { to: '/catalog/quotes', label: 'Quote Builder & Scopes', icon: FileSpreadsheet },
+    { to: '/portal/invoices', label: 'Client Portal (ZAR Pay)', icon: DollarSign },
   ];
 
   const systemItems = [

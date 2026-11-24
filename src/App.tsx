@@ -17,6 +17,7 @@ import { PublicWebFormPage } from './pages/PublicWebFormPage';
 import { PublicBookingPage } from './pages/PublicBookingPage';
 import { SchedulerPage } from './modules/scheduler/pages/SchedulerPage';
 import { SocialListeningHub } from './modules/social';
+import { ClientPortalInvoicesPage } from './modules/portal';
 import { useAuth } from './context/AuthContext';
 import { Loader2 } from 'lucide-react';
 
@@ -136,6 +137,12 @@ const AppLayout: React.FC = () => {
         subtitle: 'Tenant-isolated VTiger administration, workflows, schemas & access control' 
       };
     }
+    if (path.startsWith('/portal')) {
+      return {
+        title: 'Client Portal & ZAR Payments',
+        subtitle: 'SARS 15% VAT tax invoices, PayShap, Instant EFT, Capitec Pay & Peach Checkout V2',
+      };
+    }
     if (path === '/scheduler') {
       return {
         title: 'Scheduler & Bookings',
@@ -204,8 +211,8 @@ const AppLayout: React.FC = () => {
             <Route path="/projects/:id/*" element={<ProjectWorkspace />} />
             <Route path="/projects/costing" element={<Navigate to="/projects" replace />} />
             <Route path="/projects/milestones" element={<Navigate to="/projects" replace />} />
-            <Route path="/projects/gantt" element={<Navigate to="/projects" replace />} />
-            <Route path="/gantt" element={<Navigate to="/projects" replace />} />
+            <Route path="/projects/gantt" element={<ProjectWorkspace />} />
+            <Route path="/gantt" element={<ProjectWorkspace />} />
             
             {/* General Project Management Routes */}
             {renderPmRoutes()}
@@ -221,6 +228,9 @@ const AppLayout: React.FC = () => {
             
             <Route path="/scheduler" element={<SchedulerPage />} />
             <Route path="/social" element={<SocialListeningHub />} />
+            <Route path="/portal" element={<ClientPortalInvoicesPage />} />
+            <Route path="/portal/invoices" element={<ClientPortalInvoicesPage />} />
+            <Route path="/portal/invoices/:id" element={<ClientPortalInvoicesPage />} />
             <Route path="/mcp" element={<McpServersPage />} />
             <Route path="/forms" element={<Navigate to="/settings/automation/forms" replace />} />
             

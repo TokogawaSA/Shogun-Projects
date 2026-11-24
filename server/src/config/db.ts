@@ -1,30 +1,101 @@
 import { PrismaClient } from '@prisma/client';
-import dotenv from 'dotenv';
+import { parseEnv } from './env.js';
 
-dotenv.config();
+export interface DatabaseSslConfig {
+  rejectUnauthorized: boolean;
+}
+
+export interface DatabasePoolConfig {
+  ssl: DatabaseSslConfig | false;
+  pgbouncer: boolean;
+  poolMode: 'transaction';
+  statementCacheSize: number;
+  connectionLimit: number;
+  poolTimeout: number;
+}
 
 /**
- * Construct connection URL dynamically if DATABASE_URL is not explicitly configured
+ * Build POPIA Section 19 compliant TLS and PgBouncer transaction-pooling configuration.
+ * Enforces `ssl: { rejectUnauthorized: true }` in production.
  */
-function getDatabaseUrl(): string {
-  if (process.env.DATABASE_URL) {
-    return process.env.DATABASE_URL;
+export function getDatabasePoolConfig(rawEnv: NodeJS.ProcessEnv = process.env): DatabasePoolConfig {
+  const cfg = parseEnv(rawEnv);
+  const isProd = cfg.NODE_ENV === 'production';
+  const requireSsl = isProd || cfg.DB_SSL;
+
+  return {
+    ssl: requireSsl ? { rejectUnauthorized: true } : false,
+    pgbouncer: isProd ? true : cfg.DB_PGBOUNCER,
+    poolMode: 'transaction',
+    statementCacheSize: 0,
+    connectionLimit: cfg.DB_CONNECTION_LIMIT,
+    poolTimeout: cfg.DB_POOL_TIMEOUT,
+  };
+}
+
+/**
+ * Append or enforce PgBouncer transaction pooling and strict TLS query parameters on a PostgreSQL URI.
+ */
+function applyPoolingAndSslParams(baseUri: string, poolCfg: DatabasePoolConfig): string {
+  const separator = baseUri.includes('?') ? '&' : '?';
+  const [basePart, rawQuery = ''] = baseUri.split('?');
+  const params = new URLSearchParams(rawQuery);
+
+  if (!params.has('connection_limit')) {
+    params.set('connection_limit', String(poolCfg.connectionLimit));
+  }
+  if (!params.has('pool_timeout')) {
+    params.set('pool_timeout', String(poolCfg.poolTimeout));
   }
 
-  const host = process.env.DB_HOST || 'localhost';
-  const port = process.env.DB_PORT || '5432';
-  const user = encodeURIComponent(process.env.DB_USER || 'postgres');
-  const password = encodeURIComponent(process.env.DB_PASSWORD || '');
-  const database = process.env.DB_NAME || 'shogun_db';
-  const schema = process.env.DB_SCHEMA || 'public';
+  // PgBouncer-compatible transaction pooling (disables prepared statement collisions)
+  if (poolCfg.pgbouncer) {
+    params.set('pgbouncer', 'true');
+    params.set('statement_cache_size', String(poolCfg.statementCacheSize));
+  }
 
-  return `postgresql://${user}:${password}@${host}:${port}/${database}?schema=${schema}&connection_limit=10&pool_timeout=30`;
+  // Enforce strict TLS verification in production (`ssl: { rejectUnauthorized: true }`)
+  if (poolCfg.ssl && poolCfg.ssl.rejectUnauthorized) {
+    const existingMode = params.get('sslmode');
+    if (!existingMode || existingMode === 'disable' || existingMode === 'prefer' || existingMode === 'allow') {
+      params.set('sslmode', 'require');
+    }
+    params.set('sslaccept', 'strict');
+  }
+
+  const queryString = params.toString();
+  return queryString ? `${basePart}${separator === '&' || queryString ? '?' : ''}${queryString}` : basePart;
 }
 
-// Ensure DATABASE_URL is set in environment for Prisma client
+/**
+ * Construct or normalize the PostgreSQL connection URL with PgBouncer transaction pooling
+ * and production TLS safeguards.
+ */
+export function getDatabaseUrl(rawEnv: NodeJS.ProcessEnv = process.env): string {
+  const cfg = parseEnv(rawEnv);
+  const poolCfg = getDatabasePoolConfig(rawEnv);
+
+  if (cfg.DATABASE_URL) {
+    return applyPoolingAndSslParams(cfg.DATABASE_URL, poolCfg);
+  }
+
+  const host = cfg.DB_HOST;
+  const port = cfg.DB_PORT;
+  const user = encodeURIComponent(cfg.DB_USER);
+  const password = encodeURIComponent(cfg.DB_PASSWORD);
+  const database = cfg.DB_NAME;
+  const schema = cfg.DB_SCHEMA;
+
+  const baseUri = `postgresql://${user}:${password}@${host}:${port}/${database}?schema=${encodeURIComponent(schema)}`;
+  return applyPoolingAndSslParams(baseUri, poolCfg);
+}
+
+// Ensure DATABASE_URL is populated for Prisma engine initialization
 if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = getDatabaseUrl();
+  process.env.DATABASE_URL = getDatabaseUrl(process.env);
 }
+
+export const dbPoolConfig: DatabasePoolConfig = getDatabasePoolConfig(process.env);
 
 declare global {
   // eslint-disable-next-line no-var
@@ -32,7 +103,7 @@ declare global {
 }
 
 /**
- * Singleton Prisma Client Instance with Connection Pooling
+ * Singleton Prisma Client Instance with PgBouncer-Compatible Connection Pooling
  */
 export const prisma: PrismaClient =
   globalThis.prismaGlobal ||
@@ -40,7 +111,7 @@ export const prisma: PrismaClient =
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
     datasources: {
       db: {
-        url: getDatabaseUrl(),
+        url: getDatabaseUrl(process.env),
       },
     },
   });

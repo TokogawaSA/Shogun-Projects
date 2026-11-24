@@ -12,6 +12,8 @@ export { ProjectBoard } from './components/ProjectBoard';
 export { ProjectTaskList } from './components/ProjectTaskList';
 export { ProjectMilestones } from './components/ProjectMilestones';
 export { ProjectOverview } from './components/ProjectOverview';
+export { ProjectGanttTimeline } from './components/ProjectGanttTimeline';
+export { ProjectTimesheetGrid } from './components/ProjectTimesheetGrid';
 export { TaskDetailModal } from './components/TaskDetailModal';
 export { CreateTaskModal } from './components/CreateTaskModal';
 export { ColumnConfigModal } from './components/ColumnConfigModal';

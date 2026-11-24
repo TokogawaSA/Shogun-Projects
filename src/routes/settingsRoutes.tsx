@@ -33,6 +33,9 @@ import {
   CurrencyFiscalView,
   AuditTrailView,
 } from '../modules/settings/views/SystemViews';
+import { PopiaGovernanceView } from '../modules/settings/PopiaGovernanceView';
+import { AccountingIntegrationsView } from '../modules/settings/AccountingIntegrationsView';
+import { WorkingCalendarView } from '../modules/settings/WorkingCalendarView';
 
 export const renderSettingsRoutes = () => (
   <Route path="/settings" element={<SettingsLayout />}>
@@ -73,6 +76,12 @@ export const renderSettingsRoutes = () => (
     <Route path="system/company" element={<CompanyBrandingView />} />
     <Route path="system/fiscal" element={<CurrencyFiscalView />} />
     <Route path="system/audit" element={<AuditTrailView />} />
+    <Route path="system/popia" element={<PopiaGovernanceView />} />
+    <Route path="compliance/popia" element={<PopiaGovernanceView />} />
+    <Route path="system/accounting" element={<AccountingIntegrationsView />} />
+    <Route path="integrations/accounting" element={<AccountingIntegrationsView />} />
+    <Route path="system/calendars" element={<WorkingCalendarView />} />
+    <Route path="calendars" element={<WorkingCalendarView />} />
     <Route path="system" element={<CompanyBrandingView />} />
     <Route path="system/*" element={<CompanyBrandingView />} />
 

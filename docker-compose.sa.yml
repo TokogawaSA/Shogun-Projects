@@ -1,0 +1,156 @@
+# ==============================================================================
+# Shogun Projects - South African Containerized Cloud Stack
+# Targets: HOSTAFRICA VPS / HCode, AWS Cape Town (af-south-1), Azure SA North (southafricanorth)
+# Compliance: POPIA Section 19 (Security Safeguards) & Section 72 (Data Residency)
+# ==============================================================================
+
+name: shogun-sa-cloud
+
+x-sa-common-env: &sa-common-env
+  NODE_ENV: production
+  TZ: Africa/Johannesburg
+  DEFAULT_TIMEZONE: Africa/Johannesburg
+  DATA_RESIDENCY_REGION: ${DATA_RESIDENCY_REGION:-za-jhb}
+  ENFORCE_LOCAL_RESIDENCY: ${ENFORCE_LOCAL_RESIDENCY:-true}
+  DB_HOST: ${DB_HOST:-pgbouncer}
+  DB_PORT: ${DB_PORT:-6432}
+  DB_USER: ${DB_USER:-shogun_sa}
+  DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be provided}
+  DB_NAME: ${DB_NAME:-shogun_db}
+  DB_SCHEMA: ${DB_SCHEMA:-public}
+  DB_SSL: ${DB_SSL:-true}
+  DB_PGBOUNCER: "true"
+  DB_CONNECTION_LIMIT: ${DB_CONNECTION_LIMIT:-10}
+  DB_POOL_TIMEOUT: ${DB_POOL_TIMEOUT:-30}
+  DATABASE_URL: ${DATABASE_URL:-}
+  DIRECT_URL: ${DIRECT_URL:-}
+  REDIS_HOST: ${REDIS_HOST:-redis}
+  REDIS_PORT: ${REDIS_PORT:-6379}
+  REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be provided}
+  REDIS_TLS: ${REDIS_TLS:-true}
+  S3_REGION: ${S3_REGION:-af-south-1}
+  S3_ENDPOINT: ${S3_ENDPOINT:-}
+  S3_BUCKET: ${S3_BUCKET:-shogun-za-vault}
+  S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
+  S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
+  S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-false}
+  JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be provided}
+  CRON_SECRET: ${CRON_SECRET:?CRON_SECRET must be provided}
+  CORS_ORIGIN: ${CORS_ORIGIN:-}
+  CLIENT_ORIGIN: ${CLIENT_ORIGIN:-}
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    container_name: shogun-sa-api
+    restart: unless-stopped
+    ports:
+      - "${API_BIND_PORT:-5000}:5000"
+    environment:
+      <<: *sa-common-env
+      PORT: 5000
+      ENABLE_WORKERS: "false"
+      ENABLE_REDIS: "true"
+    depends_on:
+      pgbouncer:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:5000/api/v1/health/residency"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - sa_vpc_net
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    container_name: shogun-sa-worker
+    restart: unless-stopped
+    environment:
+      <<: *sa-common-env
+    depends_on:
+      pgbouncer:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    networks:
+      - sa_vpc_net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: shogun-sa-postgres
+    restart: unless-stopped
+    environment:
+      TZ: Africa/Johannesburg
+      PGTZ: Africa/Johannesburg
+      POSTGRES_USER: ${DB_USER:-shogun_sa}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be provided}
+      POSTGRES_DB: ${DB_NAME:-shogun_db}
+    volumes:
+      - sa_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-shogun_sa} -d ${DB_NAME:-shogun_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sa_vpc_net
+
+  pgbouncer:
+    image: edoburu/pgbouncer:1.22.1-p0
+    container_name: shogun-sa-pgbouncer
+    restart: unless-stopped
+    environment:
+      TZ: Africa/Johannesburg
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-shogun_sa}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be provided}
+      DB_NAME: ${DB_NAME:-shogun_db}
+      LISTEN_PORT: 6432
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 500
+      DEFAULT_POOL_SIZE: 25
+      AUTH_TYPE: scram-sha-256
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - sa_vpc_net
+
+  redis:
+    image: redis:7-alpine
+    container_name: shogun-sa-redis
+    restart: unless-stopped
+    environment:
+      TZ: Africa/Johannesburg
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?REDIS_PASSWORD must be provided}"]
+    volumes:
+      - sa_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sa_vpc_net
+
+volumes:
+  sa_postgres_data:
+  sa_redis_data:
+
+networks:
+  sa_vpc_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../config/db.js';
 import { updateTaskWithEvents } from '../services/taskService.js';
+import { cascadeProjectGanttTasks } from '../services/schedulingEngine.js';
 import { getTenantCurrency } from '../utils/tenantConfig.js';
 
 // ============================================================================
@@ -544,6 +545,21 @@ export async function updateTask(req: Request, res: Response): Promise<void> {
       },
       userId
     );
+
+    // Cascade Finish-to-Start Gantt dependencies across SA weekends & public holidays
+    // when schedule-impacting fields change
+    if (
+      data.dueDate !== undefined ||
+      data.estimatedHours !== undefined ||
+      data.predecessorTaskIds !== undefined ||
+      data.customFields?.startDate !== undefined
+    ) {
+      try {
+        await cascadeProjectGanttTasks(tenantId, updated.projectId);
+      } catch (cascadeErr: any) {
+        console.warn('[Gantt Cascade Notice]:', cascadeErr?.message || cascadeErr);
+      }
+    }
 
     // Sync subtasks if provided
     if (Array.isArray(data.subtasks)) {

@@ -1,6 +1,17 @@
-import React from 'react';
-import { Users, Bot, User, AlertTriangle, CheckCircle2, Clock, ArrowUpRight } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Users, Bot, User, AlertTriangle, CheckCircle2, Clock, ArrowUpRight, Calendar } from 'lucide-react';
 import { Task } from '../../types';
+import {
+  SaHolidayItem,
+  addUtcDays,
+  buildHolidayMapForYears,
+  countSaWorkingDays,
+  fetchTenantWorkingCalendar,
+  formatUtcIso,
+  getMondayOfIsoWeek,
+  parseIsoDateUtc,
+  toUtcIsoDate,
+} from '../../utils/saHolidayUtils';
 
 interface TaskWorkloadViewProps {
   tasks: Task[];
@@ -27,6 +38,38 @@ const BASE_TEAM_MEMBERS = [
 ];
 
 export const TaskWorkloadView: React.FC<TaskWorkloadViewProps> = ({ tasks, onSelectTask }) => {
+  const [customHolidays, setCustomHolidays] = useState<SaHolidayItem[]>([]);
+  const [workDays, setWorkDays] = useState<number[]>([1, 2, 3, 4, 5]);
+  const [annualWorkingDays, setAnnualWorkingDays] = useState<number>(251);
+
+  const todayIso = toUtcIsoDate(new Date());
+  const currentYear = parseIsoDateUtc(todayIso).getUTCFullYear();
+  const weekMondayIso = getMondayOfIsoWeek(todayIso);
+  const weekSundayIso = formatUtcIso(addUtcDays(parseIsoDateUtc(weekMondayIso), 6));
+
+  useEffect(() => {
+    let active = true;
+    fetchTenantWorkingCalendar(currentYear).then((res) => {
+      if (!active) return;
+      setWorkDays(res.calendar.workDays || [1, 2, 3, 4, 5]);
+      setCustomHolidays(res.holidays || []);
+      setAnnualWorkingDays(res.stats.workingDaysInYear);
+    });
+    return () => {
+      active = false;
+    };
+  }, [currentYear]);
+
+  const holidayMap = useMemo(
+    () => buildHolidayMapForYears([currentYear - 1, currentYear, currentYear + 1], customHolidays),
+    [currentYear, customHolidays]
+  );
+
+  const saWorkingDaysThisWeek = useMemo(
+    () => countSaWorkingDays(weekMondayIso, weekSundayIso, holidayMap, workDays),
+    [weekMondayIso, weekSundayIso, holidayMap, workDays]
+  );
+
   const workloadList: UserWorkloadData[] = BASE_TEAM_MEMBERS.map((member) => {
     const assigned = tasks.filter(
       (t) =>
@@ -36,7 +79,13 @@ export const TaskWorkloadView: React.FC<TaskWorkloadViewProps> = ({ tasks, onSel
     );
 
     const totalHours = assigned.reduce((acc, t) => acc + (t.estimatedHours || 4), 0);
-    const utilization = Math.round((totalHours / member.capacity) * 100);
+    // Adjust human member weekly capacity by actual SA working days so public holidays
+    // are never flagged as under-utilization
+    const adjustedCapacity = member.isAi
+      ? member.capacity
+      : Number(((member.capacity / 5) * saWorkingDaysThisWeek).toFixed(1));
+    const denom = adjustedCapacity > 0 ? adjustedCapacity : member.capacity;
+    const utilization = denom > 0 ? Math.round((totalHours / denom) * 100) : 100;
 
     return {
       userId: member.userId,
@@ -45,13 +94,25 @@ export const TaskWorkloadView: React.FC<TaskWorkloadViewProps> = ({ tasks, onSel
       isAi: member.isAi,
       assignedTasks: assigned,
       totalEstimatedHours: totalHours,
-      capacityHours: member.capacity,
+      capacityHours: adjustedCapacity,
       utilizationPercent: utilization,
     };
   });
 
   return (
     <div className="space-y-6 text-xs select-none">
+      {/* SA Working Calendar Capacity Notice */}
+      <div className="px-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between flex-wrap gap-2 text-[11px] text-slate-300">
+        <span className="flex items-center gap-2">
+          <Calendar className="w-3.5 h-3.5 text-emerald-400" />
+          <span>
+            South African Working Calendar active: <strong>{saWorkingDaysThisWeek} working days</strong> this week ({weekMondayIso} → {weekSundayIso})
+          </span>
+        </span>
+        <span className="font-mono text-emerald-300">
+          {currentYear}: {annualWorkingDays} SA working days ({annualWorkingDays * 8}h/member)
+        </span>
+      </div>
       {/* Overview Cards Header */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl flex items-center gap-3">

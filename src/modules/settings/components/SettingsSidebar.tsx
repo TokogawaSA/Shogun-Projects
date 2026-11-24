@@ -27,6 +27,7 @@ import {
   Building,
   Coins,
   History,
+  Calendar,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
@@ -102,6 +103,9 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
       { to: '/settings/system/company', label: 'Company Branding', icon: Building },
       { to: '/settings/system/fiscal', label: 'Currency & Fiscal', icon: Coins },
       { to: '/settings/system/audit', label: 'Audit Trail Logs', icon: History },
+      { to: '/settings/system/popia', label: 'POPIA Governance', icon: Shield, badge: 'POPIA' },
+      { to: '/settings/system/accounting', label: 'Accounting (Sage SA & Xero)', icon: Coins, badge: 'GL' },
+      { to: '/settings/system/calendars', label: 'Working Calendars & Shutdown', icon: Calendar, badge: 'SAST' },
     ],
   },
 ];

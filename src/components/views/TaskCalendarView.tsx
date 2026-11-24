@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, Sparkles } from 'lucide-react';
 import { Task } from '../../types';
+import {
+  SaHolidayItem,
+  buildHolidayMapForYears,
+  fetchTenantWorkingCalendar,
+} from '../../utils/saHolidayUtils';
 
 interface TaskCalendarViewProps {
   tasks: Task[];
@@ -17,6 +22,24 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
+  const [apiHolidays, setApiHolidays] = useState<SaHolidayItem[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    fetchTenantWorkingCalendar(year).then((res) => {
+      if (active && Array.isArray(res.holidays)) {
+        setApiHolidays(res.holidays);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [year]);
+
+  const holidayMap = useMemo(
+    () => buildHolidayMapForYears([year], apiHolidays),
+    [year, apiHolidays]
+  );
 
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -105,28 +128,46 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
         {daysArray.map((day) => {
           const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
           const dayTasks = tasksByDate.get(dateStr) || [];
+          const holiday = holidayMap.get(dateStr) || null;
           const isToday =
             new Date().toISOString().split('T')[0] === dateStr;
 
           return (
             <div
               key={day}
+              title={
+                holiday
+                  ? `${dateStr}: ${holiday.name}${holiday.isObservedMonday ? ' (Observed Monday - Act 36 of 1994 s2(1))' : ' (SA Public Holiday)'}`
+                  : undefined
+              }
               className={`min-h-[110px] p-2 rounded-xl border transition flex flex-col justify-between ${
-                isToday
-                  ? 'bg-indigo-950/30 border-indigo-500/80 shadow-sm'
-                  : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700'
+                holiday
+                  ? 'bg-amber-950/35 border-amber-500/60 shadow-sm'
+                  : isToday
+                    ? 'bg-indigo-950/30 border-indigo-500/80 shadow-sm'
+                    : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700'
               }`}
             >
-              <div className="flex items-center justify-between mb-1">
-                <span
-                  className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${
-                    isToday
-                      ? 'bg-indigo-600 text-white'
-                      : 'text-slate-300'
-                  }`}
-                >
-                  {day}
-                </span>
+              <div className="flex items-center justify-between mb-1 gap-1">
+                <div className="flex items-center gap-1 min-w-0">
+                  <span
+                    className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
+                      holiday
+                        ? 'bg-amber-500/30 text-amber-200 border border-amber-400/50'
+                        : isToday
+                          ? 'bg-indigo-600 text-white'
+                          : 'text-slate-300'
+                    }`}
+                  >
+                    {day}
+                  </span>
+                  {holiday && (
+                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-200 text-[9px] font-semibold truncate">
+                      <Sparkles className="w-2.5 h-2.5 shrink-0" />
+                      <span className="truncate">{holiday.name}</span>
+                    </span>
+                  )}
+                </div>
 
                 {onQuickAddForDate && (
                   <button

@@ -148,6 +148,15 @@ export function formatCurrencyAmount(
     maxDecimals = 2;
   }
 
+  if (code === 'ZAR' && !options.compact) {
+    const isNeg = num < 0;
+    const fixedAbs = Math.abs(num).toFixed(options.decimals ?? 2);
+    const [intPart, decPart] = fixedAbs.split('.');
+    const spacedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    const zarFormatted = `${isNeg ? '-' : ''}R ${spacedInt}${decPart !== undefined ? `.${decPart}` : ''}`;
+    return options.showCode ? `${zarFormatted} ZAR` : zarFormatted;
+  }
+
   const formattedNum = num.toLocaleString(undefined, {
     minimumFractionDigits: minDecimals,
     maximumFractionDigits: maxDecimals,

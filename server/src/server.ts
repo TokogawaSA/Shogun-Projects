@@ -1,9 +1,10 @@
+import { env } from './config/env.js';
 import app from './app.js';
 import { disconnectDatabase } from './config/db.js';
 import { startWorkers, stopWorkers } from './workers/index.js';
 import { initSocketServer } from './socket.js';
 
-const PORT = process.env.PORT || 5000;
+const PORT = env.PORT;
 
 // Start HTTP server listener
 export const server = app.listen(PORT, () => {

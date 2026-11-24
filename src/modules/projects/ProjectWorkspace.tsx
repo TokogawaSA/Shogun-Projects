@@ -1,19 +1,21 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  ChevronDown, 
-  FolderKanban, 
-  Search, 
-  Check, 
-  Plus, 
-  SlidersHorizontal, 
-  LayoutGrid, 
-  List, 
-  Layers, 
-  BarChart3, 
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import {
+  ArrowLeft,
+  ChevronDown,
+  FolderKanban,
+  Search,
+  Check,
+  Plus,
+  SlidersHorizontal,
+  LayoutGrid,
+  List,
+  Layers,
+  BarChart3,
   Loader2,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  GanttChartSquare,
+  Clock
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useProject } from '../../context/ProjectContext';
@@ -23,16 +25,19 @@ import { ProjectBoard } from './components/ProjectBoard';
 import { ProjectTaskList } from './components/ProjectTaskList';
 import { ProjectMilestones } from './components/ProjectMilestones';
 import { ProjectOverview } from './components/ProjectOverview';
+import { ProjectGanttTimeline } from './components/ProjectGanttTimeline';
+import { ProjectTimesheetGrid } from './components/ProjectTimesheetGrid';
 import { TaskDetailModal } from './components/TaskDetailModal';
 import { CreateTaskModal } from './components/CreateTaskModal';
 import { ColumnConfigModal } from './components/ColumnConfigModal';
 import { ContextualBookingsPanel } from '../scheduler/components/ContextualBookingsPanel';
 
-type WorkspaceTab = 'board' | 'list' | 'milestones' | 'overview' | 'bookings';
+type WorkspaceTab = 'board' | 'list' | 'gantt' | 'timesheets' | 'milestones' | 'overview' | 'bookings';
 
 export const ProjectWorkspace: React.FC = () => {
   const { id: urlProjectId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') as WorkspaceTab | null;
 
@@ -44,8 +49,11 @@ export const ProjectWorkspace: React.FC = () => {
 
   // Core State
   const [activeTab, setActiveTab] = useState<WorkspaceTab>(() => {
-    if (tabParam && ['board', 'list', 'milestones', 'overview', 'bookings'].includes(tabParam)) {
+    if (tabParam && ['board', 'list', 'gantt', 'timesheets', 'milestones', 'overview', 'bookings'].includes(tabParam)) {
       return tabParam;
+    }
+    if (location.pathname.includes('/gantt')) {
+      return 'gantt';
     }
     return 'board';
   });
@@ -388,6 +396,32 @@ export const ProjectWorkspace: React.FC = () => {
           </button>
 
           <button
+            onClick={() => handleTabChange('gantt')}
+            className={clsx(
+              'flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all duration-150',
+              activeTab === 'gantt'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-semibold ring-1 ring-indigo-400/40'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            )}
+          >
+            <GanttChartSquare className="w-3.5 h-3.5" />
+            <span>Gantt & CPM</span>
+          </button>
+
+          <button
+            onClick={() => handleTabChange('timesheets')}
+            className={clsx(
+              'flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all duration-150',
+              activeTab === 'timesheets'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-semibold ring-1 ring-indigo-400/40'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            )}
+          >
+            <Clock className="w-3.5 h-3.5" />
+            <span>Timesheets (SAST)</span>
+          </button>
+
+          <button
             onClick={() => handleTabChange('milestones')}
             className={clsx(
               'flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all duration-150',
@@ -486,6 +520,22 @@ export const ProjectWorkspace: React.FC = () => {
               onUpdateMilestone={handleUpdateMilestone}
               onDeleteMilestone={handleDeleteMilestone}
               onOpenTask={(task) => setSelectedTask(task)}
+            />
+          )}
+
+          {activeTab === 'gantt' && (
+            <ProjectGanttTimeline
+              projectId={activeProjectId}
+              tasks={tasks}
+              onOpenTask={(task) => setSelectedTask(task)}
+              onRefreshTasks={loadData}
+            />
+          )}
+
+          {activeTab === 'timesheets' && (
+            <ProjectTimesheetGrid
+              projectId={activeProjectId}
+              tasks={tasks}
             />
           )}
 

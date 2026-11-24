@@ -152,6 +152,13 @@ export interface AccountEntity extends BaseCRMEntity {
   shippingPostalCode?: string;
   shippingCountry?: string;
 
+  // South African B2B Procurement & Statutory Firmographics
+  cipcRegistrationNumber?: string | null;
+  vatRegistrationNumber?: string | null;
+  bbbeeLevel?: number | null;
+  bbbeeExpiryDate?: Timestamp | null;
+  csdSupplierNumber?: string | null;
+
   // Relational aggregates
   linkedProjectCount?: number;
   activeDealCount?: number;

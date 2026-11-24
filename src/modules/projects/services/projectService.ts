@@ -60,6 +60,7 @@ export const projectService = {
             actualHours: Number(t.actualHours) || 0,
             parentTaskId: t.parentTaskId || undefined,
             milestoneId: t.milestoneId,
+            predecessorTaskIds: Array.isArray(t.predecessorTaskIds) ? t.predecessorTaskIds : [],
             subtasks: Array.isArray(t.subtasks)
               ? t.subtasks.map((st: any) => ({
                   id: st.id,
