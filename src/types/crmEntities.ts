@@ -16,9 +16,15 @@ export type Timestamp = { seconds?: number; nanoseconds?: number; toDate?: () =>
 
 export type EntityModuleName = 'leads' | 'accounts' | 'contacts' | 'deals';
 
+export type CustomerSegment = 'B2B' | 'B2C';
+
+export type PreferredChannel = 'email' | 'whatsapp' | 'sms' | 'phone' | string;
+
+export type LoyaltyTier = 'standard' | 'silver' | 'gold' | 'vip' | string;
+
 export type Salutation = 'Mr.' | 'Ms.' | 'Mrs.' | 'Dr.' | 'Prof.' | string;
 
-export type LeadSource = 
+export type LeadSource =
   | 'cold_call'
   | 'existing_customer'
   | 'self_generated'
@@ -30,10 +36,15 @@ export type LeadSource =
   | 'trade_show'
   | 'web_site'
   | 'word_of_mouth'
+  | 'social_media'
+  | 'whatsapp'
+  | 'marketplace'
+  | 'referral'
+  | 'walk_in'
   | 'other'
   | string;
 
-export type LeadEntityStatus = 
+export type LeadEntityStatus =
   | 'unqualified'
   | 'contacted'
   | 'pre_qualified'
@@ -43,17 +54,20 @@ export type LeadEntityStatus =
 
 export type LeadRating = 'hot' | 'warm' | 'cold' | string;
 
-export type AccountEntityType = 
+export type AccountEntityType =
   | 'prospect'
   | 'customer'
   | 'partner'
   | 'vendor'
   | 'reseller'
+  | 'individual'
+  | 'consumer'
+  | 'household'
   | string;
 
 export type AccountRating = 'hot' | 'warm' | 'cold' | string;
 
-export type DealStageType = 
+export type DealStageType =
   | 'prospecting'
   | 'qualification'
   | 'needs_analysis'
@@ -63,7 +77,14 @@ export type DealStageType =
   | 'closed_won'
   | 'closed_lost';
 
-export type DealEntityType = 'new_business' | 'existing_business' | string;
+export type DealEntityType =
+  | 'new_business'
+  | 'existing_business'
+  | 'b2b_enterprise'
+  | 'b2b_smb'
+  | 'b2c_direct'
+  | 'b2c_subscription'
+  | string;
 
 // ==========================================
 // 2. Base CRM Entity Interface
@@ -77,6 +98,7 @@ export interface BaseCRMEntity {
   createdById: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  customerSegment?: CustomerSegment;
   customFields?: Record<string, any>;
 }
 
@@ -137,7 +159,7 @@ export interface AccountEntity extends BaseCRMEntity {
   accountType: AccountEntityType;
   rating: AccountRating;
   annualRevenue?: number;
-  
+
   // Billing Address
   billingStreet?: string;
   billingCity?: string;
@@ -237,7 +259,7 @@ export type CRMEntity = Lead | Account | Contact | Deal;
 // 4. VTiger-Style Block & Field Layout Schemas
 // ==========================================
 
-export type CRMFieldType = 
+export type CRMFieldType =
   | 'text'
   | 'textarea'
   | 'number'
@@ -279,6 +301,8 @@ export interface FieldDefinition {
   step?: number;
   min?: number;
   max?: number;
+  /** Restrict field visibility to B2B, B2C, or ALL (default) */
+  visibilitySegment?: CustomerSegment | 'ALL';
 }
 
 export interface BlockLayout {
@@ -288,6 +312,8 @@ export interface BlockLayout {
   isCollapsible: boolean;
   isCollapsedByDefault?: boolean;
   fields: FieldDefinition[];
+  /** Restrict block visibility to B2B, B2C, or ALL (default) */
+  visibilitySegment?: CustomerSegment | 'ALL';
 }
 
 export interface EntityLayoutConfig {
@@ -299,7 +325,7 @@ export interface EntityLayoutConfig {
 // 5. Query, Filter & List View Definitions
 // ==========================================
 
-export type FilterOperator = 
+export type FilterOperator =
   | 'equals'
   | 'not_equals'
   | 'contains'

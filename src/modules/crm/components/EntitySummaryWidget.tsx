@@ -8,6 +8,7 @@ import React, { useState, useEffect } from 'react';
 import { apiClient } from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import { EntityModuleName } from '../../../types/crmEntities';
+import { getRecordSegment } from '../utils/customerSegment';
 import {
   Coins,
   Briefcase,
@@ -125,7 +126,11 @@ export const EntitySummaryWidget: React.FC<EntitySummaryWidgetProps> = ({
     }
   };
 
-  // 4-Column Key Metrics Configuration based on entity type
+  // 4-Column Key Metrics Configuration based on entity type & B2B/B2C segment
+  const segment = getRecordSegment(record);
+  const isB2C = segment === 'B2C';
+  const custom = (record.customFields as Record<string, any>) || {};
+
   const renderMetricCards = () => {
     switch (moduleName) {
       case 'deals':
@@ -133,7 +138,7 @@ export const EntitySummaryWidget: React.FC<EntitySummaryWidgetProps> = ({
           <>
             <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-500/20 shadow-md">
               <div className="flex items-center justify-between text-slate-400 text-xs mb-1">
-                <span>Deal Value</span>
+                <span>{isB2C ? 'Order / Deal Value' : 'Deal Value'}</span>
                 <Coins className="w-4 h-4 text-emerald-400" />
               </div>
               <div className="text-xl font-bold text-emerald-400 font-mono">
@@ -161,19 +166,25 @@ export const EntitySummaryWidget: React.FC<EntitySummaryWidgetProps> = ({
               <div className="text-sm font-semibold text-slate-100">
                 {record.closingDate ? new Date(record.closingDate).toLocaleDateString() : '—'}
               </div>
-              <div className="text-[11px] text-slate-500 mt-0.5">Type: {record.dealType || 'New Business'}</div>
+              <div className="text-[11px] text-slate-500 mt-0.5 capitalize">
+                {segment} • {String(record.dealType || (isB2C ? 'b2c_direct' : 'new_business')).replace(/_/g, ' ')}
+              </div>
             </div>
 
             <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-500/20 shadow-md">
               <div className="flex items-center justify-between text-slate-400 text-xs mb-1">
-                <span>Primary Account</span>
+                <span>{isB2C ? 'Consumer / Buyer' : 'Primary Account'}</span>
                 <User className="w-4 h-4 text-violet-400" />
               </div>
               <div className="text-sm font-semibold text-indigo-300 truncate">
-                {record.accountName || 'No Linked Account'}
+                {isB2C
+                  ? record.contactName || record.accountName || 'Direct Consumer'
+                  : record.accountName || record.account?.accountName || 'No Linked Account'}
               </div>
               <div className="text-[11px] text-slate-500 mt-0.5 truncate">
-                Contact: {record.contactName || 'Unassigned'}
+                {isB2C
+                  ? `Account: ${record.accountName || record.account?.accountName || 'Individual'}`
+                  : `Contact: ${record.contactName || 'Unassigned'}`}
               </div>
             </div>
           </>
@@ -197,24 +208,34 @@ export const EntitySummaryWidget: React.FC<EntitySummaryWidgetProps> = ({
 
             <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-500/20 shadow-md">
               <div className="flex items-center justify-between text-slate-400 text-xs mb-1">
-                <span>Annual Revenue</span>
+                <span>{isB2C ? 'Estimated Budget' : 'Annual Revenue'}</span>
                 <Coins className="w-4 h-4 text-emerald-400" />
               </div>
               <div className="text-lg font-bold text-emerald-400 font-mono">
-                {formatCurrency(record.annualRevenue)}
+                {formatCurrency(isB2C ? custom.estimatedBudget ?? record.annualRevenue : record.annualRevenue)}
               </div>
-              <div className="text-[11px] text-slate-500 mt-0.5">Est. Budget Pool</div>
+              <div className="text-[11px] text-slate-500 mt-0.5">
+                {isB2C ? 'Est. Consumer Spend' : 'Est. Budget Pool'}
+              </div>
             </div>
 
             <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-500/20 shadow-md">
               <div className="flex items-center justify-between text-slate-400 text-xs mb-1">
-                <span>Company & Role</span>
+                <span>{isB2C ? 'Consumer Channel' : 'Company & Role'}</span>
                 <Briefcase className="w-4 h-4 text-violet-400" />
               </div>
-              <div className="text-sm font-semibold text-slate-100 truncate">
-                {record.company || 'Private Individual'}
+              <div className="text-sm font-semibold text-slate-100 truncate capitalize">
+                {isB2C
+                  ? custom.preferredChannel || 'WhatsApp / Email'
+                  : record.company || 'Private Individual'}
               </div>
-              <div className="text-[11px] text-indigo-300 mt-0.5 truncate">{record.title || 'Prospect'}</div>
+              <div className="text-[11px] text-indigo-300 mt-0.5 truncate">
+                {isB2C
+                  ? custom.marketingOptIn
+                    ? 'POPIA Opted In'
+                    : 'B2C Individual Lead'
+                  : record.title || 'Prospect'}
+              </div>
             </div>
 
             <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-500/20 shadow-md">
@@ -226,7 +247,11 @@ export const EntitySummaryWidget: React.FC<EntitySummaryWidgetProps> = ({
                 {String(record.leadSource || 'web_site').replace(/_/g, ' ')}
               </div>
               <div className="text-[11px] text-slate-500 mt-0.5">
-                {record.isConverted ? 'Converted to Account' : 'Active Pipeline Prospect'}
+                {record.isConverted
+                  ? isB2C
+                    ? 'Converted to Consumer'
+                    : 'Converted to Account'
+                  : `${segment} Pipeline Prospect`}
               </div>
             </div>
           </>
@@ -237,33 +262,48 @@ export const EntitySummaryWidget: React.FC<EntitySummaryWidgetProps> = ({
           <>
             <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-500/20 shadow-md">
               <div className="flex items-center justify-between text-slate-400 text-xs mb-1">
-                <span>Account Type</span>
+                <span>{isB2C ? 'Consumer Profile' : 'Account Type'}</span>
                 <ShieldCheck className="w-4 h-4 text-teal-400" />
               </div>
               <div className="text-base font-semibold text-slate-100 capitalize">
-                {record.accountType || 'Customer'}
+                {record.accountType || (isB2C ? 'Individual' : 'Customer')}
               </div>
-              <div className="text-[11px] text-slate-500 mt-0.5">Rating: {record.rating || 'hot'}</div>
+              <div className="text-[11px] text-slate-500 mt-0.5">
+                {segment} • Rating: {record.rating || 'hot'}
+              </div>
             </div>
 
             <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-500/20 shadow-md">
               <div className="flex items-center justify-between text-slate-400 text-xs mb-1">
-                <span>Annual Revenue</span>
+                <span>{isB2C ? 'Loyalty & Channel' : 'Annual Revenue'}</span>
                 <Coins className="w-4 h-4 text-emerald-400" />
               </div>
-              <div className="text-lg font-bold text-emerald-400 font-mono">
-                {formatCurrency(record.annualRevenue)}
-              </div>
-              <div className="text-[11px] text-slate-500 mt-0.5">Industry: {record.industry || 'Tech'}</div>
+              {isB2C ? (
+                <>
+                  <div className="text-base font-bold text-amber-300 capitalize">
+                    {custom.loyaltyTier || 'Standard'} Tier
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5 capitalize">
+                    Channel: {custom.preferredChannel || 'Email'}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="text-lg font-bold text-emerald-400 font-mono">
+                    {formatCurrency(record.annualRevenue)}
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">Industry: {record.industry || 'Tech'}</div>
+                </>
+              )}
             </div>
 
             <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-500/20 shadow-md">
               <div className="flex items-center justify-between text-slate-400 text-xs mb-1">
-                <span>Active Deals</span>
+                <span>{isB2C ? 'Active Orders / Deals' : 'Active Deals'}</span>
                 <Briefcase className="w-4 h-4 text-indigo-400" />
               </div>
               <div className="text-xl font-bold text-indigo-300">
-                {record.activeDealCount || 0}
+                {record.activeDealCount ?? record.deals?.length ?? 0}
               </div>
               <div className="text-[11px] text-slate-500 mt-0.5">Sales Opportunities</div>
             </div>
@@ -274,7 +314,7 @@ export const EntitySummaryWidget: React.FC<EntitySummaryWidgetProps> = ({
                 <Layers className="w-4 h-4 text-violet-400" />
               </div>
               <div className="text-xl font-bold text-violet-300">
-                {record.linkedProjectCount || 0}
+                {record.linkedProjectCount ?? record.projects?.length ?? 0}
               </div>
               <div className="text-[11px] text-slate-500 mt-0.5">Delivery Workspaces</div>
             </div>
@@ -287,26 +327,38 @@ export const EntitySummaryWidget: React.FC<EntitySummaryWidgetProps> = ({
           <>
             <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-500/20 shadow-md">
               <div className="flex items-center justify-between text-slate-400 text-xs mb-1">
-                <span>Primary Affiliation</span>
+                <span>{isB2C ? 'Customer Segment' : 'Primary Affiliation'}</span>
                 <User className="w-4 h-4 text-indigo-400" />
               </div>
               <div className="text-sm font-semibold text-slate-100 truncate">
-                {record.accountName || 'Direct Contact'}
+                {isB2C
+                  ? 'B2C Individual Consumer'
+                  : record.accountName || record.account?.accountName || 'Direct Contact'}
               </div>
               <div className="text-[11px] text-slate-500 mt-0.5">
-                {record.isPrimaryContact ? 'Primary Key Contact' : 'Affiliate Contact'}
+                {isB2C
+                  ? `Tier: ${(custom.loyaltyTier || 'standard').toUpperCase()}`
+                  : record.isPrimaryContact
+                    ? 'Primary Key Contact'
+                    : 'Affiliate Contact'}
               </div>
             </div>
 
             <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-500/20 shadow-md">
               <div className="flex items-center justify-between text-slate-400 text-xs mb-1">
-                <span>Department</span>
+                <span>{isB2C ? 'Preferred Channel' : 'Department'}</span>
                 <Briefcase className="w-4 h-4 text-violet-400" />
               </div>
-              <div className="text-sm font-semibold text-slate-100 truncate">
-                {record.department || 'General'}
+              <div className="text-sm font-semibold text-slate-100 truncate capitalize">
+                {isB2C ? custom.preferredChannel || 'WhatsApp' : record.department || 'General'}
               </div>
-              <div className="text-[11px] text-indigo-300 mt-0.5 truncate">{record.jobTitle || 'Representative'}</div>
+              <div className="text-[11px] text-indigo-300 mt-0.5 truncate">
+                {isB2C
+                  ? custom.marketingOptIn
+                    ? 'POPIA Consent: Opted In'
+                    : 'POPIA Consent: Not Opted In'
+                  : record.jobTitle || 'Representative'}
+              </div>
             </div>
 
             <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-500/20 shadow-md">
@@ -317,7 +369,9 @@ export const EntitySummaryWidget: React.FC<EntitySummaryWidgetProps> = ({
               <div className="text-xs font-semibold text-indigo-300 truncate">
                 {record.email || '—'}
               </div>
-              <div className="text-[11px] text-slate-500 mt-0.5 truncate">Phone: {record.phone || '—'}</div>
+              <div className="text-[11px] text-slate-500 mt-0.5 truncate">
+                Phone: {record.mobile || record.phone || '—'}
+              </div>
             </div>
 
             <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-500/20 shadow-md">
@@ -326,7 +380,7 @@ export const EntitySummaryWidget: React.FC<EntitySummaryWidgetProps> = ({
                 <ShieldCheck className="w-4 h-4 text-teal-400" />
               </div>
               <div className="text-sm font-semibold text-slate-200 truncate">
-                {record.assignedUserName || 'CRM Admin'}
+                {record.assignedUserName || record.assignedUser?.displayName || 'CRM Admin'}
               </div>
               <div className="text-[11px] text-slate-500 mt-0.5">Assigned Agent</div>
             </div>

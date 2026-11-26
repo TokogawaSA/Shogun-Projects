@@ -8,6 +8,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../../services/api';
 import { EntityModuleName } from '../../../types/crmEntities';
+import { getRecordSegment, getSegmentMeta } from '../utils/customerSegment';
 import {
   ArrowLeft,
   Edit,
@@ -20,6 +21,8 @@ import {
   Target,
   User as UserIcon,
   AlertTriangle,
+  FileSpreadsheet,
+  Receipt,
 } from 'lucide-react';
 
 export interface EntityHeaderProps {
@@ -28,6 +31,8 @@ export interface EntityHeaderProps {
   record: Record<string, any>;
   onOpenConvertLead?: () => void;
   onOpenAddTask?: () => void;
+  onOpenCreateQuote?: () => void;
+  onOpenCreateInvoice?: () => void;
   className?: string;
 }
 
@@ -37,6 +42,8 @@ export const EntityHeader: React.FC<EntityHeaderProps> = ({
   record,
   onOpenConvertLead,
   onOpenAddTask,
+  onOpenCreateQuote,
+  onOpenCreateInvoice,
   className = '',
 }) => {
   const navigate = useNavigate();
@@ -44,12 +51,15 @@ export const EntityHeader: React.FC<EntityHeaderProps> = ({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const segment = getRecordSegment(record);
+  const segmentMeta = getSegmentMeta(segment);
+
   const getModuleIcon = () => {
     switch (moduleName) {
       case 'leads':
         return Target;
       case 'accounts':
-        return Building2;
+        return segment === 'B2C' ? UserIcon : Building2;
       case 'contacts':
         return Users;
       case 'deals':
@@ -67,10 +77,10 @@ export const EntityHeader: React.FC<EntityHeaderProps> = ({
     moduleName === 'leads'
       ? `${record.firstName || ''} ${record.lastName || ''}`.trim() || 'Unnamed Lead'
       : moduleName === 'accounts'
-      ? record.accountName || record.name || 'Unnamed Account'
-      : moduleName === 'contacts'
-      ? `${record.firstName || ''} ${record.lastName || ''}`.trim() || 'Unnamed Contact'
-      : record.dealName || record.title || 'Unnamed Deal';
+        ? record.accountName || record.name || 'Unnamed Account'
+        : moduleName === 'contacts'
+          ? `${record.firstName || ''} ${record.lastName || ''}`.trim() || 'Unnamed Contact'
+          : record.dealName || record.title || 'Unnamed Deal';
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -108,16 +118,28 @@ export const EntityHeader: React.FC<EntityHeaderProps> = ({
               {recordNumber}
             </span>
 
+            {/* B2B / B2C Customer Segment Badge */}
+            <span
+              className={`inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full font-semibold border ${segmentMeta.badgeClasses}`}
+              title={segmentMeta.description}
+            >
+              {segment === 'B2B' ? (
+                <Building2 className="w-3 h-3" />
+              ) : (
+                <UserIcon className="w-3 h-3" />
+              )}
+              {segmentMeta.fullLabel}
+            </span>
+
             {/* Status / Stage Badges */}
             {record.leadStatus && (
               <span
-                className={`text-[11px] px-2.5 py-0.5 rounded-full font-medium border ${
-                  record.leadStatus === 'converted'
+                className={`text-[11px] px-2.5 py-0.5 rounded-full font-medium border ${record.leadStatus === 'converted'
                     ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                     : record.leadStatus === 'lost'
-                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
-                    : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
-                }`}
+                      ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                      : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
+                  }`}
               >
                 {String(record.leadStatus).replace(/_/g, ' ')}
               </span>
@@ -125,13 +147,12 @@ export const EntityHeader: React.FC<EntityHeaderProps> = ({
 
             {record.stage && (
               <span
-                className={`text-[11px] px-2.5 py-0.5 rounded-full font-medium border ${
-                  record.stage === 'closed_won'
+                className={`text-[11px] px-2.5 py-0.5 rounded-full font-medium border ${record.stage === 'closed_won'
                     ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                     : record.stage === 'closed_lost'
-                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
-                    : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
-                }`}
+                      ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                      : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+                  }`}
               >
                 {String(record.stage).replace(/_/g, ' ')}
               </span>
@@ -139,13 +160,12 @@ export const EntityHeader: React.FC<EntityHeaderProps> = ({
 
             {record.rating && (
               <span
-                className={`text-[11px] px-2 py-0.5 rounded-full font-medium border ${
-                  record.rating === 'hot'
+                className={`text-[11px] px-2 py-0.5 rounded-full font-medium border ${record.rating === 'hot'
                     ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
                     : record.rating === 'warm'
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                    : 'bg-sky-500/20 text-sky-300 border-sky-500/30'
-                }`}
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                      : 'bg-sky-500/20 text-sky-300 border-sky-500/30'
+                  }`}
               >
                 {record.rating}
               </span>
@@ -164,16 +184,25 @@ export const EntityHeader: React.FC<EntityHeaderProps> = ({
               </div>
               <span>Assigned: <strong className="text-slate-300">{record.assignedUserName || 'CRM Admin'}</strong></span>
             </div>
-            {record.company && moduleName === 'leads' && (
+            {moduleName === 'leads' && segment === 'B2B' && record.company && (
               <>
                 <span>•</span>
                 <span>Company: <strong className="text-slate-300">{record.company}</strong></span>
               </>
             )}
-            {record.accountName && (moduleName === 'contacts' || moduleName === 'deals') && (
+            {moduleName === 'leads' && segment === 'B2C' && (
               <>
                 <span>•</span>
-                <span>Account: <strong className="text-slate-300">{record.accountName}</strong></span>
+                <span>Profile: <strong className="text-teal-300">Individual Consumer</strong></span>
+              </>
+            )}
+            {(record.accountName || record.account?.accountName) && (moduleName === 'contacts' || moduleName === 'deals') && (
+              <>
+                <span>•</span>
+                <span>
+                  {segment === 'B2C' ? 'Consumer Account' : 'Account'}:{' '}
+                  <strong className="text-slate-300">{record.accountName || record.account?.accountName}</strong>
+                </span>
               </>
             )}
           </div>
@@ -190,6 +219,27 @@ export const EntityHeader: React.FC<EntityHeaderProps> = ({
           >
             <UserCheck className="w-3.5 h-3.5" />
             Convert Lead
+          </button>
+        )}
+
+        {/* Create Quote & Invoice Shortcuts for Accounts, Deals, and B2C Contacts */}
+        {(moduleName === 'accounts' || moduleName === 'deals' || (moduleName === 'contacts' && segment === 'B2C')) && onOpenCreateQuote && (
+          <button
+            onClick={onOpenCreateQuote}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-all shadow-sm"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            New Quote
+          </button>
+        )}
+
+        {(moduleName === 'accounts' || moduleName === 'deals' || (moduleName === 'contacts' && segment === 'B2C')) && onOpenCreateInvoice && (
+          <button
+            onClick={onOpenCreateInvoice}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-all shadow-sm"
+          >
+            <Receipt className="w-3.5 h-3.5" />
+            New Invoice
           </button>
         )}
 

@@ -184,8 +184,6 @@ export interface Lead {
   createdAt: string;
 }
 
-// Re-export CRM Modular types
-export * from './crm';
 export * from './settings';
 export * from './ppm';
 export * from './catalogAndProjects';

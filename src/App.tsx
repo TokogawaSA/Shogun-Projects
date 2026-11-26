@@ -17,7 +17,6 @@ import { PublicWebFormPage } from './pages/PublicWebFormPage';
 import { PublicBookingPage } from './pages/PublicBookingPage';
 import { SchedulerPage } from './modules/scheduler/pages/SchedulerPage';
 import { SocialListeningHub } from './modules/social';
-import { ClientPortalInvoicesPage } from './modules/portal';
 import { useAuth } from './context/AuthContext';
 import { Loader2 } from 'lucide-react';
 
@@ -98,19 +97,19 @@ const AppLayout: React.FC = () => {
     if (path.startsWith('/catalog/quotes')) {
       return {
         title: 'Interactive Quote Builder & Line Items',
-        subtitle: 'Multi-tier PriceBook pricing, taxes, line item discounts & project scope conversion',
+        subtitle: 'Commercial quotations, business & client details, itemised scope & pricing, terms, and quote-to-invoice conversion',
+      };
+    }
+    if (path.startsWith('/catalog/invoices')) {
+      return {
+        title: 'Invoices & Billing System',
+        subtitle: 'SARS tax invoices, itemised scope & pricing, payment tracking & due dates',
       };
     }
     if (path.startsWith('/pm') || (path.startsWith('/projects/') && !path.includes('/costing') && !path.includes('/milestones') && !path.includes('/gantt'))) {
       return {
         title: 'Project Workspace & Modular AEC Engine',
         subtitle: 'Phase-gated [SD/DD/CD/CA] delivery, drawings, CA RFIs & admin-modular tabs',
-      };
-    }
-    if (path.startsWith('/catalog/price-books')) {
-      return {
-        title: 'Price Books & Tiers',
-        subtitle: 'Enterprise customer tiers, partner discount matrices & rate overrides',
       };
     }
     if (path.startsWith('/catalog')) {
@@ -135,12 +134,6 @@ const AppLayout: React.FC = () => {
       return { 
         title: 'Settings & Administration Hub', 
         subtitle: 'Tenant-isolated VTiger administration, workflows, schemas & access control' 
-      };
-    }
-    if (path.startsWith('/portal')) {
-      return {
-        title: 'Client Portal & ZAR Payments',
-        subtitle: 'SARS 15% VAT tax invoices, PayShap, Instant EFT, Capitec Pay & Peach Checkout V2',
       };
     }
     if (path === '/scheduler') {
@@ -228,9 +221,10 @@ const AppLayout: React.FC = () => {
             
             <Route path="/scheduler" element={<SchedulerPage />} />
             <Route path="/social" element={<SocialListeningHub />} />
-            <Route path="/portal" element={<ClientPortalInvoicesPage />} />
-            <Route path="/portal/invoices" element={<ClientPortalInvoicesPage />} />
-            <Route path="/portal/invoices/:id" element={<ClientPortalInvoicesPage />} />
+            <Route path="/portal" element={<Navigate to="/catalog/invoices" replace />} />
+            <Route path="/portal/invoices" element={<Navigate to="/catalog/invoices" replace />} />
+            <Route path="/portal/invoices/:id" element={<Navigate to="/catalog/invoices" replace />} />
+            <Route path="/portal/*" element={<Navigate to="/catalog/invoices" replace />} />
             <Route path="/mcp" element={<McpServersPage />} />
             <Route path="/forms" element={<Navigate to="/settings/automation/forms" replace />} />
             

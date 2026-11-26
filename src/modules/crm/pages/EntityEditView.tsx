@@ -8,9 +8,14 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiClient } from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
-import { EntityModuleName, FieldDefinition, PicklistOption } from '../../../types/crmEntities';
+import { EntityModuleName, FieldDefinition, PicklistOption, CustomerSegment } from '../../../types/crmEntities';
 import { useCurrency } from '../../../context/CurrencyContext';
-import { DEFAULT_MODULE_LAYOUTS } from '../utils/moduleLayouts';
+import { DEFAULT_MODULE_LAYOUTS, getModuleLayoutForSegment } from '../utils/moduleLayouts';
+import {
+  getRecordSegment,
+  getEntityFieldValue,
+  setEntityFieldValue,
+} from '../utils/customerSegment';
 import { EntityLookupModal } from '../components/EntityLookupModal';
 import {
   Save,
@@ -18,6 +23,7 @@ import {
   Loader2,
   Building2,
   Users,
+  User,
   Briefcase,
   Target,
   Search,
@@ -41,13 +47,14 @@ export const EntityEditView: React.FC = () => {
       : 'leads'
   ) as EntityModuleName;
 
-  const layoutBlocks = DEFAULT_MODULE_LAYOUTS[currentModule] || DEFAULT_MODULE_LAYOUTS.leads;
-
   // Form Field State
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState<boolean>(!isCreate);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  const activeSegment: CustomerSegment = getRecordSegment(formData);
+  const layoutBlocks = getModuleLayoutForSegment(currentModule, activeSegment);
 
   // Relational Lookup State
   const [lookupField, setLookupField] = useState<FieldDefinition | null>(null);
@@ -57,23 +64,28 @@ export const EntityEditView: React.FC = () => {
   useEffect(() => {
     if (isCreate) {
       // Set defaults for Create Mode
-      const defaults: Record<string, any> = {
+      let defaults: Record<string, any> = {
         tenantId,
         assignedUserId: user?.uid || undefined,
         assignedUserName: user?.displayName || user?.email?.split('@')[0] || 'CRM Admin',
         currency: currencyCode,
+        customFields: {
+          customerSegment: 'B2B',
+        },
       };
 
       // Set default picklist values from schema
-      layoutBlocks.forEach((block) => {
+      const allBlocks = DEFAULT_MODULE_LAYOUTS[currentModule] || DEFAULT_MODULE_LAYOUTS.leads;
+      allBlocks.forEach((block) => {
         block.fields.forEach((field) => {
           if (field.defaultValue !== undefined) {
-            defaults[field.name] = field.defaultValue;
+            defaults = setEntityFieldValue(defaults, field.name, field.defaultValue);
           } else if (field.type === 'picklist' && field.picklistValues && field.picklistValues.length > 0) {
             const first = field.picklistValues[0];
-            defaults[field.name] = typeof first === 'string' ? first : (first as PicklistOption).value;
+            const firstVal = typeof first === 'string' ? first : (first as PicklistOption).value;
+            defaults = setEntityFieldValue(defaults, field.name, firstVal);
           } else if (field.type === 'boolean') {
-            defaults[field.name] = false;
+            defaults = setEntityFieldValue(defaults, field.name, false);
           }
         });
       });
@@ -105,10 +117,30 @@ export const EntityEditView: React.FC = () => {
   }, [isCreate, currentModule, recordId, tenantId, user]);
 
   const handleFieldChange = (fieldName: string, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      [fieldName]: value,
-    }));
+    setFormData((prev) => setEntityFieldValue(prev, fieldName, value));
+  };
+
+  const handleSegmentChange = (nextSegment: CustomerSegment) => {
+    setFormData((prev) => {
+      let updated = setEntityFieldValue(prev, 'customFields.customerSegment', nextSegment);
+      if (isCreate) {
+        if (currentModule === 'accounts') {
+          if (nextSegment === 'B2C' && (!updated.accountType || updated.accountType === 'customer' || updated.accountType === 'prospect')) {
+            updated = { ...updated, accountType: 'individual' };
+          } else if (nextSegment === 'B2B' && ['individual', 'consumer', 'household'].includes(updated.accountType)) {
+            updated = { ...updated, accountType: 'prospect' };
+          }
+        }
+        if (currentModule === 'deals') {
+          if (nextSegment === 'B2C' && (!updated.dealType || updated.dealType === 'new_business')) {
+            updated = { ...updated, dealType: 'b2c_direct' };
+          } else if (nextSegment === 'B2B' && ['b2c_direct', 'b2c_subscription'].includes(updated.dealType)) {
+            updated = { ...updated, dealType: 'new_business' };
+          }
+        }
+      }
+      return updated;
+    });
   };
 
   // 2. Open Relational Lookup Modal
@@ -147,22 +179,73 @@ export const EntityEditView: React.FC = () => {
 
     try {
       if (isCreate) {
-        // Validate required relational links
-        if (currentModule === 'contacts' && !formData.accountId) {
-          throw new Error('Please select an Account for this contact using the lookup field.');
-        }
-        if (currentModule === 'deals' && !formData.accountId) {
-          throw new Error('Please select an Account for this deal using the lookup field.');
+        let resolvedAccountId = formData.accountId;
+        let resolvedAccountName = formData.accountName;
+
+        // Validate relational links (B2B requires explicit Account; B2C auto-provisions Individual Account if omitted)
+        if ((currentModule === 'contacts' || currentModule === 'deals') && !resolvedAccountId) {
+          if (activeSegment === 'B2B') {
+            throw new Error(
+              `Please select an Account for this B2B ${currentModule.slice(0, -1)} using the lookup field.`
+            );
+          }
+
+          // B2C: Auto-provision a lightweight Individual Consumer Account so relational FKs stay valid
+          const consumerAccountName =
+            currentModule === 'contacts'
+              ? `${formData.firstName || ''} ${formData.lastName || ''}`.trim() || 'Individual Consumer'
+              : formData.contactName || formData.dealName || 'Individual Consumer';
+
+          const autoAccount = await apiClient.post<any>('/crm/accounts', {
+            tenantId,
+            accountName: consumerAccountName,
+            accountType: 'individual',
+            industry: 'Consumer',
+            rating: 'warm',
+            email: formData.email || undefined,
+            primaryPhone: formData.mobile || formData.phone || undefined,
+            assignedUserId: formData.assignedUserId || user?.uid || undefined,
+            customFields: {
+              ...(formData.customFields || {}),
+              customerSegment: 'B2C',
+            },
+          });
+
+          if (autoAccount?.id) {
+            resolvedAccountId = autoAccount.id;
+            resolvedAccountName = autoAccount.accountName || consumerAccountName;
+          }
         }
 
         const newEntity: Record<string, any> = {
           ...formData,
           tenantId,
           assignedUserId: formData.assignedUserId || user?.uid || undefined,
+          customFields: {
+            ...(formData.customFields || {}),
+            customerSegment: activeSegment,
+          },
         };
+
+        if (resolvedAccountId) {
+          newEntity.accountId = resolvedAccountId;
+          newEntity.accountName = resolvedAccountName;
+        }
 
         if (currentModule === 'leads') {
           newEntity.isConverted = false;
+          if (activeSegment === 'B2C' && !String(newEntity.company || '').trim()) {
+            newEntity.company = 'Individual';
+          }
+        }
+
+        if (currentModule === 'accounts' && activeSegment === 'B2C') {
+          if (!String(newEntity.industry || '').trim()) {
+            newEntity.industry = 'Consumer';
+          }
+          if (!newEntity.accountType) {
+            newEntity.accountType = 'individual';
+          }
         }
 
         const created = await apiClient.post<any>(`/crm/${currentModule}`, newEntity);
@@ -173,6 +256,10 @@ export const EntityEditView: React.FC = () => {
         // Update Existing Record
         const updatePayload = {
           ...formData,
+          customFields: {
+            ...(formData.customFields || {}),
+            customerSegment: activeSegment,
+          },
           updatedAt: new Date().toISOString(),
         };
 
@@ -284,6 +371,75 @@ export const EntityEditView: React.FC = () => {
         </div>
       )}
 
+      {/* B2B / B2C Customer Segment Switcher */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <button
+          type="button"
+          onClick={() => handleSegmentChange('B2B')}
+          className={`flex items-center gap-3 p-4 rounded-2xl border text-left transition-all ${
+            activeSegment === 'B2B'
+              ? 'bg-indigo-600/20 border-indigo-500/50 text-indigo-100 shadow-lg shadow-indigo-500/10'
+              : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+          }`}
+        >
+          <div
+            className={`p-2.5 rounded-xl ${
+              activeSegment === 'B2B'
+                ? 'bg-indigo-500/25 text-indigo-300'
+                : 'bg-slate-800 text-slate-400'
+            }`}
+          >
+            <Building2 className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-xs font-bold flex items-center gap-2">
+              B2B — Business / Organization
+              {activeSegment === 'B2B' && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/30 text-indigo-200">
+                  Active
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Corporate firmographics, company accounts, procurement &amp; SA statutory compliance.
+            </p>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleSegmentChange('B2C')}
+          className={`flex items-center gap-3 p-4 rounded-2xl border text-left transition-all ${
+            activeSegment === 'B2C'
+              ? 'bg-teal-600/20 border-teal-500/50 text-teal-100 shadow-lg shadow-teal-500/10'
+              : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+          }`}
+        >
+          <div
+            className={`p-2.5 rounded-xl ${
+              activeSegment === 'B2C'
+                ? 'bg-teal-500/25 text-teal-300'
+                : 'bg-slate-800 text-slate-400'
+            }`}
+          >
+            <User className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-xs font-bold flex items-center gap-2">
+              B2C — Individual / Consumer
+              {activeSegment === 'B2C' && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-500/30 text-teal-200">
+                  Active
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Direct consumer profile, preferred channel, loyalty tier &amp; POPIA consent (no company required).
+            </p>
+          </div>
+        </button>
+      </div>
+
       {/* 2. Main 2-Column Block Layout Form */}
       <form onSubmit={handleSave} className="space-y-6">
         {layoutBlocks.map((block) => {
@@ -379,7 +535,7 @@ export const EntityEditView: React.FC = () => {
    * Helper to render input controls according to field definition
    */
   function renderFieldControl(field: FieldDefinition) {
-    const value = formData[field.name];
+    const value = getEntityFieldValue(formData, field.name);
     const isReadOnly = field.isReadOnly;
 
     // Picklist options

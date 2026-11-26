@@ -3,7 +3,7 @@
  * Provides optimistic state updates and Express REST API integration
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '../../../services/api';
 import { BaseCRMEntity, EntityModuleName } from '../../../types/crmEntities';
 
@@ -23,9 +23,6 @@ export function useEntityRecord<T extends BaseCRMEntity = BaseCRMEntity>(
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
-  // Store the last committed snapshot for error rollback
-  const previousRecordRef = useRef<T | null>(null);
-
   const fetchRecord = useCallback(async () => {
     if (!recordId) {
       setRecord(null);
@@ -39,7 +36,6 @@ export function useEntityRecord<T extends BaseCRMEntity = BaseCRMEntity>(
     try {
       const data = await apiClient.get<T>(`/crm/${module}/${recordId}`);
       setRecord(data || null);
-      previousRecordRef.current = data || null;
     } catch (err: any) {
       console.error(`[useEntityRecord] Error fetching ${module}/${recordId}:`, err);
       setError(err);
@@ -61,7 +57,6 @@ export function useEntityRecord<T extends BaseCRMEntity = BaseCRMEntity>(
       if (!recordId || !record) return false;
 
       const previousState = record;
-      previousRecordRef.current = previousState;
 
       // 1. Optimistic local state update
       let updatedEntity: T;

@@ -1,9 +1,103 @@
 /**
  * Default VTiger-Style Block & Field Layout Configurations
- * Defines 2-column collapsible blocks per CRM entity module.
+ * Defines 2-column collapsible blocks per CRM entity module,
+ * supporting both B2B (Business/Organization) and B2C (Individual/Consumer) workflows.
  */
 
-import { EntityModuleName, BlockLayout } from '../../../types/crmEntities';
+import { EntityModuleName, BlockLayout, CustomerSegment } from '../../../types/crmEntities';
+import { filterBlocksBySegment } from './customerSegment';
+
+const SEGMENT_FIELD = (sortOrder: number) => ({
+  name: 'customFields.customerSegment',
+  label: 'Customer Segment',
+  type: 'picklist' as const,
+  column: 1 as const,
+  sortOrder,
+  isRequired: true,
+  defaultValue: 'B2B',
+  picklistValues: [
+    { label: 'B2B (Business / Organization)', value: 'B2B' },
+    { label: 'B2C (Individual / Consumer)', value: 'B2C' },
+  ],
+});
+
+const LEAD_SOURCE_OPTIONS = [
+  'cold_call',
+  'existing_customer',
+  'self_generated',
+  'employee',
+  'partner',
+  'public_relations',
+  'web_site',
+  'social_media',
+  'whatsapp',
+  'marketplace',
+  'referral',
+  'walk_in',
+  'other',
+];
+
+const B2C_CONSUMER_PROFILE_BLOCK = (id: string, sortOrder: number): BlockLayout => ({
+  id,
+  label: 'B2C Consumer Profile & POPIA Preferences',
+  sortOrder,
+  isCollapsible: true,
+  isCollapsedByDefault: false,
+  visibilitySegment: 'B2C',
+  fields: [
+    {
+      name: 'customFields.preferredChannel',
+      label: 'Preferred Contact Channel',
+      type: 'picklist',
+      column: 1,
+      sortOrder: 1,
+      defaultValue: 'whatsapp',
+      picklistValues: [
+        { label: 'WhatsApp', value: 'whatsapp' },
+        { label: 'Email', value: 'email' },
+        { label: 'SMS', value: 'sms' },
+        { label: 'Phone Call', value: 'phone' },
+      ],
+    },
+    {
+      name: 'customFields.loyaltyTier',
+      label: 'Loyalty / Membership Tier',
+      type: 'picklist',
+      column: 1,
+      sortOrder: 2,
+      defaultValue: 'standard',
+      picklistValues: [
+        { label: 'Standard', value: 'standard' },
+        { label: 'Silver', value: 'silver' },
+        { label: 'Gold', value: 'gold' },
+        { label: 'VIP', value: 'vip' },
+      ],
+    },
+    {
+      name: 'customFields.nationalIdNumber',
+      label: 'ID / Passport Number',
+      type: 'text',
+      column: 2,
+      sortOrder: 3,
+      placeholder: 'SA ID (13 digits) or Passport #',
+    },
+    {
+      name: 'customFields.dateOfBirth',
+      label: 'Date of Birth',
+      type: 'date',
+      column: 2,
+      sortOrder: 4,
+    },
+    {
+      name: 'customFields.marketingOptIn',
+      label: 'POPIA Marketing Consent',
+      type: 'boolean',
+      column: 1,
+      sortOrder: 5,
+      defaultValue: false,
+    },
+  ],
+});
 
 export const DEFAULT_MODULE_LAYOUTS: Record<EntityModuleName, BlockLayout[]> = {
   leads: [
@@ -15,17 +109,18 @@ export const DEFAULT_MODULE_LAYOUTS: Record<EntityModuleName, BlockLayout[]> = {
       isCollapsedByDefault: false,
       fields: [
         { name: 'leadNumber', label: 'Lead Number', type: 'text', column: 1, sortOrder: 1, isReadOnly: true },
-        { name: 'salutation', label: 'Salutation', type: 'picklist', column: 1, sortOrder: 2, picklistValues: ['Mr.', 'Ms.', 'Mrs.', 'Dr.', 'Prof.'] },
-        { name: 'firstName', label: 'First Name', type: 'text', column: 1, sortOrder: 3, isRequired: true },
-        { name: 'lastName', label: 'Last Name', type: 'text', column: 1, sortOrder: 4, isRequired: true },
-        { name: 'company', label: 'Company', type: 'text', column: 1, sortOrder: 5, isRequired: true },
-        { name: 'title', label: 'Title / Designation', type: 'text', column: 1, sortOrder: 6 },
+        SEGMENT_FIELD(2),
+        { name: 'salutation', label: 'Salutation', type: 'picklist', column: 1, sortOrder: 3, picklistValues: ['Mr.', 'Ms.', 'Mrs.', 'Dr.', 'Prof.'] },
+        { name: 'firstName', label: 'First Name', type: 'text', column: 1, sortOrder: 4, isRequired: true },
+        { name: 'lastName', label: 'Last Name', type: 'text', column: 1, sortOrder: 5, isRequired: true },
+        { name: 'company', label: 'Company', type: 'text', column: 1, sortOrder: 6, isRequired: true, visibilitySegment: 'B2B' },
+        { name: 'title', label: 'Title / Designation', type: 'text', column: 1, sortOrder: 7, visibilitySegment: 'B2B' },
         {
           name: 'leadStatus',
           label: 'Lead Status',
           type: 'picklist',
           column: 2,
-          sortOrder: 7,
+          sortOrder: 8,
           isRequired: true,
           picklistValues: [
             { label: 'Unqualified', value: 'unqualified' },
@@ -41,7 +136,7 @@ export const DEFAULT_MODULE_LAYOUTS: Record<EntityModuleName, BlockLayout[]> = {
           label: 'Rating',
           type: 'picklist',
           column: 2,
-          sortOrder: 8,
+          sortOrder: 9,
           picklistValues: [
             { label: 'Hot', value: 'hot', color: '#f43f5e' },
             { label: 'Warm', value: 'warm', color: '#f59e0b' },
@@ -53,18 +148,20 @@ export const DEFAULT_MODULE_LAYOUTS: Record<EntityModuleName, BlockLayout[]> = {
           label: 'Lead Source',
           type: 'picklist',
           column: 2,
-          sortOrder: 9,
-          picklistValues: ['cold_call', 'existing_customer', 'self_generated', 'employee', 'partner', 'public_relations', 'web_site', 'other'],
+          sortOrder: 10,
+          picklistValues: LEAD_SOURCE_OPTIONS,
         },
-        { name: 'industry', label: 'Industry', type: 'text', column: 2, sortOrder: 10 },
-        { name: 'annualRevenue', label: 'Annual Revenue', type: 'currency', column: 2, sortOrder: 11 },
-        { name: 'assignedUserName', label: 'Assigned User', type: 'user', column: 2, sortOrder: 12 },
+        { name: 'industry', label: 'Industry', type: 'text', column: 2, sortOrder: 11, visibilitySegment: 'B2B' },
+        { name: 'annualRevenue', label: 'Annual Revenue', type: 'currency', column: 2, sortOrder: 12, visibilitySegment: 'B2B' },
+        { name: 'customFields.estimatedBudget', label: 'Estimated Purchase Budget', type: 'currency', column: 2, sortOrder: 12, visibilitySegment: 'B2C' },
+        { name: 'assignedUserName', label: 'Assigned User', type: 'user', column: 2, sortOrder: 13 },
       ],
     },
+    B2C_CONSUMER_PROFILE_BLOCK('lead_b2c_profile', 2),
     {
       id: 'lead_contact_address',
       label: 'Contact & Address Information',
-      sortOrder: 2,
+      sortOrder: 3,
       isCollapsible: true,
       isCollapsedByDefault: false,
       fields: [
@@ -72,7 +169,7 @@ export const DEFAULT_MODULE_LAYOUTS: Record<EntityModuleName, BlockLayout[]> = {
         { name: 'secondaryEmail', label: 'Secondary Email', type: 'email', column: 1, sortOrder: 2 },
         { name: 'phone', label: 'Primary Phone', type: 'phone', column: 1, sortOrder: 3 },
         { name: 'mobile', label: 'Mobile Phone', type: 'phone', column: 1, sortOrder: 4 },
-        { name: 'website', label: 'Website', type: 'url', column: 1, sortOrder: 5 },
+        { name: 'website', label: 'Website', type: 'url', column: 1, sortOrder: 5, visibilitySegment: 'B2B' },
         { name: 'street', label: 'Street Address', type: 'text', column: 2, sortOrder: 6 },
         { name: 'city', label: 'City', type: 'text', column: 2, sortOrder: 7 },
         { name: 'state', label: 'State / Province', type: 'text', column: 2, sortOrder: 8 },
@@ -83,7 +180,7 @@ export const DEFAULT_MODULE_LAYOUTS: Record<EntityModuleName, BlockLayout[]> = {
     {
       id: 'lead_description',
       label: 'Description Details',
-      sortOrder: 3,
+      sortOrder: 4,
       isCollapsible: true,
       isCollapsedByDefault: false,
       fields: [
@@ -101,30 +198,40 @@ export const DEFAULT_MODULE_LAYOUTS: Record<EntityModuleName, BlockLayout[]> = {
       isCollapsedByDefault: false,
       fields: [
         { name: 'accountNumber', label: 'Account Number', type: 'text', column: 1, sortOrder: 1, isReadOnly: true },
-        { name: 'accountName', label: 'Account Name', type: 'text', column: 1, sortOrder: 2, isRequired: true },
-        { name: 'domain', label: 'Domain', type: 'text', column: 1, sortOrder: 3 },
-        { name: 'website', label: 'Website', type: 'url', column: 1, sortOrder: 4 },
-        { name: 'industry', label: 'Industry', type: 'text', column: 1, sortOrder: 5, isRequired: true },
+        SEGMENT_FIELD(2),
+        { name: 'accountName', label: 'Account / Customer Name', type: 'text', column: 1, sortOrder: 3, isRequired: true },
+        { name: 'domain', label: 'Domain', type: 'text', column: 1, sortOrder: 4, visibilitySegment: 'B2B' },
+        { name: 'website', label: 'Website', type: 'url', column: 1, sortOrder: 5, visibilitySegment: 'B2B' },
+        { name: 'industry', label: 'Industry', type: 'text', column: 1, sortOrder: 6, isRequired: true, visibilitySegment: 'B2B' },
         {
           name: 'accountType',
           label: 'Account Type',
           type: 'picklist',
           column: 2,
-          sortOrder: 6,
-          picklistValues: ['customer', 'prospect', 'partner', 'vendor', 'reseller'],
+          sortOrder: 7,
+          picklistValues: [
+            'customer',
+            'prospect',
+            'partner',
+            'vendor',
+            'reseller',
+            'individual',
+            'consumer',
+            'household',
+          ],
         },
         {
           name: 'rating',
           label: 'Rating',
           type: 'picklist',
           column: 2,
-          sortOrder: 7,
+          sortOrder: 8,
           picklistValues: ['hot', 'warm', 'cold'],
         },
-        { name: 'annualRevenue', label: 'Annual Revenue', type: 'currency', column: 2, sortOrder: 8 },
-        { name: 'primaryPhone', label: 'Primary Phone', type: 'phone', column: 2, sortOrder: 9 },
-        { name: 'email', label: 'Primary Email', type: 'email', column: 2, sortOrder: 10 },
-        { name: 'assignedUserName', label: 'Assigned User', type: 'user', column: 2, sortOrder: 11 },
+        { name: 'annualRevenue', label: 'Annual Revenue', type: 'currency', column: 2, sortOrder: 9, visibilitySegment: 'B2B' },
+        { name: 'primaryPhone', label: 'Primary Phone', type: 'phone', column: 2, sortOrder: 10 },
+        { name: 'email', label: 'Primary Email', type: 'email', column: 2, sortOrder: 11 },
+        { name: 'assignedUserName', label: 'Assigned User', type: 'user', column: 2, sortOrder: 12 },
       ],
     },
     {
@@ -133,6 +240,7 @@ export const DEFAULT_MODULE_LAYOUTS: Record<EntityModuleName, BlockLayout[]> = {
       sortOrder: 2,
       isCollapsible: true,
       isCollapsedByDefault: false,
+      visibilitySegment: 'B2B',
       fields: [
         {
           name: 'cipcRegistrationNumber',
@@ -177,6 +285,7 @@ export const DEFAULT_MODULE_LAYOUTS: Record<EntityModuleName, BlockLayout[]> = {
         },
       ],
     },
+    B2C_CONSUMER_PROFILE_BLOCK('account_b2c_profile', 2),
     {
       id: 'account_address',
       label: 'Address Details',
@@ -199,7 +308,7 @@ export const DEFAULT_MODULE_LAYOUTS: Record<EntityModuleName, BlockLayout[]> = {
     {
       id: 'account_summary_desc',
       label: 'Summary & Description',
-      sortOrder: 3,
+      sortOrder: 4,
       isCollapsible: true,
       isCollapsedByDefault: false,
       fields: [
@@ -219,26 +328,36 @@ export const DEFAULT_MODULE_LAYOUTS: Record<EntityModuleName, BlockLayout[]> = {
       isCollapsedByDefault: false,
       fields: [
         { name: 'contactNumber', label: 'Contact Number', type: 'text', column: 1, sortOrder: 1, isReadOnly: true },
-        { name: 'salutation', label: 'Salutation', type: 'picklist', column: 1, sortOrder: 2, picklistValues: ['Mr.', 'Ms.', 'Mrs.', 'Dr.', 'Prof.'] },
-        { name: 'firstName', label: 'First Name', type: 'text', column: 1, sortOrder: 3, isRequired: true },
-        { name: 'lastName', label: 'Last Name', type: 'text', column: 1, sortOrder: 4, isRequired: true },
-        { name: 'accountName', label: 'Account Name', type: 'reference', referenceModule: 'accounts', column: 1, sortOrder: 5 },
-        { name: 'jobTitle', label: 'Job Title', type: 'text', column: 2, sortOrder: 6 },
-        { name: 'department', label: 'Department', type: 'text', column: 2, sortOrder: 7 },
-        { name: 'isPrimaryContact', label: 'Primary Contact', type: 'boolean', column: 2, sortOrder: 8 },
-        { name: 'assignedUserName', label: 'Assigned User', type: 'user', column: 2, sortOrder: 9 },
+        SEGMENT_FIELD(2),
+        { name: 'salutation', label: 'Salutation', type: 'picklist', column: 1, sortOrder: 3, picklistValues: ['Mr.', 'Ms.', 'Mrs.', 'Dr.', 'Prof.'] },
+        { name: 'firstName', label: 'First Name', type: 'text', column: 1, sortOrder: 4, isRequired: true },
+        { name: 'lastName', label: 'Last Name', type: 'text', column: 1, sortOrder: 5, isRequired: true },
+        {
+          name: 'accountName',
+          label: 'Account Name',
+          type: 'reference',
+          referenceModule: 'accounts',
+          column: 1,
+          sortOrder: 6,
+          tooltip: 'Required for B2B contacts; optional for B2C consumers (auto-links an Individual Account if omitted).',
+        },
+        { name: 'jobTitle', label: 'Job Title', type: 'text', column: 2, sortOrder: 7, visibilitySegment: 'B2B' },
+        { name: 'department', label: 'Department', type: 'text', column: 2, sortOrder: 8, visibilitySegment: 'B2B' },
+        { name: 'isPrimaryContact', label: 'Primary Contact', type: 'boolean', column: 2, sortOrder: 9, visibilitySegment: 'B2B' },
+        { name: 'assignedUserName', label: 'Assigned User', type: 'user', column: 2, sortOrder: 10 },
       ],
     },
+    B2C_CONSUMER_PROFILE_BLOCK('contact_b2c_profile', 2),
     {
       id: 'contact_communication',
       label: 'Communication & Mailing Details',
-      sortOrder: 2,
+      sortOrder: 3,
       isCollapsible: true,
       isCollapsedByDefault: false,
       fields: [
         { name: 'email', label: 'Primary Email', type: 'email', column: 1, sortOrder: 1, isRequired: true },
         { name: 'secondaryEmail', label: 'Secondary Email', type: 'email', column: 1, sortOrder: 2 },
-        { name: 'phone', label: 'Office Phone', type: 'phone', column: 1, sortOrder: 3 },
+        { name: 'phone', label: 'Primary Phone', type: 'phone', column: 1, sortOrder: 3 },
         { name: 'mobile', label: 'Mobile Phone', type: 'phone', column: 1, sortOrder: 4 },
         { name: 'mailingStreet', label: 'Mailing Street', type: 'text', column: 2, sortOrder: 5 },
         { name: 'mailingCity', label: 'Mailing City', type: 'text', column: 2, sortOrder: 6 },
@@ -250,7 +369,7 @@ export const DEFAULT_MODULE_LAYOUTS: Record<EntityModuleName, BlockLayout[]> = {
     {
       id: 'contact_description',
       label: 'Description Details',
-      sortOrder: 3,
+      sortOrder: 4,
       isCollapsible: true,
       isCollapsedByDefault: false,
       fields: [
@@ -268,16 +387,25 @@ export const DEFAULT_MODULE_LAYOUTS: Record<EntityModuleName, BlockLayout[]> = {
       isCollapsedByDefault: false,
       fields: [
         { name: 'dealNumber', label: 'Deal Number', type: 'text', column: 1, sortOrder: 1, isReadOnly: true },
-        { name: 'dealName', label: 'Deal Name', type: 'text', column: 1, sortOrder: 2, isRequired: true },
-        { name: 'accountName', label: 'Account Name', type: 'reference', referenceModule: 'accounts', column: 1, sortOrder: 3 },
-        { name: 'contactName', label: 'Primary Contact', type: 'reference', referenceModule: 'contacts', column: 1, sortOrder: 4 },
-        { name: 'amount', label: 'Opportunity Amount', type: 'currency', column: 1, sortOrder: 5, isRequired: true },
+        SEGMENT_FIELD(2),
+        { name: 'dealName', label: 'Deal Name', type: 'text', column: 1, sortOrder: 3, isRequired: true },
+        {
+          name: 'accountName',
+          label: 'Account Name',
+          type: 'reference',
+          referenceModule: 'accounts',
+          column: 1,
+          sortOrder: 4,
+          tooltip: 'Required for B2B deals; optional for B2C deals when a Consumer Contact is selected.',
+        },
+        { name: 'contactName', label: 'Primary Contact / Consumer', type: 'reference', referenceModule: 'contacts', column: 1, sortOrder: 5 },
+        { name: 'amount', label: 'Opportunity Amount', type: 'currency', column: 1, sortOrder: 6, isRequired: true },
         {
           name: 'stage',
           label: 'Sales Stage',
           type: 'picklist',
           column: 2,
-          sortOrder: 6,
+          sortOrder: 7,
           isRequired: true,
           picklistValues: [
             { label: 'Prospecting', value: 'prospecting' },
@@ -290,18 +418,25 @@ export const DEFAULT_MODULE_LAYOUTS: Record<EntityModuleName, BlockLayout[]> = {
             { label: 'Closed Lost', value: 'closed_lost', color: '#f43f5e' },
           ],
         },
-        { name: 'probability', label: 'Win Probability (%)', type: 'percentage', column: 2, sortOrder: 7 },
+        { name: 'probability', label: 'Win Probability (%)', type: 'percentage', column: 2, sortOrder: 8 },
         {
           name: 'dealType',
           label: 'Deal Type',
           type: 'picklist',
           column: 2,
-          sortOrder: 8,
-          picklistValues: ['new_business', 'existing_business'],
+          sortOrder: 9,
+          picklistValues: [
+            { label: 'New Business', value: 'new_business' },
+            { label: 'Existing Business', value: 'existing_business' },
+            { label: 'B2B Enterprise', value: 'b2b_enterprise' },
+            { label: 'B2B SMB', value: 'b2b_smb' },
+            { label: 'B2C Direct Sale', value: 'b2c_direct' },
+            { label: 'B2C Subscription', value: 'b2c_subscription' },
+          ],
         },
-        { name: 'closingDate', label: 'Expected Closing Date', type: 'date', column: 2, sortOrder: 9, isRequired: true },
-        { name: 'leadSource', label: 'Lead Source', type: 'picklist', column: 2, sortOrder: 10, picklistValues: ['cold_call', 'existing_customer', 'self_generated', 'web_site', 'other'] },
-        { name: 'assignedUserName', label: 'Assigned Representative', type: 'user', column: 2, sortOrder: 11 },
+        { name: 'closingDate', label: 'Expected Closing Date', type: 'date', column: 2, sortOrder: 10, isRequired: true },
+        { name: 'leadSource', label: 'Lead Source', type: 'picklist', column: 2, sortOrder: 11, picklistValues: LEAD_SOURCE_OPTIONS },
+        { name: 'assignedUserName', label: 'Assigned Representative', type: 'user', column: 2, sortOrder: 12 },
       ],
     },
     {
@@ -327,3 +462,14 @@ export const DEFAULT_MODULE_LAYOUTS: Record<EntityModuleName, BlockLayout[]> = {
     },
   ],
 };
+
+/**
+ * Returns the module's block layout filtered for the active CustomerSegment (B2B vs B2C).
+ */
+export function getModuleLayoutForSegment(
+  moduleName: EntityModuleName,
+  segment: CustomerSegment
+): BlockLayout[] {
+  const baseBlocks = DEFAULT_MODULE_LAYOUTS[moduleName] || DEFAULT_MODULE_LAYOUTS.leads;
+  return filterBlocksBySegment(baseBlocks, segment);
+}

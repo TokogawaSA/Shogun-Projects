@@ -61,24 +61,8 @@ export const LayoutEditor: React.FC = () => {
             setNewFieldBlockId(data.blocks[0].blockId);
           }
         } else if (isMounted) {
-          // Default initial schema layout
-          const defaultBlocks: LayoutBlock[] = [
-            { blockId: 'blk_core', label: 'Primary Information', sortOrder: 1, isCollapsible: false },
-            { blockId: 'blk_details', label: 'Detailed & Financial Specifications', sortOrder: 2, isCollapsible: true },
-            { blockId: 'blk_custom', label: 'Custom Attributes & Notes', sortOrder: 3, isCollapsible: true },
-          ];
-
-          const defaultFields: CustomField[] = [
-            { fieldId: 'field_title', blockId: 'blk_core', label: 'Record Title / Name', type: 'text', isRequired: true, isUnique: false, sortOrder: 1 },
-            { fieldId: 'field_status', blockId: 'blk_core', label: 'Lifecycle Status', type: 'picklist', isRequired: true, isUnique: false, picklistValues: ['Active', 'Pending', 'Archived'], sortOrder: 2 },
-            { fieldId: 'field_value', blockId: 'blk_details', label: 'Estimated Value ($)', type: 'currency', isRequired: false, isUnique: false, defaultValue: 0, sortOrder: 3 },
-            { fieldId: 'field_target_date', blockId: 'blk_details', label: 'Target Completion Date', type: 'date', isRequired: false, isUnique: false, sortOrder: 4 },
-            { fieldId: 'field_is_flagged', blockId: 'blk_custom', label: 'Priority Escalation Flag', type: 'boolean', isRequired: false, isUnique: false, defaultValue: false, sortOrder: 5 },
-          ];
-
-          setBlocks(defaultBlocks);
-          setFields(defaultFields);
-          setNewFieldBlockId(defaultBlocks[0].blockId);
+          setBlocks([]);
+          setFields([]);
         }
       } catch {
         // Continue

@@ -8,7 +8,8 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { EntityModuleName } from '../../../types/crmEntities';
 import { useEntityRecord } from '../hooks/useEntityRecord';
-import { DEFAULT_MODULE_LAYOUTS } from '../utils/moduleLayouts';
+import { getModuleLayoutForSegment } from '../utils/moduleLayouts';
+import { getRecordSegment } from '../utils/customerSegment';
 import { EntityHeader } from '../components/EntityHeader';
 import { RelatedListsNav, SubPanelTab } from '../components/RelatedListsNav';
 import { EntitySummaryWidget } from '../components/EntitySummaryWidget';
@@ -33,9 +34,11 @@ export const EntityDetailView: React.FC = () => {
 
   // Sub-panel tab state
   const [activeTab, setActiveTab] = useState<SubPanelTab>('summary');
+  const [billingAction, setBillingAction] = useState<'new_quote' | 'new_invoice' | null>(null);
   const [isConvertModalOpen, setIsConvertModalOpen] = useState<boolean>(false);
 
-  const layoutBlocks = DEFAULT_MODULE_LAYOUTS[currentModule] || DEFAULT_MODULE_LAYOUTS.leads;
+  const recordSegment = getRecordSegment(record);
+  const layoutBlocks = getModuleLayoutForSegment(currentModule, recordSegment);
 
   if (loading) {
     return (
@@ -80,10 +83,21 @@ export const EntityDetailView: React.FC = () => {
         onOpenAddTask={() => {
           setActiveTab('tasks');
         }}
+        onOpenCreateQuote={() => {
+          setActiveTab('billing');
+          setBillingAction('new_quote');
+        }}
+        onOpenCreateInvoice={() => {
+          setActiveTab('billing');
+          setBillingAction('new_invoice');
+        }}
       />
 
-      {/* South African B2B Compliance Badge Bar for Juristic Client Accounts */}
-      {currentModule === 'accounts' && <SaComplianceBadgeBar record={record} />}
+      {/* B2B Statutory Compliance Bar (Accounts) or B2C Consumer & POPIA Bar (B2C Accounts/Contacts/Leads) */}
+      {(currentModule === 'accounts' ||
+        (recordSegment === 'B2C' && (currentModule === 'contacts' || currentModule === 'leads'))) && (
+          <SaComplianceBadgeBar record={record} />
+        )}
 
       {/* 2. Sub-Panel Navigation Tabs */}
       <RelatedListsNav
@@ -92,6 +106,8 @@ export const EntityDetailView: React.FC = () => {
         record={record}
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        billingAction={billingAction}
+        onBillingActionHandled={() => setBillingAction(null)}
       />
 
       {/* 3. Main Content Switching Area */}

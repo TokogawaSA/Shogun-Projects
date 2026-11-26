@@ -41,52 +41,7 @@ export const RoleHierarchyTree: React.FC = () => {
         if (Array.isArray(res) && res.length > 0 && isMounted) {
           setRoles(res);
         } else if (isMounted) {
-          // Default seed hierarchy
-          const initialRoles: Role[] = [
-            {
-              id: 'role_ceo',
-              name: 'Chief Executive Officer (CEO)',
-              parentRoleId: null,
-              assignedProfileId: 'admin_profile',
-              description: 'Top-level enterprise executive authority',
-            },
-            {
-              id: 'role_vp_eng',
-              name: 'VP of Engineering',
-              parentRoleId: 'role_ceo',
-              assignedProfileId: 'admin_profile',
-              description: 'Head of technical delivery and DevOps systems',
-            },
-            {
-              id: 'role_pm_lead',
-              name: 'Senior Project Manager',
-              parentRoleId: 'role_vp_eng',
-              assignedProfileId: 'standard_profile',
-              description: 'Coordinates cross-functional product sprints',
-            },
-            {
-              id: 'role_dev',
-              name: 'Software Engineer / Agent',
-              parentRoleId: 'role_pm_lead',
-              assignedProfileId: 'support_profile',
-              description: 'Builds core features and fixes tickets',
-            },
-            {
-              id: 'role_vp_sales',
-              name: 'VP of Sales & Growth',
-              parentRoleId: 'role_ceo',
-              assignedProfileId: 'standard_profile',
-              description: 'Oversees pipeline revenue and key client accounts',
-            },
-            {
-              id: 'role_sales_rep',
-              name: 'Account Executive',
-              parentRoleId: 'role_vp_sales',
-              assignedProfileId: 'support_profile',
-              description: 'Drives outbound prospecting and deal conversions',
-            },
-          ];
-          setRoles(initialRoles);
+          setRoles([]);
         }
       } catch {
         // Continue

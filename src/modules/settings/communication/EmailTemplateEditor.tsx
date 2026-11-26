@@ -77,39 +77,7 @@ export const EmailTemplateEditor: React.FC = () => {
             loadTemplateIntoEditor(res[0]);
           }
         } else if (isMounted) {
-          // Default seed templates
-          const defaultTemplates: EmailTemplate[] = [
-            {
-              id: 'tpl_deal_won',
-              name: 'VIP Deal Closed Won Notification',
-              targetModule: 'deals',
-              subject: '🎉 Congratulations! Deal Closed: {{deal.title}}',
-              htmlBody: `<div style="font-family: sans-serif; padding: 20px; color: #1e293b;">
-  <h2>Great news, {{user.displayName}}!</h2>
-  <p>Deal <strong>{{deal.title}}</strong> valued at <strong>\${{deal.value}}</strong> has successfully transitioned to <em>{{deal.pipelineStage}}</em>.</p>
-  <p>Target Kickoff Date: {{deal.expectedCloseDate}}</p>
-  <hr style="border: 1px solid #e2e8f0; margin: 20px 0;" />
-  <p style="font-size: 12px; color: #64748b;">Shogun Projects CRM Automated Dispatcher</p>
-</div>`,
-              updatedAt: new Date().toISOString(),
-            },
-            {
-              id: 'tpl_welcome_contact',
-              name: 'Client Stakeholder Welcome',
-              targetModule: 'contacts',
-              subject: 'Welcome to our partner portal, {{contact.firstName}}!',
-              htmlBody: `<div style="font-family: sans-serif; padding: 20px; color: #1e293b;">
-  <h3>Hello {{contact.firstName}} {{contact.lastName}},</h3>
-  <p>We are delighted to welcome you aboard as <strong>{{contact.jobTitle}}</strong>.</p>
-  <p>Your team workspace has been provisioned and is ready for collaboration.</p>
-</div>`,
-              updatedAt: new Date().toISOString(),
-            },
-          ];
-          setTemplates(defaultTemplates);
-          if (!selectedTemplateId) {
-            loadTemplateIntoEditor(defaultTemplates[0]);
-          }
+          setTemplates([]);
         }
       } catch {
         // Continue
@@ -288,11 +256,10 @@ export const EmailTemplateEditor: React.FC = () => {
                 <div
                   key={tpl.id}
                   onClick={() => loadTemplateIntoEditor(tpl)}
-                  className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between group ${
-                    selectedTemplateId === tpl.id
+                  className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between group ${selectedTemplateId === tpl.id
                       ? 'bg-sky-500/10 border-sky-500/40 text-white shadow-md shadow-sky-500/10'
                       : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700'
-                  }`}
+                    }`}
                 >
                   <div className="min-w-0">
                     <p className="text-xs font-bold truncate">{tpl.name}</p>
@@ -384,9 +351,8 @@ export const EmailTemplateEditor: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setPreviewMode(false)}
-                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                          !previewMode ? 'bg-sky-600 text-white' : 'text-slate-400 hover:text-white'
-                        }`}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${!previewMode ? 'bg-sky-600 text-white' : 'text-slate-400 hover:text-white'
+                          }`}
                       >
                         <Code2 className="w-3.5 h-3.5" />
                         <span>HTML Source</span>
@@ -394,9 +360,8 @@ export const EmailTemplateEditor: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setPreviewMode(true)}
-                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                          previewMode ? 'bg-sky-600 text-white' : 'text-slate-400 hover:text-white'
-                        }`}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${previewMode ? 'bg-sky-600 text-white' : 'text-slate-400 hover:text-white'
+                          }`}
                       >
                         <Eye className="w-3.5 h-3.5" />
                         <span>Live Merged Preview</span>

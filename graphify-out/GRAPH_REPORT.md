@@ -1,16 +1,16 @@
-# Graph Report - Shogun Projects  (2026-11-24)
+# Graph Report - Shogun Projects  (2026-11-26)
 
 ## Corpus Check
-- 290 files · ~233,240 words
+- 300 files · ~251,181 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1750 nodes · 3632 edges · 99 communities (86 shown, 13 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 36 edges (avg confidence: 0.5)
+- 1864 nodes · 4224 edges · 95 communities (81 shown, 14 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 60 edges (avg confidence: 0.5)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `96b15d94`
+- Built from commit: `8d17cf0c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -76,47 +76,43 @@
 - server.js
 - bcryptjs
 - package-cpanel.js
-- tailwindcss
+- apply-rls-payments.ts
 - LineItemEditor.tsx
 - zod
-- helmet
+- XeroAdapter
 - AdminWorkflowView.tsx
 - RiskDeliverablesView.tsx
-- DynamicFieldRenderer.tsx
-- socket.io
+- cors
+- helmet
 - cron-trigger.sh
-- EntityListView.tsx
-- scripts
+- ioredis
+- nodemailer
 - WorkflowBuilderModal.tsx
-- popiaWorker.ts
+- socket.io
 - bookingRoutes.ts
 - EntityListView.tsx
 - EntityEditView.tsx
 - catalogController.ts
 - ConvertDealModal.tsx
-- crm.ts
+- scripts
 - popiaRoutes.ts
-- EntityEditView.tsx
 - socket.ts
 - mcpRoutes.ts
 - DealKanbanBoard.tsx
 - SettingsLayout.tsx
-- cors
-- react
-- CustomFieldsPanel.tsx
-- MultiAssigneeSelector.tsx
+- Shogun Projects: South African Market Localization & Sovereignty Addendum (`SA_LOCALIZATION_SPEC.md`)
 
 ## God Nodes (most connected - your core abstractions)
-1. `useAuth()` - 60 edges
-2. `apiClient` - 48 edges
-3. `withTenantTx()` - 42 edges
-4. `useCurrency()` - 38 edges
+1. `useAuth()` - 66 edges
+2. `withTenantTx()` - 54 edges
+3. `apiClient` - 50 edges
+4. `useCurrency()` - 30 edges
 5. `createRedisConnection()` - 27 edges
 6. `getTenantId()` - 24 edges
-7. `Task` - 23 edges
-8. `BookingService` - 20 edges
-9. `getTenantId()` - 19 edges
-10. `sendControllerError()` - 19 edges
+7. `InvoiceSystemView()` - 22 edges
+8. `getRecordSegment()` - 22 edges
+9. `Task` - 22 edges
+10. `sendCatalogError()` - 20 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `TaskCalendarView()` --references--> `react`  [EXTRACTED]
@@ -125,59 +121,59 @@
   src/components/views/UniversalViewBar.tsx → package.json
 - `HierarchyProvider()` --references--> `react`  [EXTRACTED]
   src/context/HierarchyContext.tsx → package.json
-- `CreateTaskModalProps` --references--> `Task`  [EXTRACTED]
-  src/components/dashboard/CreateTaskModal.tsx → src/types/index.ts
 - `CustomFieldsPanel()` --calls--> `useCurrency()`  [EXTRACTED]
   src/components/tasks/CustomFieldsPanel.tsx → src/context/CurrencyContext.tsx
+- `TaskMindMapViewProps` --references--> `Task`  [EXTRACTED]
+  src/components/views/TaskMindMapView.tsx → src/types/index.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (99 total, 13 thin omitted)
+## Communities (95 total, 14 thin omitted)
 
 ### Community 0 - "AuthContext.tsx"
 Cohesion: 0.09
-Nodes (24): ProfileMatrixTable(), AutoNumberingConfigView(), LayoutEditor(), PicklistEditorModal(), PicklistEditorModalProps, AutoNumberingConfig, AutoNumberingRule, CallWebhookActionPayload (+16 more)
+Nodes (25): ProfileMatrixTable(), AutoNumberingConfigView(), LayoutEditor(), PicklistEditorModal(), PicklistEditorModalProps, AutoNumberingConfig, AutoNumberingRule, CallWebhookActionPayload (+17 more)
 
 ### Community 1 - "crm.ts"
-Cohesion: 0.17
-Nodes (11): AuditTrailEntry, ExpenseCategory, ExpenseEntry, ExpenseStatus, Portfolio, ProjectBudget, ResourceProfile, RiskCategory (+3 more)
+Cohesion: 0.15
+Nodes (28): convertLead(), createAccount(), createContact(), createDeal(), createLead(), deleteAccount(), deleteContact(), deleteDeal() (+20 more)
 
 ### Community 2 - "index.js"
-Cohesion: 0.25
-Nodes (9): ALL_VIEW_TABS, UniversalViewBarProps, ViewFilterState, ViewGroupBy, ViewMode, ViewSortState, PRIORITY_BUCKET_DEFS, PRIORITY_ORDER (+1 more)
+Cohesion: 0.13
+Nodes (16): accountingSyncQueue, defaultJobOptions, emailQueue, enqueueScheduledJob(), enqueueWorkflowEvent(), getScheduledJobsQueue(), getSocialAnalysisQueue(), getWorkflowQueue() (+8 more)
 
 ### Community 3 - "index.ts"
-Cohesion: 0.17
-Nodes (23): useCurrency(), ProjectContext, ProjectContextType, ProjectProviderProps, useProject(), Account360Drawer(), ConvertDealModal(), ConvertDealModalProps (+15 more)
+Cohesion: 0.20
+Nodes (11): Account360Summary, EntityHeader(), EntityHeaderProps, EntityLookupModal(), EntityLookupModalProps, RelatedListsNavProps, UseEntityRecordResult, getSegmentMeta() (+3 more)
 
 ### Community 4 - "devDependencies"
 Cohesion: 0.07
-Nodes (32): Account, AccountEntity, AccountEntityType, AccountRating, BaseCRMEntity, Contact, ContactEntity, CRMEntity (+24 more)
+Nodes (31): AccountEntity, AccountEntityType, AccountRating, BaseCRMEntity, ContactEntity, CRMEntity, CRMFieldType, DealEntity (+23 more)
 
 ### Community 5 - "scripts"
-Cohesion: 0.14
-Nodes (32): COLOR_OPTIONS, ColumnConfigModal(), ColumnConfigModalProps, CreateTaskModal(), CreateTaskModalProps, COLUMN_COLORS, PRIORITY_META, ProjectBoard() (+24 more)
+Cohesion: 0.10
+Nodes (57): TaskCalendarView(), BASE_TEAM_MEMBERS, TaskWorkloadView(), COLOR_OPTIONS, ColumnConfigModal(), ColumnConfigModalProps, CreateTaskModal(), CreateTaskModalProps (+49 more)
 
 ### Community 6 - "useFirestoreCRM.ts"
-Cohesion: 0.13
-Nodes (25): WorkflowBuilderModal(), WorkflowBuilderModalProps, WorkflowListView(), LinearRuleBuilderProps, ConditionOperator, SupportedModule, WorkflowAction, WorkflowCondition (+17 more)
+Cohesion: 0.14
+Nodes (24): WorkflowBuilderModal(), WorkflowBuilderModalProps, WorkflowListView(), LinearRuleBuilderProps, SupportedModule, WorkflowAction, WorkflowCondition, WorkflowRule (+16 more)
 
 ### Community 7 - "compilerOptions"
-Cohesion: 0.13
-Nodes (13): AdvancedRecurrenceModalProps, DEFAULT_RECURRENCE, AVAILABLE_TEAM_MEMBERS, MultiAssigneeSelectorProps, TaskDependenciesPanelProps, AdvancedRecurrenceConfig, CustomFieldOption, CustomFieldValue (+5 more)
+Cohesion: 0.23
+Nodes (14): RFC-4122, executeRightToErasure(), exportSubjectData(), scrubCustomFieldsPii(), POPIA_TENANT_NAMESPACE_BYTES, PopiaRlsTxOptions, toTenantUuid(), withPopiaRlsTx() (+6 more)
 
 ### Community 8 - "App.tsx"
-Cohesion: 0.06
-Nodes (55): createPriceBook(), createProduct(), createTaxInvoice(), deleteProduct(), fulfillDeliverable(), getPriceBooks(), getProductById(), getProducts() (+47 more)
+Cohesion: 0.05
+Nodes (71): convertQuoteToTaxInvoice(), createPriceBook(), createProduct(), createTaxInvoice(), deleteProduct(), deleteQuote(), deleteTaxInvoice(), extractInvoiceMetaPayload() (+63 more)
 
 ### Community 9 - "settings.ts"
 Cohesion: 0.11
 Nodes (6): hierarchicalSample, mockSpaces, mockTasks, PRIORITY_BUCKET_DEFS, PRIORITY_ORDER, STATUS_BUCKET_DEFS
 
 ### Community 10 - "dependencies"
-Cohesion: 0.15
-Nodes (6): NodeConfigDrawerProps, ActionNode, ConditionNode, DelayNode, TriggerNode, WorkflowCanvasProps
+Cohesion: 0.18
+Nodes (15): ConvertLeadModal(), EntityBlocksViewer(), ActivityItem, EntitySummaryWidget(), EntitySummaryWidgetProps, RelatedListsNav(), SubPanelTab, BBBEE_RECOGNITION_MAP (+7 more)
 
 ### Community 11 - "compilerOptions"
 Cohesion: 0.13
@@ -188,20 +184,20 @@ Cohesion: 0.07
 Nodes (22): circularChain, cycleRes, enterprisePriceBook, enterprisePricing, evaluateLowStockStatus(), inv1, inv2, inv3 (+14 more)
 
 ### Community 13 - "LayoutEditor.tsx"
-Cohesion: 0.13
-Nodes (29): FormSubmissionsModal(), FormSubmissionsModalProps, WebFormBuilderModal(), WebFormBuilderModalProps, WebFormsManagementView(), PublicWebFormPage(), addStoredSubmission(), DEFAULT_ENTERPRISE_FORMS (+21 more)
+Cohesion: 0.16
+Nodes (25): FormSubmissionsModal(), FormSubmissionsModalProps, WebFormBuilderModal(), WebFormBuilderModalProps, PublicWebFormPage(), formService, ConditionalActionType, ConditionOperator (+17 more)
 
 ### Community 14 - "settingsRoutes.tsx"
-Cohesion: 0.14
-Nodes (15): DEFAULT_STATUS_COLUMNS, KanbanBoardProps, statusOrder, TaskCard(), TaskCardProps, TaskCalendarView(), TaskCalendarViewProps, TaskListViewProps (+7 more)
+Cohesion: 0.06
+Nodes (40): CreateTaskModalProps, DEFAULT_STATUS_COLUMNS, KanbanBoardProps, statusOrder, TaskCard(), TaskCardProps, AdvancedRecurrenceModalProps, DEFAULT_RECURRENCE (+32 more)
 
 ### Community 15 - "settingsRoutes.tsx"
-Cohesion: 0.14
-Nodes (11): RoleHierarchyTree(), ModuleManagerView(), HubCardProps, SettingsHub(), DataSharingRulesView(), ScheduledCronView(), WebhooksGatewayView(), NotificationDispatcherView() (+3 more)
+Cohesion: 0.09
+Nodes (19): OutgoingEmailConfig(), WebFormsManagementView(), MODULE_LABELS, PopiaAuditLogEntry, PopiaExpiryAction, PopiaGovernanceView(), PopiaModuleName, PopiaRetentionPolicy (+11 more)
 
 ### Community 16 - "SettingsLayout.tsx"
-Cohesion: 0.09
-Nodes (42): createRedisConnection(), disconnectRedis(), redisConnectionOptions, RedisSslConfig, accountingSyncQueue, DealStageUpdatedPayload, defaultJobOptions, EmailJobPayload (+34 more)
+Cohesion: 0.04
+Nodes (48): autoprefixer, axios, clsx, lucide-react, dependencies, axios, clsx, lucide-react (+40 more)
 
 ### Community 17 - "serve-dist.js"
 Cohesion: 0.15
@@ -217,7 +213,7 @@ Nodes (21): DOM, DOM.Iterable, compilerOptions, allowImportingTsExtensions, isol
 
 ### Community 20 - "CommunicationViews.tsx"
 Cohesion: 0.12
-Nodes (17): bcryptjs, bullmq, cors, dotenv, express, express-rate-limit, jsonwebtoken, dependencies (+9 more)
+Nodes (17): bcryptjs, bullmq, dotenv, express, express-rate-limit, jsonwebtoken, dependencies, bcryptjs (+9 more)
 
 ### Community 21 - "ProfileMatrixTable.tsx"
 Cohesion: 0.05
@@ -237,35 +233,35 @@ Nodes (20): src/**/__tests__/*, compilerOptions, declaration, esModuleInterop, f
 
 ### Community 25 - "vite-env.d.ts"
 Cohesion: 0.10
-Nodes (39): createDrawingSheet(), createRfi(), createSiteReport(), getDrawingSheets(), getProjectPhases(), getRfiLog(), getSiteReports(), getStudioCapacityHeatmap() (+31 more)
+Nodes (40): createDrawingSheet(), createRfi(), createSiteReport(), getDrawingSheets(), getProjectPhases(), getRfiLog(), getSiteReports(), getStudioCapacityHeatmap() (+32 more)
 
 ### Community 26 - "tailwind.config.js"
-Cohesion: 0.15
-Nodes (21): ContactDetailViewProps, EscalateToTaskModal(), EscalateToTaskModalProps, LinkContactModal(), LinkContactModalProps, AVAILABLE_PLATFORMS, ListeningRulesModal(), ListeningRulesModalProps (+13 more)
+Cohesion: 0.17
+Nodes (20): EscalateToTaskModal(), EscalateToTaskModalProps, LinkContactModal(), LinkContactModalProps, AVAILABLE_PLATFORMS, ListeningRulesModal(), ListeningRulesModalProps, SocialListeningHub() (+12 more)
 
 ### Community 27 - "vite.config.ts"
-Cohesion: 0.04
-Nodes (48): autoprefixer, axios, clsx, lucide-react, dependencies, axios, clsx, lucide-react (+40 more)
+Cohesion: 0.19
+Nodes (13): RFC-1918, APPROVED_SA_S3_REGIONS, DataResidencyRegion, EnvConfig, envSchema, evaluateDataResidency(), extractHostname(), isApprovedSouthAfricanHost() (+5 more)
 
 ### Community 28 - "zod"
-Cohesion: 0.11
-Nodes (25): AccountingSyncJobPayload, enqueueAccountingSyncJob(), createCheckoutBodySchema, peachWebhookRouter, portalPaymentRouter, clearPeachLocalTokenCache(), computePeachWebhookSignature(), createCheckoutSession() (+17 more)
+Cohesion: 0.14
+Nodes (20): disconnectRedis(), AccountingSyncJobPayload, clearPeachLocalTokenCache(), computePeachWebhookSignature(), createCheckoutSession(), CreatePeachCheckoutOptions, generateMerchantTransactionId(), getPeachEndpoints() (+12 more)
 
 ### Community 29 - "useAuth"
 Cohesion: 0.10
 Nodes (17): backendStaging, backendZip, clientDist, __dirname, __filename, frontendZip, htaccessPath, publicHtaccess (+9 more)
 
 ### Community 30 - "WorkflowCanvas.tsx"
-Cohesion: 0.23
-Nodes (11): CatalogListView(), CatalogStats, useCatalog(), UseCatalogReturn, PriceBookManager(), ProductModal(), ProductModalProps, BillingFrequency (+3 more)
+Cohesion: 0.06
+Nodes (94): CatalogListView(), ContextualBillingPanel(), ContextualBillingPanelProps, DocumentPartiesAndDatesSection(), DocumentPartiesAndDatesSectionProps, DocumentPreviewCard(), DocumentPreviewCardProps, CatalogStats (+86 more)
 
 ### Community 31 - "EntityDetailView.tsx"
 Cohesion: 0.09
-Nodes (43): runTests(), generateToken(), getMe(), inviteUser(), inviteUserSchema, login(), loginSchema, register() (+35 more)
+Nodes (44): runTests(), generateToken(), getMe(), inviteUser(), inviteUserSchema, login(), loginSchema, register() (+36 more)
 
 ### Community 32 - "dependencies"
-Cohesion: 0.17
-Nodes (12): AppLayout(), Header(), Sidebar(), DashboardPage(), LoginPage(), McpServersPage(), ProjectsPage(), renderCatalogRoutes() (+4 more)
+Cohesion: 0.10
+Nodes (23): Sidebar(), AuthContext, AuthContextType, AuthProviderProps, TenantInfo, useAuth(), RealtimeRoomOptions, useRealtimeRoom() (+15 more)
 
 ### Community 33 - "devDependencies"
 Cohesion: 0.18
@@ -276,8 +272,8 @@ Cohesion: 0.17
 Nodes (3): gateway, mockAccountData, MockSocketGateway
 
 ### Community 35 - "useCatalog.ts"
-Cohesion: 0.22
-Nodes (12): AuditReport, runCrmAudit(), emailQueue, evaluateCustomWorkflows(), processDealStageUpdated(), ConditionData, evaluateCondition(), getNestedProperty() (+4 more)
+Cohesion: 0.20
+Nodes (15): AuditReport, runCrmAudit(), DealStageUpdatedPayload, TaskStatusChangedPayload, createWorkflowWorker(), evaluateCustomWorkflows(), processDealStageUpdated(), processTaskStatusChanged() (+7 more)
 
 ### Community 36 - "Project"
 Cohesion: 0.15
@@ -285,47 +281,47 @@ Nodes (12): 1. Executive Summary & Core Mission, 2. Architectural Pillars & Core
 
 ### Community 38 - "DynamicFieldRenderer.tsx"
 Cohesion: 0.13
-Nodes (22): socialRouter, EscalateTaskPayload, InboundSocialPayload, LinkContactPayload, OutboundReplyPayload, SocialIntent, SocialInteractionModel, SocialInteractionStatus (+14 more)
+Nodes (23): socialRouter, broadcastToTenant(), EscalateTaskPayload, InboundSocialPayload, LinkContactPayload, OutboundReplyPayload, SocialIntent, SocialInteractionModel (+15 more)
 
 ### Community 39 - "settingsController.ts"
-Cohesion: 0.14
-Nodes (18): handleGenerateTasks(), handleSummarizeAccount(), AccountContextSummary, ExternalLlmInvokeFn, GeneratedTasksResult, generateTasksFromMeetingNotes(), setExternalLlmProvider(), summarizeAccountContext() (+10 more)
+Cohesion: 0.20
+Nodes (10): handleGenerateTasks(), handleSummarizeAccount(), AccountContextSummary, ExternalLlmInvokeFn, GeneratedTasksResult, generateTasksFromMeetingNotes(), setExternalLlmProvider(), summarizeAccountContext() (+2 more)
 
 ### Community 40 - "AuthContext.tsx"
 Cohesion: 0.16
-Nodes (26): createForm(), deleteForm(), formsStore, getFormById(), getForms(), getFormSubmissions(), getInitialForms(), getPublicForm() (+18 more)
+Nodes (25): createForm(), deleteForm(), formsStore, getFormById(), getForms(), getFormSubmissions(), getPublicForm(), getTenantForms() (+17 more)
 
 ### Community 41 - "EntityModuleName"
 Cohesion: 0.20
 Nodes (9): BackgroundProps, Connection, ControlsProps, Edge, HandleProps, Node, Position, ReactFlowProps (+1 more)
 
 ### Community 43 - "scripts"
-Cohesion: 0.21
-Nodes (11): bankersRound2(), LineItemEditor(), LineItemEditorProps, QUOTE_CURRENCIES, VAT_MODES, QuoteToProjectModal(), QuoteToProjectModalProps, LineItem (+3 more)
+Cohesion: 0.09
+Nodes (20): app, authLimiter, defaultDevOrigins, envOrigins, runRecurringTasksCron(), bookingRouter, publicBookingRouter, calendarRouter (+12 more)
 
 ### Community 44 - "Antigravity 2.0 & Antigravity IDE Development Context: cPanel Full-Stack Edition"
 Cohesion: 0.27
 Nodes (7): extractCustomFields(), IdMapper, loadSourceDataset(), normalizeTimestamp(), prisma, runETLMigration(), SourceDataset
 
 ### Community 45 - "GanttChart.tsx"
-Cohesion: 0.16
-Nodes (17): CreateTaskModal(), CreateTaskModalProps, MilestoneStatus, ProjectDeliverable, ProjectMilestone, RecurrenceRule, SupportedQuoteCurrency, Task (+9 more)
+Cohesion: 0.10
+Nodes (25): react, react, App(), AppLayout(), Header(), UniversalViewBar(), AuthProvider(), HierarchyProvider() (+17 more)
 
 ### Community 47 - "test-crm-conversion.js"
 Cohesion: 0.33
 Nodes (5): __dirname, distDir, __filename, MIME_TYPES, server
 
 ### Community 48 - "seed-and-test-crm.ts"
-Cohesion: 0.16
-Nodes (11): ConvertLeadModal(), ConvertLeadModalProps, RelatedListsNav(), SubPanelTab, BBBEE_RECOGNITION_MAP, SaComplianceBadgeBar(), SaComplianceBadgeBarProps, useEntityRecord() (+3 more)
+Cohesion: 0.31
+Nodes (9): ALLOWED_MCP_AGENTS, enforceOffshoreAiConsentGuard(), executeGuardedMcpTool(), mcpRouter, resolveClientIp(), resolveMcpActorAgent(), appendPopiaAuditLog(), PopiaActorAgent (+1 more)
 
 ### Community 49 - "ecosystem.config.cjs"
 Cohesion: 0.40
 Nodes (4): Antigravity 2.0 & Antigravity IDE Development Context: cPanel Full-Stack Edition, Architectural Stack Matrix (Consolidated PostgreSQL Edition), Multi-Tenancy & Security Directives, Operational Control Model
 
 ### Community 50 - "package.json"
-Cohesion: 0.26
-Nodes (9): DynamicFieldRenderer(), formatDate(), getBadgeClasses(), toInputDate(), EntityBlocksViewer(), EntityBlocksViewerProps, InlineEditWrapper(), InlineEditWrapperProps (+1 more)
+Cohesion: 0.17
+Nodes (17): CurrencyContext, CurrencyContextType, CurrencyOption, CurrencyProvider(), CurrencyProviderProps, formatCurrencyAmount(), FormatCurrencyOptions, parseCurrency() (+9 more)
 
 ### Community 52 - "package.json"
 Cohesion: 0.13
@@ -348,20 +344,28 @@ Cohesion: 0.40
 Nodes (3): __dirname, __filename, server
 
 ### Community 59 - "bcryptjs"
-Cohesion: 0.20
-Nodes (9): MODULE_LABELS, PopiaAuditLogEntry, PopiaExpiryAction, PopiaGovernanceView(), PopiaModuleName, PopiaRetentionPolicy, PopiaSubjectType, RETENTION_PRESETS (+1 more)
+Cohesion: 0.15
+Nodes (6): NodeConfigDrawerProps, ActionNode, ConditionNode, DelayNode, TriggerNode, WorkflowCanvasProps
+
+### Community 60 - "package-cpanel.js"
+Cohesion: 0.29
+Nodes (8): DynamicFieldRenderer(), formatDate(), getBadgeClasses(), toInputDate(), EntityBlocksViewerProps, InlineEditWrapper(), InlineEditWrapperProps, BlockLayout
+
+### Community 61 - "apply-rls-payments.ts"
+Cohesion: 0.24
+Nodes (9): DynamicFieldRendererProps, MassEditModal(), MassEditModalProps, EntityListView(), MODULE_SCHEMAS, SEGMENT_COLUMN_FIELD, getEntityFieldValue(), FieldDefinition (+1 more)
 
 ### Community 62 - "LineItemEditor.tsx"
-Cohesion: 0.22
-Nodes (14): TaskMindMapView(), TaskMindMapViewProps, HierarchyContext, HierarchyContextType, useHierarchy(), hierarchyService, Folder, HierarchyBreadcrumbItem (+6 more)
+Cohesion: 0.20
+Nodes (15): CreateTaskModal(), TaskMindMapView(), TaskMindMapViewProps, HierarchyContext, HierarchyContextType, useHierarchy(), hierarchyService, Folder (+7 more)
 
 ### Community 63 - "zod"
-Cohesion: 0.25
-Nodes (8): DynamicFieldRendererProps, MassEditModal(), MassEditModalProps, EntityEditView(), EntityListView(), MODULE_SCHEMAS, FieldDefinition, PicklistOption
+Cohesion: 0.26
+Nodes (8): ConvertLeadModalProps, EntityEditView(), filterBlocksBySegment(), setEntityFieldValue(), DEFAULT_MODULE_LAYOUTS, getModuleLayoutForSegment(), LEAD_SOURCE_OPTIONS, CustomerSegment
 
-### Community 64 - "helmet"
-Cohesion: 0.08
-Nodes (24): app, authLimiter, defaultDevOrigins, envOrigins, runRecurringTasksCron(), createFolder(), createList(), createSpace() (+16 more)
+### Community 64 - "XeroAdapter"
+Cohesion: 0.31
+Nodes (8): createFolder(), createList(), createSpace(), DEFAULT_CLICK_APPS, DEFAULT_SPACE_STATUSES, getHierarchyTree(), nestTask(), hierarchyRouter
 
 ### Community 65 - "AdminWorkflowView.tsx"
 Cohesion: 0.33
@@ -371,97 +375,69 @@ Nodes (4): __dirname, __filename, prisma, TEST_LOGINS
 Cohesion: 0.18
 Nodes (8): analyzeSentimentAndIntent(), mockDatabase, NEGATIVE_KEYWORDS, POSITIVE_KEYWORDS, PRAISE_KEYWORDS, PURCHASE_KEYWORDS, simulateInboundIngestion(), SUPPORT_KEYWORDS
 
-### Community 67 - "DynamicFieldRenderer.tsx"
-Cohesion: 0.17
-Nodes (11): CustomFieldsPanel(), CustomFieldsPanelProps, DEFAULT_DEFINITIONS, CurrencyContext, CurrencyContextType, CurrencyOption, CurrencyProviderProps, FormatCurrencyOptions (+3 more)
-
-### Community 74 - "EntityListView.tsx"
-Cohesion: 0.17
-Nodes (11): useAuth(), RealtimeRoomOptions, useRealtimeRoom(), SchedulerPage(), TenantUserRecord, UserManagementView(), EmailTemplateEditor(), OutgoingEmailConfig() (+3 more)
-
-### Community 81 - "popiaWorker.ts"
-Cohesion: 0.23
-Nodes (14): RFC-4122, executeRightToErasure(), exportSubjectData(), scrubCustomFieldsPii(), POPIA_TENANT_NAMESPACE_BYTES, PopiaRlsTxOptions, toTenantUuid(), withPopiaRlsTx() (+6 more)
+### Community 81 - "socket.io"
+Cohesion: 0.43
+Nodes (5): AuthenticatedSocket, broadcastGanttUpdate(), broadcastKanbanUpdate(), broadcastToProject(), initSocketServer()
 
 ### Community 82 - "bookingRoutes.ts"
-Cohesion: 0.13
-Nodes (22): createBooking(), createBookingType(), createPublicBooking(), deleteBooking(), deleteBookingType(), getAvailability(), getBookingById(), getPublicBookingTypeMeta() (+14 more)
+Cohesion: 0.14
+Nodes (21): createBooking(), createBookingType(), createPublicBooking(), deleteBooking(), deleteBookingType(), getAvailability(), getBookingById(), getPublicBookingTypeMeta() (+13 more)
 
 ### Community 83 - "EntityListView.tsx"
-Cohesion: 0.08
-Nodes (19): __dirname, __filename, __dirname, __filename, __dirname, __filename, __dirname, __filename (+11 more)
+Cohesion: 0.07
+Nodes (18): __dirname, __filename, __dirname, __filename, __dirname, __filename, __dirname, __filename (+10 more)
 
 ### Community 84 - "EntityEditView.tsx"
-Cohesion: 0.10
-Nodes (33): RFC-1918, APPROVED_SA_S3_REGIONS, bootResidencyAudit, DataResidencyRegion, EnvConfig, envSchema, evaluateDataResidency(), extractHostname() (+25 more)
+Cohesion: 0.15
+Nodes (24): parseEnv(), getRedisOptions(), getRedisSslConfig(), redisConnectionOptions, RedisSslConfig, assertSafeIdentifier(), assertTenantKeyNamespace(), buildTenantStorageKey() (+16 more)
 
 ### Community 85 - "catalogController.ts"
-Cohesion: 0.13
-Nodes (30): convertLead(), createAccount(), createContact(), createDeal(), createLead(), deleteAccount(), deleteContact(), deleteDeal() (+22 more)
+Cohesion: 0.17
+Nodes (21): createRedisConnection(), EmailJobPayload, enqueueEmailJob(), getEmailQueue(), QUEUE_NAMES, ScheduledJobPayload, createAccountingSyncWorker(), BbbeeExpirySweepReport (+13 more)
 
 ### Community 86 - "ConvertDealModal.tsx"
 Cohesion: 0.17
 Nodes (11): tests/**/*, ./tsconfig.json, compilerOptions, noEmit, rootDir, exclude, extends, include (+3 more)
 
-### Community 87 - "crm.ts"
-Cohesion: 0.18
-Nodes (14): Account360DrawerProps, fallbackAccounts, UseAccountsResult, fallbackContacts, UseContactsResult, Account, AccountStatus, AccountTier (+6 more)
-
 ### Community 88 - "popiaRoutes.ts"
 Cohesion: 0.20
 Nodes (9): consentMutationSchema, dsrEraseSchema, dsrExportSchema, INFORMATION_OFFICER_ROLES, popiaRouter, putPoliciesBodySchema, requireInformationOfficerOrAdmin(), retentionPolicyItemSchema (+1 more)
 
-### Community 89 - "EntityEditView.tsx"
-Cohesion: 0.17
-Nodes (13): Account360Summary, EntityHeader(), EntityHeaderProps, EntityLookupModal(), EntityLookupModalProps, ActivityItem, EntitySummaryWidget(), EntitySummaryWidgetProps (+5 more)
-
 ### Community 90 - "socket.ts"
-Cohesion: 0.16
-Nodes (15): disconnectDatabase(), env, app, handleShutdown(), server, handleShutdown(), server, AuthenticatedSocket (+7 more)
+Cohesion: 0.24
+Nodes (10): disconnectDatabase(), bootResidencyAudit, env, app, handleShutdown(), server, handleShutdown(), server (+2 more)
 
 ### Community 91 - "mcpRoutes.ts"
-Cohesion: 0.32
-Nodes (20): createChangeRequest(), createDocument(), evaluateWorkflowRules(), generateInvoice(), getAnalyticsMetrics(), getClientPortalData(), getCriticalPath(), getDocuments() (+12 more)
+Cohesion: 0.10
+Nodes (63): cascadeProjectSchedule(), createChangeRequest(), createDocument(), evaluateWorkflowRules(), generateInvoice(), getAnalyticsMetrics(), getClientPortalData(), getCriticalPath() (+55 more)
 
 ### Community 92 - "DealKanbanBoard.tsx"
-Cohesion: 0.26
-Nodes (10): projectManagementService, ClientChangeRequestItem, CriticalPathData, PmAnalyticsMetrics, ProjectDocumentItem, ProjectInvoiceItem, ResourceWorkloadItem, TimesheetItem (+2 more)
+Cohesion: 0.10
+Nodes (21): projectManagementService, AuditTrailEntry, ExpenseCategory, ExpenseEntry, ExpenseStatus, Portfolio, ProjectBudget, ResourceProfile (+13 more)
 
 ### Community 93 - "SettingsLayout.tsx"
 Cohesion: 0.28
 Nodes (6): SettingsHeader(), SettingsHeaderProps, SETTINGS_CATEGORIES, SettingsCategory, SettingsSidebar(), SettingsLayout()
 
-### Community 94 - "cors"
-Cohesion: 0.40
-Nodes (7): formatSaQuoteCurrency(), ClientPortalInvoicesPage(), InvoicePaymentModal(), InvoicePaymentModalProps, SA_PAYMENT_RAILS, SaPaymentRail, TaxInvoice
-
-### Community 96 - "react"
-Cohesion: 0.12
-Nodes (16): react, react, App(), UniversalViewBar(), AuthContext, AuthContextType, AuthProvider(), AuthProviderProps (+8 more)
-
-### Community 97 - "CustomFieldsPanel.tsx"
-Cohesion: 0.31
-Nodes (8): CurrencyProvider(), formatCurrencyAmount(), parseCurrency(), SUPPORTED_CURRENCIES, AuditTrailView(), CompanyBrandingView(), CurrencyFiscalView(), CompanyDetails
-
 ## Knowledge Gaps
-- **542 isolated node(s):** `name`, `private`, `version`, `type`, `dev` (+537 more)
+- **558 isolated node(s):** `name`, `private`, `version`, `type`, `dev` (+553 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **13 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **14 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `apiClient` connect `EntityEditView.tsx` to `AuthContext.tsx`, `index.ts`, `scripts`, `useFirestoreCRM.ts`, `compilerOptions`, `LayoutEditor.tsx`, `settingsRoutes.tsx`, `settingsRoutes.tsx`, `nodemailer`, `tailwind.config.js`, `WorkflowCanvas.tsx`, `dependencies`, `scripts`, `GanttChart.tsx`, `seed-and-test-crm.ts`, `bcryptjs`, `LineItemEditor.tsx`, `zod`, `DynamicFieldRenderer.tsx`, `EntityListView.tsx`, `crm.ts`, `DealKanbanBoard.tsx`, `cors`, `react`, `CustomFieldsPanel.tsx`?**
+- **Why does `apiClient` connect `index.ts` to `dependencies`, `AuthContext.tsx`, `scripts`, `useFirestoreCRM.ts`, `dependencies`, `compilerOptions`, `GanttChart.tsx`, `settingsRoutes.tsx`, `settingsRoutes.tsx`, `LayoutEditor.tsx`, `package.json`, `nodemailer`, `LineItemEditor.tsx`, `tailwind.config.js`, `DealKanbanBoard.tsx`, `apply-rls-payments.ts`, `WorkflowCanvas.tsx`, `zod`?**
+  _High betweenness centrality (0.030) - this node is a cross-community bridge._
+- **Why does `useAuth()` connect `dependencies` to `AuthContext.tsx`, `index.ts`, `scripts`, `useFirestoreCRM.ts`, `dependencies`, `GanttChart.tsx`, `settingsRoutes.tsx`, `package.json`, `nodemailer`, `SettingsLayout.tsx`, `WorkflowCanvas.tsx`, `tailwind.config.js`, `apply-rls-payments.ts`, `LineItemEditor.tsx`, `zod`?**
   _High betweenness centrality (0.026) - this node is a cross-community bridge._
-- **Why does `useAuth()` connect `EntityListView.tsx` to `dependencies`, `react`, `AuthContext.tsx`, `index.ts`, `scripts`, `useFirestoreCRM.ts`, `scripts`, `GanttChart.tsx`, `settingsRoutes.tsx`, `seed-and-test-crm.ts`, `nodemailer`, `EntityEditView.tsx`, `tailwind.config.js`, `bcryptjs`, `SettingsLayout.tsx`, `LineItemEditor.tsx`, `zod`?**
-  _High betweenness centrality (0.022) - this node is a cross-community bridge._
-- **Why does `react` connect `react` to `vite.config.ts`, `settingsRoutes.tsx`?**
+- **Why does `react` connect `GanttChart.tsx` to `SettingsLayout.tsx`, `scripts`?**
   _High betweenness centrality (0.019) - this node is a cross-community bridge._
 - **What connects `name`, `private`, `version` to the rest of the system?**
-  _542 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _558 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `AuthContext.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.09359605911330049 - nodes in this community are weakly interconnected._
-- **Should `devDependencies` be split into smaller, more focused modules?**
-  _Cohesion score 0.06818181818181818 - nodes in this community are weakly interconnected._
-- **Should `scripts` be split into smaller, more focused modules?**
-  _Cohesion score 0.14482029598308668 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.0896551724137931 - nodes in this community are weakly interconnected._
+- **Should `crm.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.14623655913978495 - nodes in this community are weakly interconnected._
+- **Should `index.js` be split into smaller, more focused modules?**
+  _Cohesion score 0.12857142857142856 - nodes in this community are weakly interconnected._

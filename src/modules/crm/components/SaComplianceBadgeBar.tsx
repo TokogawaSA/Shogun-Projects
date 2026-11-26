@@ -7,8 +7,13 @@ import {
   CheckCircle2,
   AlertTriangle,
   Clock,
+  ShieldCheck,
+  MessageCircle,
+  CreditCard,
+  Star,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { getRecordSegment } from '../utils/customerSegment';
 
 export interface SaComplianceBadgeBarProps {
   record: Record<string, any>;
@@ -32,6 +37,117 @@ const BBBEE_RECOGNITION_MAP: Record<number, string> = {
 
 export const SaComplianceBadgeBar: React.FC<SaComplianceBadgeBarProps> = ({ record }) => {
   const custom = (record.customFields as Record<string, any>) || {};
+  const segment = getRecordSegment(record);
+
+  // Render B2C Consumer & POPIA Verification Bar for Individual / Consumer records
+  if (segment === 'B2C') {
+    const nationalId: string | null = custom.nationalIdNumber || null;
+    const saIdValid = Boolean(nationalId && /^\d{13}$/.test(nationalId.trim()));
+    const marketingOptIn = Boolean(custom.marketingOptIn);
+    const preferredChannel: string = custom.preferredChannel || 'Not Set';
+    const loyaltyTier: string = custom.loyaltyTier || 'Standard';
+
+    return (
+      <div className="p-4 rounded-2xl bg-slate-900/85 border border-teal-500/20 shadow-lg backdrop-blur-md">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-teal-400">
+            B2C Consumer Profile & POPIA Privacy Compliance
+          </span>
+          <span className="text-[10px] font-mono text-slate-400">
+            POPIA Consent • Identity • Channel • Loyalty
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+          {/* 1. POPIA Marketing Consent */}
+          <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 flex items-start gap-2.5">
+            <div className="p-2 rounded-lg bg-teal-500/15 text-teal-400 border border-teal-500/30">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[10px] font-mono uppercase text-slate-400">
+                  POPIA Consent
+                </span>
+                <span
+                  className={clsx(
+                    'text-[9px] font-mono px-1.5 py-0.5 rounded border',
+                    marketingOptIn
+                      ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                      : 'bg-slate-800 text-slate-400 border-slate-700'
+                  )}
+                >
+                  {marketingOptIn ? 'OPTED IN' : 'NO CONSENT'}
+                </span>
+              </div>
+              <p className="text-xs font-mono font-bold text-slate-100 truncate mt-0.5">
+                {marketingOptIn ? 'Direct Marketing Allowed' : 'Transactional Only'}
+              </p>
+            </div>
+          </div>
+
+          {/* 2. Preferred Channel */}
+          <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 flex items-start gap-2.5">
+            <div className="p-2 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+              <MessageCircle className="w-4 h-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] font-mono uppercase text-slate-400">
+                Preferred Channel
+              </span>
+              <p className="text-xs font-mono font-bold text-slate-100 truncate mt-0.5 capitalize">
+                {preferredChannel}
+              </p>
+            </div>
+          </div>
+
+          {/* 3. Loyalty Tier */}
+          <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 flex items-start gap-2.5">
+            <div className="p-2 rounded-lg bg-amber-500/15 text-amber-400 border border-amber-500/30">
+              <Star className="w-4 h-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] font-mono uppercase text-slate-400">
+                Loyalty Tier
+              </span>
+              <p className="text-xs font-mono font-bold text-slate-100 truncate mt-0.5 capitalize">
+                {loyaltyTier}
+              </p>
+            </div>
+          </div>
+
+          {/* 4. Consumer Identity Verification */}
+          <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 flex items-start gap-2.5">
+            <div className="p-2 rounded-lg bg-sky-500/15 text-sky-400 border border-sky-500/30">
+              <CreditCard className="w-4 h-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[10px] font-mono uppercase text-slate-400">
+                  ID / Passport
+                </span>
+                {nationalId && (
+                  <span
+                    className={clsx(
+                      'text-[9px] font-mono px-1.5 py-0.5 rounded border',
+                      saIdValid
+                        ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                        : 'bg-sky-500/15 text-sky-300 border-sky-500/30'
+                    )}
+                  >
+                    {saIdValid ? 'SA ID' : 'RECORDED'}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs font-mono font-bold text-slate-100 truncate mt-0.5">
+                {nationalId ? `••••••${nationalId.slice(-4)}` : 'Not Provided'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const cipc: string | null =
     record.cipcRegistrationNumber || custom.cipcRegistrationNumber || null;

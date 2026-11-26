@@ -1,49 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, Plus, X, Bot, User, Check } from 'lucide-react';
 import { TaskAssigneeAllocation } from '../../types';
+import { apiClient } from '../../services/api';
 
 interface MultiAssigneeSelectorProps {
   assignees?: TaskAssigneeAllocation[];
   onChange: (assignees: TaskAssigneeAllocation[]) => void;
 }
-
-const AVAILABLE_TEAM_MEMBERS: TaskAssigneeAllocation[] = [
-  {
-    userId: 'usr-admin-master',
-    displayName: 'Admin Master',
-    email: 'admin@shogunate.solutions',
-    role: 'Lead Architect',
-    allocationPercent: 100,
-  },
-  {
-    userId: 'usr-dev-alex',
-    displayName: 'Alex Rivers',
-    email: 'alex.rivers@shogunate.solutions',
-    role: 'Senior Fullstack Dev',
-    allocationPercent: 100,
-  },
-  {
-    userId: 'usr-agent-sentinel',
-    displayName: 'Sentinel Agent (AI)',
-    email: 'sentinel@antigravity.ai',
-    role: 'Logic & Validation Subagent',
-    allocationPercent: 100,
-  },
-  {
-    userId: 'usr-agent-worker',
-    displayName: 'Worker Agent (AI)',
-    email: 'worker@antigravity.ai',
-    role: 'Code Generation Subagent',
-    allocationPercent: 100,
-  },
-  {
-    userId: 'usr-agent-auditor',
-    displayName: 'Auditor Agent (AI)',
-    email: 'auditor@antigravity.ai',
-    role: 'Security & Quality Subagent',
-    allocationPercent: 100,
-  },
-];
 
 export const MultiAssigneeSelector: React.FC<MultiAssigneeSelectorProps> = ({
   assignees = [],
@@ -51,6 +14,30 @@ export const MultiAssigneeSelector: React.FC<MultiAssigneeSelectorProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [teamMembers, setTeamMembers] = useState<TaskAssigneeAllocation[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    apiClient
+      .get<any[]>('/settings/users')
+      .then((res) => {
+        if (!mounted || !Array.isArray(res)) return;
+        const mapped: TaskAssigneeAllocation[] = res.map((u) => ({
+          userId: u.id || u.uid,
+          displayName: u.displayName || u.name || u.email || 'Team Member',
+          email: u.email || '',
+          role: u.role || 'Member',
+          allocationPercent: 100,
+        }));
+        setTeamMembers(mapped);
+      })
+      .catch(() => {
+        if (mounted) setTeamMembers([]);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleToggleAssignee = (member: TaskAssigneeAllocation) => {
     const isAssigned = assignees.some((a) => a.userId === member.userId);
@@ -61,7 +48,7 @@ export const MultiAssigneeSelector: React.FC<MultiAssigneeSelectorProps> = ({
     }
   };
 
-  const filteredMembers = AVAILABLE_TEAM_MEMBERS.filter(
+  const filteredMembers = teamMembers.filter(
     (m) =>
       m.displayName.toLowerCase().includes(search.toLowerCase()) ||
       m.role?.toLowerCase().includes(search.toLowerCase())

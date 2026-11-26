@@ -15,23 +15,12 @@ interface ProjectProviderProps {
   initialProjectId?: string | null;
 }
 
-export const ProjectProvider: React.FC<ProjectProviderProps> = ({ 
-  children, 
-  initialProjectId = 'proj-shogun-1' 
+export const ProjectProvider: React.FC<ProjectProviderProps> = ({
+  children,
+  initialProjectId = null
 }) => {
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(initialProjectId);
-  const [projects, setProjects] = useState<Project[]>([
-    {
-      id: 'proj-shogun-1',
-      title: 'Antigravity 2.0 Integration Hub',
-      description: 'Centralized multi-agent orchestration and task tracking for Shogun Projects.',
-      organizationId: 'org-shogunate-root',
-      ownerId: 'usr-admin-master',
-      members: ['usr-admin-master', 'usr-dev-agent-1'],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ]);
+  const [projects, setProjects] = useState<Project[]>([]);
 
   return (
     <ProjectContext.Provider

@@ -12,9 +12,15 @@ import { useAuth } from '../../../context/AuthContext';
 import {
   EntityModuleName,
   FieldDefinition,
+  CustomerSegment,
 } from '../../../types/crmEntities';
 import { useCurrency } from '../../../context/CurrencyContext';
 import { MassEditModal } from '../components/MassEditModal';
+import {
+  getRecordSegment,
+  getEntityFieldValue,
+  getSegmentMeta,
+} from '../utils/customerSegment';
 import {
   Search,
   Plus,
@@ -44,6 +50,18 @@ import {
 // Default Field Schemas per Module
 // ==========================================
 
+const SEGMENT_COLUMN_FIELD: FieldDefinition = {
+  name: 'customFields.customerSegment',
+  label: 'Segment',
+  type: 'picklist',
+  column: 1,
+  sortOrder: 1.5,
+  picklistValues: [
+    { label: 'B2B', value: 'B2B' },
+    { label: 'B2C', value: 'B2C' },
+  ],
+};
+
 const MODULE_SCHEMAS: Record<EntityModuleName, { title: string; singular: string; icon: any; fields: FieldDefinition[] }> = {
   leads: {
     title: 'Leads',
@@ -51,6 +69,7 @@ const MODULE_SCHEMAS: Record<EntityModuleName, { title: string; singular: string
     icon: Target,
     fields: [
       { name: 'leadNumber', label: 'Lead No', type: 'text', column: 1, sortOrder: 1, isReadOnly: true },
+      SEGMENT_COLUMN_FIELD,
       { name: 'firstName', label: 'First Name', type: 'text', column: 1, sortOrder: 2, isRequired: true },
       { name: 'lastName', label: 'Last Name', type: 'text', column: 1, sortOrder: 3, isRequired: true },
       { name: 'company', label: 'Company', type: 'text', column: 1, sortOrder: 4, isRequired: true },
@@ -106,6 +125,7 @@ const MODULE_SCHEMAS: Record<EntityModuleName, { title: string; singular: string
     icon: Building2,
     fields: [
       { name: 'accountNumber', label: 'Account No', type: 'text', column: 1, sortOrder: 1, isReadOnly: true },
+      SEGMENT_COLUMN_FIELD,
       { name: 'accountName', label: 'Account Name', type: 'text', column: 1, sortOrder: 2, isRequired: true },
       { name: 'domain', label: 'Domain', type: 'text', column: 1, sortOrder: 3 },
       { name: 'industry', label: 'Industry', type: 'text', column: 1, sortOrder: 4, isRequired: true },
@@ -115,7 +135,7 @@ const MODULE_SCHEMAS: Record<EntityModuleName, { title: string; singular: string
         type: 'picklist',
         column: 1,
         sortOrder: 5,
-        picklistValues: ['customer', 'prospect', 'partner', 'vendor', 'reseller'],
+        picklistValues: ['customer', 'prospect', 'partner', 'vendor', 'reseller', 'individual', 'consumer', 'household'],
       },
       {
         name: 'rating',
@@ -141,6 +161,7 @@ const MODULE_SCHEMAS: Record<EntityModuleName, { title: string; singular: string
     icon: Users,
     fields: [
       { name: 'contactNumber', label: 'Contact No', type: 'text', column: 1, sortOrder: 1, isReadOnly: true },
+      SEGMENT_COLUMN_FIELD,
       { name: 'firstName', label: 'First Name', type: 'text', column: 1, sortOrder: 2, isRequired: true },
       { name: 'lastName', label: 'Last Name', type: 'text', column: 1, sortOrder: 3, isRequired: true },
       { name: 'accountName', label: 'Account', type: 'reference', referenceModule: 'accounts', column: 1, sortOrder: 4 },
@@ -161,6 +182,7 @@ const MODULE_SCHEMAS: Record<EntityModuleName, { title: string; singular: string
     icon: Briefcase,
     fields: [
       { name: 'dealNumber', label: 'Deal No', type: 'text', column: 1, sortOrder: 1, isReadOnly: true },
+      SEGMENT_COLUMN_FIELD,
       { name: 'dealName', label: 'Deal Name', type: 'text', column: 1, sortOrder: 2, isRequired: true },
       { name: 'accountName', label: 'Account', type: 'reference', referenceModule: 'accounts', column: 1, sortOrder: 3 },
       { name: 'contactName', label: 'Contact', type: 'reference', referenceModule: 'contacts', column: 1, sortOrder: 4 },
@@ -223,6 +245,8 @@ export const EntityListView: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeFilterPill, setActiveFilterPill] = useState<string>('all');
+  const [segmentFilter, setSegmentFilter] = useState<'ALL' | CustomerSegment>('ALL');
+  const [reloadTick, setReloadTick] = useState<number>(0);
   const [isMassEditOpen, setIsMassEditOpen] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState<boolean>(false);
@@ -243,7 +267,7 @@ export const EntityListView: React.FC = () => {
     try {
       const saved = localStorage.getItem(`crm_cols_${currentModule}`);
       if (saved) return JSON.parse(saved);
-    } catch {}
+    } catch { }
     // Default: first 6-7 fields
     return schema.fields.slice(0, 7).map((f) => f.name);
   });
@@ -262,6 +286,7 @@ export const EntityListView: React.FC = () => {
     }
     setSelectedIds([]);
     setActiveFilterPill('all');
+    setSegmentFilter('ALL');
     setCurrentPage(1);
     setSearchQuery('');
   }, [currentModule]);
@@ -274,7 +299,7 @@ export const EntityListView: React.FC = () => {
         : [...prev, fieldName];
       try {
         localStorage.setItem(`crm_cols_${currentModule}`, JSON.stringify(updated));
-      } catch {}
+      } catch { }
       return updated;
     });
   };
@@ -302,7 +327,7 @@ export const EntityListView: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [currentModule, tenantId]);
+  }, [currentModule, tenantId, reloadTick]);
 
   // Primary Picklist Filter definition for pills
   const filterPillOptions = useMemo(() => {
@@ -331,6 +356,7 @@ export const EntityListView: React.FC = () => {
       return [
         { label: 'All Accounts', value: 'all' },
         { label: 'Customers', value: 'customer' },
+        { label: 'Individuals (B2C)', value: 'individual' },
         { label: 'Prospects', value: 'prospect' },
         { label: 'Partners', value: 'partner' },
         { label: 'Vendors', value: 'vendor' },
@@ -345,9 +371,24 @@ export const EntityListView: React.FC = () => {
     return [{ label: 'All', value: 'all' }];
   }, [currentModule]);
 
+  const segmentCounts = useMemo(() => {
+    let b2b = 0;
+    let b2c = 0;
+    entities.forEach((e) => {
+      if (getRecordSegment(e) === 'B2C') b2c += 1;
+      else b2b += 1;
+    });
+    return { all: entities.length, b2b, b2c };
+  }, [entities]);
+
   // Filtered & Searched Data
   const filteredEntities = useMemo(() => {
     let result = entities;
+
+    // B2B / B2C segment filter
+    if (segmentFilter !== 'ALL') {
+      result = result.filter((e) => getRecordSegment(e) === segmentFilter);
+    }
 
     // Filter pill logic
     if (activeFilterPill !== 'all') {
@@ -356,7 +397,14 @@ export const EntityListView: React.FC = () => {
       } else if (currentModule === 'deals') {
         result = result.filter((e) => e.stage === activeFilterPill);
       } else if (currentModule === 'accounts') {
-        result = result.filter((e) => e.accountType === activeFilterPill);
+        if (activeFilterPill === 'individual') {
+          result = result.filter((e) =>
+            ['individual', 'consumer', 'household'].includes(String(e.accountType || '').toLowerCase()) ||
+            getRecordSegment(e) === 'B2C'
+          );
+        } else {
+          result = result.filter((e) => e.accountType === activeFilterPill);
+        }
       } else if (currentModule === 'contacts' && activeFilterPill === 'primary_only') {
         result = result.filter((e) => e.isPrimaryContact === true);
       }
@@ -378,8 +426,8 @@ export const EntityListView: React.FC = () => {
 
     // Sorting logic
     result = [...result].sort((a, b) => {
-      let valA = a[sortField];
-      let valB = b[sortField];
+      const valA = getEntityFieldValue(a, sortField);
+      const valB = getEntityFieldValue(b, sortField);
 
       if (valA === valB) return 0;
       if (valA === undefined || valA === null) return 1;
@@ -395,7 +443,7 @@ export const EntityListView: React.FC = () => {
     });
 
     return result;
-  }, [entities, activeFilterPill, searchQuery, sortField, sortAsc, currentModule]);
+  }, [entities, segmentFilter, activeFilterPill, searchQuery, sortField, sortAsc, currentModule]);
 
   // Paginated Slices
   const totalCount = filteredEntities.length;
@@ -434,7 +482,7 @@ export const EntityListView: React.FC = () => {
     try {
       await Promise.all(
         selectedIds.map((recordId) =>
-          apiClient.delete(`/crm/${currentModule}/${recordId}`).catch(() => {})
+          apiClient.delete(`/crm/${currentModule}/${recordId}`).catch(() => { })
         )
       );
 
@@ -463,7 +511,7 @@ export const EntityListView: React.FC = () => {
     const rows = exportRows.map((row) => {
       return activeCols
         .map((col) => {
-          let val = row[col.name];
+          let val = getEntityFieldValue(row, col.name);
           if (typeof val === 'object' && val !== null) {
             val = JSON.stringify(val);
           }
@@ -538,11 +586,10 @@ export const EntityListView: React.FC = () => {
               <button
                 key={mod}
                 onClick={() => navigate(`/crm/${mod}`)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  currentModule === mod
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${currentModule === mod
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                }`}
+                  }`}
               >
                 {MODULE_SCHEMAS[mod].title}
               </button>
@@ -581,17 +628,44 @@ export const EntityListView: React.FC = () => {
           )}
         </div>
 
+        {/* B2B / B2C Segment Filter Toggle */}
+        <div className="flex items-center bg-slate-900 border border-slate-800 p-1 rounded-xl shrink-0">
+          {(
+            [
+              { key: 'ALL', label: `All (${segmentCounts.all})` },
+              { key: 'B2B', label: `B2B (${segmentCounts.b2b})` },
+              { key: 'B2C', label: `B2C (${segmentCounts.b2c})` },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => {
+                setSegmentFilter(tab.key);
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${segmentFilter === tab.key
+                  ? tab.key === 'B2C'
+                    ? 'bg-teal-600 text-white shadow-sm shadow-teal-600/20'
+                    : 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         {/* Filter Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full">
           {filterPillOptions.map((pill) => (
             <button
               key={pill.value}
               onClick={() => setActiveFilterPill(pill.value)}
-              className={`text-xs px-3 py-1.5 rounded-xl border whitespace-nowrap transition-all ${
-                activeFilterPill === pill.value
+              className={`text-xs px-3 py-1.5 rounded-xl border whitespace-nowrap transition-all ${activeFilterPill === pill.value
                   ? 'bg-indigo-600/20 text-indigo-300 border-indigo-500/40 font-medium'
                   : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:bg-slate-800/80 hover:text-slate-200'
-              }`}
+                }`}
             >
               {pill.label}
             </button>
@@ -783,11 +857,10 @@ export const EntityListView: React.FC = () => {
                   return (
                     <tr
                       key={item.id}
-                      className={`group transition-colors ${
-                        isSelected
+                      className={`group transition-colors ${isSelected
                           ? 'bg-indigo-950/30 hover:bg-indigo-950/40'
                           : 'hover:bg-slate-800/40'
-                      }`}
+                        }`}
                     >
                       {/* Checkbox */}
                       <td className="w-10 px-4 py-3 text-center">
@@ -811,6 +884,12 @@ export const EntityListView: React.FC = () => {
                           className="flex items-center gap-2 group-hover:underline"
                         >
                           <span className="truncate max-w-[220px]">{titleDisplay}</span>
+                          <span
+                            className={`text-[10px] px-1.5 py-0.5 rounded-full border font-semibold shrink-0 ${getSegmentMeta(getRecordSegment(item)).badgeClasses
+                              }`}
+                          >
+                            {getRecordSegment(item)}
+                          </span>
                           {item.isConverted && (
                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                               Converted
@@ -823,7 +902,7 @@ export const EntityListView: React.FC = () => {
                       {schema.fields
                         .filter((f) => visibleColumns.includes(f.name))
                         .map((field) => {
-                          const val = item[field.name];
+                          const val = getEntityFieldValue(item, field.name);
 
                           if (val === null || val === undefined || val === '') {
                             return (
@@ -863,11 +942,10 @@ export const EntityListView: React.FC = () => {
                             return (
                               <td key={field.name} className="px-4 py-3">
                                 <span
-                                  className={`text-[11px] px-2 py-0.5 rounded ${
-                                    val
+                                  className={`text-[11px] px-2 py-0.5 rounded ${val
                                       ? 'bg-emerald-500/20 text-emerald-300'
                                       : 'bg-slate-800 text-slate-400'
-                                  }`}
+                                    }`}
                                 >
                                   {val ? 'Yes' : 'No'}
                                 </span>
@@ -951,8 +1029,12 @@ export const EntityListView: React.FC = () => {
         onClose={() => setIsMassEditOpen(false)}
         moduleName={currentModule}
         selectedIds={selectedIds}
+        selectedRecords={entities.filter((e) => selectedIds.includes(e.id))}
         fields={schema.fields}
-        onSuccess={() => setSelectedIds([])}
+        onSuccess={() => {
+          setSelectedIds([]);
+          setReloadTick((t) => t + 1);
+        }}
       />
 
       {/* 7. Mass Delete Confirmation Modal */}

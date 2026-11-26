@@ -6,8 +6,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { apiClient } from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
-import { EntityModuleName } from '../../../types/crmEntities';
+import { EntityModuleName, CustomerSegment } from '../../../types/crmEntities';
 import { useCurrency } from '../../../context/CurrencyContext';
+import { getRecordSegment, getSegmentMeta } from '../utils/customerSegment';
 import {
   Search,
   X,
@@ -41,6 +42,7 @@ export const EntityLookupModal: React.FC<EntityLookupModalProps> = ({
   const [entities, setEntities] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [segmentFilter, setSegmentFilter] = useState<'ALL' | CustomerSegment>('ALL');
 
   useEffect(() => {
     if (!isOpen) return;
@@ -98,16 +100,20 @@ export const EntityLookupModal: React.FC<EntityLookupModalProps> = ({
   };
 
   const filteredEntities = useMemo(() => {
-    if (!searchQuery.trim()) return entities;
+    let list = entities;
+    if (segmentFilter !== 'ALL') {
+      list = list.filter((item) => getRecordSegment(item) === segmentFilter);
+    }
+    if (!searchQuery.trim()) return list;
     const q = searchQuery.toLowerCase().trim();
-    return entities.filter((item) => {
+    return list.filter((item) => {
       const name = getEntityName(item).toLowerCase();
       const num = String(item.leadNumber || item.accountNumber || item.contactNumber || item.dealNumber || '').toLowerCase();
       const email = String(item.email || '').toLowerCase();
       const company = String(item.company || item.accountName || '').toLowerCase();
       return name.includes(q) || num.includes(q) || email.includes(q) || company.includes(q);
     });
-  }, [entities, searchQuery, targetModule]);
+  }, [entities, searchQuery, segmentFilter, targetModule]);
 
   if (!isOpen) return null;
 
@@ -138,9 +144,9 @@ export const EntityLookupModal: React.FC<EntityLookupModalProps> = ({
           </button>
         </div>
 
-        {/* Search Bar */}
-        <div className="p-4 border-b border-slate-800/80 bg-slate-950/40">
-          <div className="relative">
+        {/* Search Bar & Segment Filter */}
+        <div className="p-4 border-b border-slate-800/80 bg-slate-950/40 flex flex-col sm:flex-row gap-2.5">
+          <div className="relative flex-1">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
@@ -150,6 +156,23 @@ export const EntityLookupModal: React.FC<EntityLookupModalProps> = ({
               autoFocus
               className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
             />
+          </div>
+          <div className="flex items-center bg-slate-950 border border-slate-800 p-1 rounded-xl shrink-0">
+            {(['ALL', 'B2B', 'B2C'] as const).map((seg) => (
+              <button
+                key={seg}
+                type="button"
+                onClick={() => setSegmentFilter(seg)}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${segmentFilter === seg
+                    ? seg === 'B2C'
+                      ? 'bg-teal-600 text-white'
+                      : 'bg-indigo-600 text-white'
+                    : 'text-slate-400 hover:text-slate-200'
+                  }`}
+              >
+                {seg === 'ALL' ? 'All' : seg}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -173,10 +196,10 @@ export const EntityLookupModal: React.FC<EntityLookupModalProps> = ({
                 targetModule === 'contacts'
                   ? item.email || item.jobTitle
                   : targetModule === 'accounts'
-                  ? item.industry || item.domain
-                  : targetModule === 'deals'
-                  ? `${formatCurrency(Number(item.amount || 0))} • ${item.stage || ''}`
-                  : item.company || item.email;
+                    ? item.industry || item.domain
+                    : targetModule === 'deals'
+                      ? `${formatCurrency(Number(item.amount || 0))} • ${item.stage || ''}`
+                      : item.company || item.email;
 
               return (
                 <div
@@ -195,6 +218,12 @@ export const EntityLookupModal: React.FC<EntityLookupModalProps> = ({
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-semibold text-slate-200 group-hover:text-indigo-200 truncate">
                           {name}
+                        </span>
+                        <span
+                          className={`text-[10px] px-1.5 py-0.2 rounded-full border font-semibold ${getSegmentMeta(getRecordSegment(item)).badgeClasses
+                            }`}
+                        >
+                          {getRecordSegment(item)}
                         </span>
                         {num && (
                           <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 font-mono">

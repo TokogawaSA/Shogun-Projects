@@ -8,6 +8,7 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, Layers } from 'lucide-react';
 import { BlockLayout } from '../../../types/crmEntities';
 import { DynamicFieldRenderer } from './DynamicFieldRenderer';
+import { getEntityFieldValue } from '../utils/customerSegment';
 
 export interface EntityBlocksViewerProps {
   blocks: BlockLayout[];
@@ -61,9 +62,8 @@ export const EntityBlocksViewer: React.FC<EntityBlocksViewerProps> = ({
             {/* Block Header */}
             <div
               onClick={() => block.isCollapsible && toggleBlock(block.id)}
-              className={`flex items-center justify-between px-5 py-3.5 bg-slate-900/90 border-b border-slate-800/80 select-none ${
-                block.isCollapsible ? 'cursor-pointer hover:bg-slate-800/60' : ''
-              }`}
+              className={`flex items-center justify-between px-5 py-3.5 bg-slate-900/90 border-b border-slate-800/80 select-none ${block.isCollapsible ? 'cursor-pointer hover:bg-slate-800/60' : ''
+                }`}
             >
               <div className="flex items-center gap-2.5">
                 <div className="p-1 rounded-md bg-indigo-500/10 text-indigo-400">
@@ -98,7 +98,7 @@ export const EntityBlocksViewer: React.FC<EntityBlocksViewerProps> = ({
                       <DynamicFieldRenderer
                         key={field.name}
                         field={field}
-                        value={record[field.name]}
+                        value={getEntityFieldValue(record, field.name)}
                         record={record}
                         onUpdate={onUpdateField}
                         isReadOnly={isReadOnly}
@@ -112,7 +112,7 @@ export const EntityBlocksViewer: React.FC<EntityBlocksViewerProps> = ({
                       <DynamicFieldRenderer
                         key={field.name}
                         field={field}
-                        value={record[field.name]}
+                        value={getEntityFieldValue(record, field.name)}
                         record={record}
                         onUpdate={onUpdateField}
                         isReadOnly={isReadOnly}
@@ -128,7 +128,7 @@ export const EntityBlocksViewer: React.FC<EntityBlocksViewerProps> = ({
                       <DynamicFieldRenderer
                         key={field.name}
                         field={field}
-                        value={record[field.name]}
+                        value={getEntityFieldValue(record, field.name)}
                         record={record}
                         onUpdate={onUpdateField}
                         isReadOnly={isReadOnly}

@@ -12,7 +12,6 @@ import {
   CheckCircle,
   Flame,
   Radio,
-  Sparkles,
   ShieldCheck,
   Twitter,
   Linkedin,
@@ -26,7 +25,6 @@ import {
   Heart,
   Loader2,
   Share2,
-  X,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useSocialStream } from '../hooks/useSocialStream';
@@ -39,7 +37,6 @@ import {
   SocialIntent,
   SocialInteractionStatus,
 } from '../../../types/social';
-import { socialApi } from '../services/socialApi';
 
 // Platform Icon Component
 const PlatformIcon: React.FC<{ platform: string; className?: string }> = ({ platform, className = 'w-4 h-4' }) => {
@@ -79,14 +76,6 @@ export const SocialListeningHub: React.FC = () => {
   const [isEscalateModalOpen, setIsEscalateModalOpen] = useState<boolean>(false);
   const [isLinkContactModalOpen, setIsLinkContactModalOpen] = useState<boolean>(false);
   const [isRulesModalOpen, setIsRulesModalOpen] = useState<boolean>(false);
-  const [isSimulateModalOpen, setIsSimulateModalOpen] = useState<boolean>(false);
-
-  // Simulation Form State
-  const [simContent, setSimContent] = useState<string>('Our production server is broken and we cannot login! Please help fix this issue urgently.');
-  const [simPlatform, setSimPlatform] = useState<string>('twitter');
-  const [simAuthorHandle, setSimAuthorHandle] = useState<string>('@tech_director');
-  const [simAuthorName, setSimAuthorName] = useState<string>('Sarah Connor');
-  const [simulating, setSimulating] = useState<boolean>(false);
 
   // Active Query
   const filterParams = useMemo(
@@ -140,27 +129,6 @@ export const SocialListeningHub: React.FC = () => {
       setReplyText('');
     } catch (err: any) {
       console.error('Failed to send reply:', err);
-    }
-  };
-
-  const handleSimulateInbound = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!simContent.trim()) return;
-    setSimulating(true);
-    try {
-      await socialApi.simulateInbound({
-        platform: simPlatform,
-        authorHandle: simAuthorHandle.trim(),
-        authorName: simAuthorName.trim(),
-        content: simContent.trim(),
-        isVerified: true,
-      });
-      setIsSimulateModalOpen(false);
-      refetch();
-    } catch (err: any) {
-      console.error('Simulation failed:', err);
-    } finally {
-      setSimulating(false);
     }
   };
 
@@ -288,15 +256,6 @@ export const SocialListeningHub: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2.5">
-          {/* Quick Simulation Button */}
-          <button
-            onClick={() => setIsSimulateModalOpen(true)}
-            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            Simulate Mention
-          </button>
-
           {/* Manage Keyword Rules Button */}
           <button
             onClick={() => setIsRulesModalOpen(true)}
@@ -483,14 +442,8 @@ export const SocialListeningHub: React.FC = () => {
                 </div>
                 <h3 className="text-sm font-bold text-white">No mentions matching filters</h3>
                 <p className="text-xs text-slate-400">
-                  Try adjusting your filters, or use "Simulate Mention" to inject a live sample interaction.
+                  Try adjusting your filters or configuring your Listening Rules to capture inbound mentions.
                 </p>
-                <button
-                  onClick={() => setIsSimulateModalOpen(true)}
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow transition"
-                >
-                  Simulate Inbound Mention
-                </button>
               </div>
             ) : (
               interactions.map((interaction) => {
@@ -784,91 +737,6 @@ export const SocialListeningHub: React.FC = () => {
         onClose={() => setIsRulesModalOpen(false)}
         onRulesChanged={() => refetch()}
       />
-
-      {/* 4. Simulate Inbound Mention Modal */}
-      {isSimulateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <h3 className="text-sm font-bold text-white">Simulate Inbound Social Mention</h3>
-              </div>
-              <button
-                onClick={() => setIsSimulateModalOpen(false)}
-                className="text-slate-400 hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSimulateInbound} className="space-y-3.5">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs text-slate-300 font-semibold">Platform</label>
-                  <select
-                    value={simPlatform}
-                    onChange={(e) => setSimPlatform(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-                  >
-                    <option value="twitter">Twitter / X</option>
-                    <option value="linkedin">LinkedIn</option>
-                    <option value="facebook">Facebook</option>
-                    <option value="reddit">Reddit</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs text-slate-300 font-semibold">Author Handle</label>
-                  <input
-                    type="text"
-                    value={simAuthorHandle}
-                    onChange={(e) => setSimAuthorHandle(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs text-slate-300 font-semibold">Author Display Name</label>
-                <input
-                  type="text"
-                  value={simAuthorName}
-                  onChange={(e) => setSimAuthorName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs text-slate-300 font-semibold">Post Content</label>
-                <textarea
-                  rows={4}
-                  value={simContent}
-                  onChange={(e) => setSimContent(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 resize-none font-sans"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setIsSimulateModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={simulating}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 transition flex items-center gap-2"
-                >
-                  {simulating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                  Inject Mention
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

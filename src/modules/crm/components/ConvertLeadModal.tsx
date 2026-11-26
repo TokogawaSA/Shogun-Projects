@@ -1,17 +1,22 @@
 /**
  * VTiger-Style Lead Conversion Modal Component
- * Converts an existing Lead into Account, Contact, and optional Deal via
- * Express REST endpoint `POST /api/crm/leads/:id/convert`.
+ * Supports both B2B (Organization Account + Contact + Opportunity) and
+ * B2C (Individual Consumer Account + Consumer Contact + Optional Direct Deal)
+ * via Express REST endpoint `POST /api/crm/leads/:id/convert`.
  */
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../../services/api';
+import { CustomerSegment } from '../../../types/crmEntities';
+import { useCurrency } from '../../../context/CurrencyContext';
+import { getRecordSegment } from '../utils/customerSegment';
 import {
   X,
   UserCheck,
   Building2,
   Users,
+  User,
   Briefcase,
   Loader2,
   AlertCircle,
@@ -33,12 +38,23 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
   onConversionSuccess,
 }) => {
   const navigate = useNavigate();
+  const { currencySymbol } = useCurrency();
+
+  const initialSegment: CustomerSegment = getRecordSegment(lead);
+  const [segment, setSegment] = useState<CustomerSegment>(initialSegment);
+  const isB2C = segment === 'B2C';
+
+  const fullName = `${lead.firstName || ''} ${lead.lastName || ''}`.trim();
 
   // Account Form State
   const [accountName, setAccountName] = useState<string>(
-    lead.company || `${lead.firstName || ''} ${lead.lastName || ''} (Individual)`.trim() || 'New Account'
+    initialSegment === 'B2C'
+      ? fullName || 'Consumer Account'
+      : lead.company || `${fullName} (Individual)`.trim() || 'New Account'
   );
-  const [industry, setIndustry] = useState<string>(lead.industry || 'Technology');
+  const [industry, setIndustry] = useState<string>(
+    initialSegment === 'B2C' ? 'Consumer' : lead.industry || 'Technology'
+  );
   const [annualRevenue, setAnnualRevenue] = useState<number>(lead.annualRevenue || 0);
 
   // Contact Form State
@@ -46,16 +62,22 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
   const [firstName, setFirstName] = useState<string>(lead.firstName || '');
   const [lastName, setLastName] = useState<string>(lead.lastName || '');
   const [email, setEmail] = useState<string>(lead.email || '');
-  const [phone, setPhone] = useState<string>(lead.phone || '');
+  const [phone, setPhone] = useState<string>(lead.phone || lead.mobile || '');
   const [jobTitle, setJobTitle] = useState<string>(lead.title || '');
 
   // Deal Form State
   const [createDeal, setCreateDeal] = useState<boolean>(true);
   const [dealName, setDealName] = useState<string>(
-    `${lead.company || lead.lastName || 'Account'} - Initial Opportunity`
+    initialSegment === 'B2C'
+      ? `${fullName || 'Consumer'} - Direct Purchase`
+      : `${lead.company || lead.lastName || 'Account'} - Initial Opportunity`
   );
   const [dealAmount, setDealAmount] = useState<number>(
-    lead.annualRevenue ? Math.round(lead.annualRevenue * 0.1) : 25000
+    lead.customFields?.estimatedBudget
+      ? Number(lead.customFields.estimatedBudget)
+      : lead.annualRevenue
+        ? Math.round(lead.annualRevenue * 0.1)
+        : 25000
   );
   const [dealStage, setDealStage] = useState<string>('qualification');
   const [closingDate, setClosingDate] = useState<string>(
@@ -67,6 +89,23 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
 
   if (!isOpen) return null;
 
+  const handleSegmentSwitch = (nextSegment: CustomerSegment) => {
+    setSegment(nextSegment);
+    if (nextSegment === 'B2C') {
+      setAccountName(fullName || 'Consumer Account');
+      setIndustry('Consumer');
+      setDealName(`${fullName || 'Consumer'} - Direct Purchase`);
+    } else {
+      setAccountName(
+        lead.company && lead.company.toLowerCase() !== 'individual'
+          ? lead.company
+          : fullName || 'New Account'
+      );
+      setIndustry(lead.industry || 'Technology');
+      setDealName(`${lead.company || lead.lastName || 'Account'} - Initial Opportunity`);
+    }
+  };
+
   const handleConvert = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!lead.id) return;
@@ -77,15 +116,16 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
     const payload = {
       createAccount: true,
       accountName: accountName.trim(),
-      industry,
-      annualRevenue: Number(annualRevenue) || 0,
+      industry: isB2C ? 'Consumer' : industry,
+      annualRevenue: isB2C ? 0 : Number(annualRevenue) || 0,
       createContact: true,
       salutation,
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       email: email.trim(),
       phone: phone.trim(),
-      jobTitle: jobTitle.trim(),
+      jobTitle: isB2C ? undefined : jobTitle.trim(),
+      department: isB2C ? 'Consumer' : 'Management',
       createDeal,
       dealName: createDeal ? dealName.trim() : undefined,
       dealAmount: createDeal ? Number(dealAmount) || 0 : undefined,
@@ -97,12 +137,55 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
       const response = await apiClient.post<any>(`/crm/leads/${lead.id}/convert`, payload);
       const { accountId, contactId, dealId } = response;
 
+      // Sync B2B / B2C segment & consumer customFields onto the newly created records
+      const sharedCustomFields: Record<string, any> = {
+        ...(lead.customFields || {}),
+        customerSegment: segment,
+      };
+
+      const syncTasks: Promise<any>[] = [];
+      if (accountId) {
+        syncTasks.push(
+          apiClient
+            .put(`/crm/accounts/${accountId}`, {
+              accountType: isB2C ? 'individual' : 'customer',
+              customFields: sharedCustomFields,
+            })
+            .catch(() => { })
+        );
+      }
+      if (contactId) {
+        syncTasks.push(
+          apiClient
+            .put(`/crm/contacts/${contactId}`, {
+              customFields: sharedCustomFields,
+            })
+            .catch(() => { })
+        );
+      }
+      if (dealId) {
+        syncTasks.push(
+          apiClient
+            .put(`/crm/deals/${dealId}`, {
+              dealType: isB2C ? 'b2c_direct' : 'new_business',
+              customFields: { customerSegment: segment },
+            })
+            .catch(() => { })
+        );
+      }
+
+      if (syncTasks.length > 0) {
+        await Promise.all(syncTasks);
+      }
+
       setIsSubmitting(false);
       if (onConversionSuccess) {
         onConversionSuccess({ accountId, contactId, dealId });
       }
       onClose();
-      if (accountId) {
+      if (isB2C && contactId) {
+        navigate(`/crm/contacts/${contactId}`);
+      } else if (accountId) {
         navigate(`/crm/accounts/${accountId}`);
       }
     } catch (err: any) {
@@ -127,7 +210,9 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
                 <Sparkles className="w-4 h-4 text-emerald-400" />
               </h2>
               <p className="text-xs text-slate-400">
-                Transform this prospect into an Account, Contact, and Opportunity in one relational transaction.
+                {isB2C
+                  ? 'Convert into a B2C Consumer Profile, Contact, and optional Direct Deal.'
+                  : 'Transform this prospect into a B2B Account, Contact, and Opportunity in one transaction.'}
               </p>
             </div>
           </div>
@@ -149,15 +234,54 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
             </div>
           )}
 
+          {/* B2B / B2C Conversion Mode Switcher */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => handleSegmentSwitch('B2B')}
+              className={`flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all ${!isB2C
+                  ? 'bg-indigo-600/20 border-indigo-500/50 text-indigo-200 shadow-lg shadow-indigo-500/10'
+                  : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                }`}
+            >
+              <div className={`p-2 rounded-xl ${!isB2C ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-800 text-slate-400'}`}>
+                <Building2 className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-bold">B2B Organization</div>
+                <div className="text-[11px] opacity-75">Company account + stakeholder</div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSegmentSwitch('B2C')}
+              className={`flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all ${isB2C
+                  ? 'bg-teal-600/20 border-teal-500/50 text-teal-200 shadow-lg shadow-teal-500/10'
+                  : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                }`}
+            >
+              <div className={`p-2 rounded-xl ${isB2C ? 'bg-teal-500/20 text-teal-300' : 'bg-slate-800 text-slate-400'}`}>
+                <User className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-bold">B2C Individual</div>
+                <div className="text-[11px] opacity-75">Consumer profile + direct buyer</div>
+              </div>
+            </button>
+          </div>
+
           {/* Section 1: Account Creation */}
           <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/90 space-y-3">
             <div className="flex items-center gap-2 text-xs font-semibold text-indigo-300">
-              <Building2 className="w-4 h-4" />
-              <span>1. Account Organization</span>
+              {isB2C ? <User className="w-4 h-4 text-teal-400" /> : <Building2 className="w-4 h-4" />}
+              <span>{isB2C ? '1. Consumer Account (Individual Profile)' : '1. Account Organization'}</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div className={`grid grid-cols-1 ${isB2C ? 'sm:grid-cols-1' : 'sm:grid-cols-3'} gap-3 text-xs`}>
               <div>
-                <label className="text-slate-400 block mb-1">Account Name *</label>
+                <label className="text-slate-400 block mb-1">
+                  {isB2C ? 'Consumer Profile Name *' : 'Account Name *'}
+                </label>
                 <input
                   type="text"
                   value={accountName}
@@ -166,24 +290,28 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
                   className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
                 />
               </div>
-              <div>
-                <label className="text-slate-400 block mb-1">Industry</label>
-                <input
-                  type="text"
-                  value={industry}
-                  onChange={(e) => setIndustry(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-              <div>
-                <label className="text-slate-400 block mb-1">Annual Revenue ($)</label>
-                <input
-                  type="number"
-                  value={annualRevenue}
-                  onChange={(e) => setAnnualRevenue(Number(e.target.value))}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-                />
-              </div>
+              {!isB2C && (
+                <>
+                  <div>
+                    <label className="text-slate-400 block mb-1">Industry</label>
+                    <input
+                      type="text"
+                      value={industry}
+                      onChange={(e) => setIndustry(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-slate-400 block mb-1">Annual Revenue ({currencySymbol})</label>
+                    <input
+                      type="number"
+                      value={annualRevenue}
+                      onChange={(e) => setAnnualRevenue(Number(e.target.value))}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -191,7 +319,7 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
           <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/90 space-y-3">
             <div className="flex items-center gap-2 text-xs font-semibold text-indigo-300">
               <Users className="w-4 h-4" />
-              <span>2. Primary Contact Person</span>
+              <span>{isB2C ? '2. Consumer Contact Details' : '2. Primary Contact Person'}</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               <div>
@@ -230,7 +358,7 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1">
+            <div className={`grid grid-cols-1 ${isB2C ? 'sm:grid-cols-2' : 'sm:grid-cols-3'} gap-3 text-xs pt-1`}>
               <div>
                 <label className="text-slate-400 block mb-1">Email *</label>
                 <input
@@ -242,7 +370,7 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
                 />
               </div>
               <div>
-                <label className="text-slate-400 block mb-1">Phone</label>
+                <label className="text-slate-400 block mb-1">Phone / Mobile</label>
                 <input
                   type="tel"
                   value={phone}
@@ -250,15 +378,17 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
                   className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200"
                 />
               </div>
-              <div>
-                <label className="text-slate-400 block mb-1">Job Title</label>
-                <input
-                  type="text"
-                  value={jobTitle}
-                  onChange={(e) => setJobTitle(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200"
-                />
-              </div>
+              {!isB2C && (
+                <div>
+                  <label className="text-slate-400 block mb-1">Job Title</label>
+                  <input
+                    type="text"
+                    value={jobTitle}
+                    onChange={(e) => setJobTitle(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -267,7 +397,7 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs font-semibold text-indigo-300">
                 <Briefcase className="w-4 h-4" />
-                <span>3. Opportunity / Deal (Optional)</span>
+                <span>{isB2C ? '3. Direct Consumer Deal / Order (Optional)' : '3. Opportunity / Deal (Optional)'}</span>
               </div>
               <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
                 <input
@@ -293,7 +423,7 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-slate-400 block mb-1">Amount ($) *</label>
+                  <label className="text-slate-400 block mb-1">Amount ({currencySymbol}) *</label>
                   <input
                     type="number"
                     value={dealAmount}
@@ -349,12 +479,12 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Converting Lead...
+                  Converting {segment} Lead...
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="w-4 h-4" />
-                  Complete Conversion
+                  Complete {segment} Conversion
                 </>
               )}
             </button>

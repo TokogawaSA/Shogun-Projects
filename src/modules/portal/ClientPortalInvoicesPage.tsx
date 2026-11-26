@@ -8,8 +8,6 @@ import {
   AlertCircle,
   CreditCard,
   RefreshCw,
-  Plus,
-  Loader2,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { apiClient, TOKEN_STORAGE_KEY } from '../../services/api';
@@ -24,7 +22,6 @@ export const ClientPortalInvoicesPage: React.FC = () => {
 
   const [invoices, setInvoices] = useState<TaxInvoice[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [creatingDemo, setCreatingDemo] = useState<boolean>(false);
   const [selectedInvoice, setSelectedInvoice] = useState<TaxInvoice | null>(null);
   const [activeTxStatus, setActiveTxStatus] = useState<{
     merchantTransactionId: string;
@@ -116,21 +113,6 @@ export const ClientPortalInvoicesPage: React.FC = () => {
     };
   }, [loadInvoices]);
 
-  const handleIssueSampleTaxInvoice = async () => {
-    setCreatingDemo(true);
-    try {
-      await apiClient.post('/catalog/tax-invoices', {
-        amount: 12500,
-        taxMode: 'EXCLUSIVE',
-        currency: 'ZAR',
-        status: 'ISSUED',
-      });
-      await loadInvoices();
-    } finally {
-      setCreatingDemo(false);
-    }
-  };
-
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
       {/* Header */}
@@ -157,19 +139,6 @@ export const ClientPortalInvoicesPage: React.FC = () => {
             <RefreshCw className={clsx('w-3.5 h-3.5', loading && 'animate-spin')} />
             <span>Refresh</span>
           </button>
-          <button
-            type="button"
-            onClick={handleIssueSampleTaxInvoice}
-            disabled={creatingDemo}
-            className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5"
-          >
-            {creatingDemo ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Plus className="w-3.5 h-3.5" />
-            )}
-            <span>Issue ZAR Tax Invoice</span>
-          </button>
         </div>
       </div>
 
@@ -181,8 +150,8 @@ export const ClientPortalInvoicesPage: React.FC = () => {
             activeTxStatus.status === 'SUCCEEDED'
               ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-200'
               : activeTxStatus.status === 'PENDING'
-              ? 'bg-amber-950/60 border-amber-500/40 text-amber-200'
-              : 'bg-rose-950/60 border-rose-500/40 text-rose-200'
+                ? 'bg-amber-950/60 border-amber-500/40 text-amber-200'
+                : 'bg-rose-950/60 border-rose-500/40 text-rose-200'
           )}
         >
           <div className="flex items-center gap-3 text-xs">
@@ -198,8 +167,8 @@ export const ClientPortalInvoicesPage: React.FC = () => {
                 {activeTxStatus.status === 'SUCCEEDED'
                   ? `Payment Confirmed (${formatSaQuoteCurrency(activeTxStatus.amount, 'ZAR')})`
                   : activeTxStatus.status === 'PENDING'
-                  ? 'Awaiting Bank / PayShap Settlement Confirmation...'
-                  : 'Payment Declined or Cancelled'}
+                    ? 'Awaiting Bank / PayShap Settlement Confirmation...'
+                    : 'Payment Declined or Cancelled'}
               </p>
               <p className="font-mono text-[11px] opacity-80">
                 Ref: {activeTxStatus.merchantTransactionId}
@@ -237,7 +206,7 @@ export const ClientPortalInvoicesPage: React.FC = () => {
               ) : invoices.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-slate-400">
-                    No SARS Tax Invoices issued yet. Click "Issue ZAR Tax Invoice" above to stage one.
+                    No SARS Tax Invoices have been issued yet.
                   </td>
                 </tr>
               ) : (
@@ -255,8 +224,8 @@ export const ClientPortalInvoicesPage: React.FC = () => {
                             inv.status === 'PAID'
                               ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                               : inv.status === 'PARTIALLY_PAID'
-                              ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                              : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
+                                ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                                : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
                           )}
                         >
                           {inv.status}

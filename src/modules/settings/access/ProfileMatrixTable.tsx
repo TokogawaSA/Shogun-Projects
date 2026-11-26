@@ -55,66 +55,7 @@ export const ProfileMatrixTable: React.FC = () => {
             setSelectedProfileId(res[0].id);
           }
         } else if (isMounted) {
-          const defaultProfiles: Profile[] = [
-            {
-              id: 'admin_profile',
-              name: 'System Administrator Profile',
-              description: 'Unrestricted full access to all tenant modules and field layouts',
-              modulePermissions: {
-                projects: { view: true, create: true, edit: true, delete: true },
-                tasks: { view: true, create: true, edit: true, delete: true },
-                accounts: { view: true, create: true, edit: true, delete: true },
-                contacts: { view: true, create: true, edit: true, delete: true },
-                deals: { view: true, create: true, edit: true, delete: true },
-              },
-              fieldPermissions: {
-                deals: { value: 'read_write', winProbability: 'read_write' },
-                accounts: { 'billingDetails.currency': 'read_write' },
-                projects: {},
-                tasks: {},
-                contacts: {},
-              },
-            },
-            {
-              id: 'standard_profile',
-              name: 'Standard Executive Profile',
-              description: 'Standard day-to-day operations with restricted record deletion',
-              modulePermissions: {
-                projects: { view: true, create: true, edit: true, delete: false },
-                tasks: { view: true, create: true, edit: true, delete: true },
-                accounts: { view: true, create: true, edit: true, delete: false },
-                contacts: { view: true, create: true, edit: true, delete: false },
-                deals: { view: true, create: true, edit: true, delete: false },
-              },
-              fieldPermissions: {
-                deals: { value: 'read_only', winProbability: 'read_write' },
-                accounts: { 'billingDetails.currency': 'read_only' },
-                projects: {},
-                tasks: {},
-                contacts: {},
-              },
-            },
-            {
-              id: 'support_profile',
-              name: 'Field Support Specialist',
-              description: 'Read-only pipeline access and assigned task updating',
-              modulePermissions: {
-                projects: { view: true, create: false, edit: false, delete: false },
-                tasks: { view: true, create: true, edit: true, delete: false },
-                accounts: { view: true, create: false, edit: false, delete: false },
-                contacts: { view: true, create: false, edit: false, delete: false },
-                deals: { view: true, create: false, edit: false, delete: false },
-              },
-              fieldPermissions: {
-                deals: { value: 'hidden', winProbability: 'hidden' },
-                accounts: {},
-                projects: {},
-                tasks: {},
-                contacts: {},
-              },
-            },
-          ];
-          setProfiles(defaultProfiles);
+          setProfiles([]);
         }
       } catch {
         // Continue
@@ -246,21 +187,19 @@ export const ProfileMatrixTable: React.FC = () => {
         <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 gap-1">
           <button
             onClick={() => setActiveTab('module_crud')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              activeTab === 'module_crud'
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${activeTab === 'module_crud'
                 ? 'bg-sky-600 text-white shadow-md shadow-sky-600/20'
                 : 'text-slate-400 hover:text-white'
-            }`}
+              }`}
           >
             Module CRUD Privileges
           </button>
           <button
             onClick={() => setActiveTab('field_security')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              activeTab === 'field_security'
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${activeTab === 'field_security'
                 ? 'bg-sky-600 text-white shadow-md shadow-sky-600/20'
                 : 'text-slate-400 hover:text-white'
-            }`}
+              }`}
           >
             Field-Level Security
           </button>

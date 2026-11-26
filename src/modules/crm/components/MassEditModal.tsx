@@ -13,6 +13,7 @@ export interface MassEditModalProps {
   onClose: () => void;
   moduleName: EntityModuleName;
   selectedIds: string[];
+  selectedRecords?: Record<string, any>[];
   fields: FieldDefinition[];
   onSuccess: () => void;
 }
@@ -22,6 +23,7 @@ export const MassEditModal: React.FC<MassEditModalProps> = ({
   onClose,
   moduleName,
   selectedIds,
+  selectedRecords = [],
   fields,
   onSuccess,
 }) => {
@@ -76,13 +78,26 @@ export const MassEditModal: React.FC<MassEditModalProps> = ({
     setError(null);
 
     try {
+      const recordMap = new Map(selectedRecords.map((r) => [r.id, r]));
       await Promise.all(
-        selectedIds.map((recordId) =>
-          apiClient.put(`/crm/${moduleName}/${recordId}`, {
-            [selectedFieldName]: fieldValue,
+        selectedIds.map((recordId) => {
+          const payload: Record<string, any> = {
             updatedAt: new Date().toISOString(),
-          }).catch(() => {})
-        )
+          };
+
+          if (selectedFieldName.startsWith('customFields.')) {
+            const customKey = selectedFieldName.slice('customFields.'.length);
+            const existingCustom = recordMap.get(recordId)?.customFields || {};
+            payload.customFields = {
+              ...existingCustom,
+              [customKey]: fieldValue,
+            };
+          } else {
+            payload[selectedFieldName] = fieldValue;
+          }
+
+          return apiClient.put(`/crm/${moduleName}/${recordId}`, payload).catch(() => { });
+        })
       );
 
       setIsUpdating(false);

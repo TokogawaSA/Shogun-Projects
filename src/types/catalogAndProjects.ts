@@ -58,12 +58,59 @@ export interface PriceBook {
   updatedAt?: string;
 }
 
+export interface BusinessDetails {
+  companyName: string;
+  registrationNumber?: string;
+  vatNumber?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  address?: string;
+  bankName?: string;
+  accountHolder?: string;
+  accountNumber?: string;
+  branchCode?: string;
+  swiftCode?: string;
+}
+
+export interface ClientBillingDetails {
+  accountId?: string | null;
+  contactId?: string | null;
+  clientName: string;
+  contactName?: string;
+  email?: string;
+  phone?: string;
+  vatNumber?: string;
+  registrationNumber?: string;
+  billingAddress?: string;
+}
+
+export type PaymentTermsPreset =
+  | 'due_on_receipt'
+  | 'net_7'
+  | 'net_14'
+  | 'net_30'
+  | 'net_60'
+  | 'custom';
+
+export interface InvoicePaymentRecord {
+  id: string;
+  amount: number;
+  paymentDate: string;
+  paymentMethod: 'EFT' | 'PAYSHAP' | 'CARD' | 'CASH' | 'OTHER' | string;
+  reference?: string;
+  notes?: string;
+  recordedAt: string;
+}
+
 export interface LineItem {
   id: string;
   productId: string;
+  sku?: string;
   productName: string;
   type: ProductOrServiceType;
   quantity: number;
+  unitLabel?: 'units' | 'hrs' | 'days' | 'months' | 'fixed' | string;
   unitPrice: number;
   costPrice?: number;
   sourceCurrency?: SupportedQuoteCurrency;
@@ -76,7 +123,13 @@ export interface LineItem {
   notes?: string;
 }
 
-export type QuoteStatus = 'draft' | 'presented' | 'approved' | 'rejected' | 'converted';
+export type QuoteStatus =
+  | 'draft'
+  | 'presented'
+  | 'approved'
+  | 'invoiced'
+  | 'rejected'
+  | 'converted';
 
 export interface Quote {
   id: string;
@@ -105,7 +158,17 @@ export interface Quote {
   subtotalExclVat?: number;
   vatAmount?: number;
   totalInclVat?: number;
+  issueDate?: string;
   validUntil?: string;
+  deliveryDate?: string;
+  referenceNumber?: string;
+  scopeSummary?: string;
+  businessDetails?: BusinessDetails;
+  clientDetails?: ClientBillingDetails;
+  paymentTerms?: string;
+  termsAndConditions?: string;
+  linkedInvoiceId?: string | null;
+  linkedInvoiceNumber?: string | null;
   notes?: string;
   createdAt: string;
   updatedAt: string;
@@ -117,16 +180,34 @@ export interface TaxInvoice {
   id: string;
   tenantId: string;
   invoiceNumber: string;
+  title?: string;
   accountId?: string | null;
   projectId?: string | null;
   quoteId?: string | null;
+  quoteNumber?: string | null;
+  poNumber?: string | null;
   status: TaxInvoiceStatus;
   currency: SupportedQuoteCurrency;
+  taxMode?: SaTaxMode;
+  vatRate?: number;
+  exchangeRateToZar?: number;
+  discountTotal?: number;
   subtotalExclVat: number;
   vatAmount: number;
   totalInclVat: number;
   amountPaid: number;
+  issueDate?: string;
+  supplyDate?: string;
   dueDate: string;
+  paymentTermsPreset?: PaymentTermsPreset;
+  lineItems?: LineItem[];
+  scopeSummary?: string;
+  businessDetails?: BusinessDetails;
+  clientDetails?: ClientBillingDetails;
+  paymentTerms?: string;
+  termsAndConditions?: string;
+  notes?: string;
+  payments?: InvoicePaymentRecord[];
   externalAccountingProvider?: 'SAGE_ZA' | 'XERO' | null;
   externalAccountingId?: string | null;
   lastSyncedAt?: string | null;

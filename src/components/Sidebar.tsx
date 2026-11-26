@@ -13,7 +13,7 @@ import {
   Layers,
   Briefcase,
   Boxes,
-  BookOpen,
+  Receipt,
   FileSpreadsheet,
   LogOut,
   Radio,
@@ -44,9 +44,8 @@ export const Sidebar: React.FC = () => {
 
   const catalogItems = [
     { to: '/catalog', label: 'Products & Services', icon: Boxes },
-    { to: '/catalog/price-books', label: 'Price Books & Tiers', icon: BookOpen },
     { to: '/catalog/quotes', label: 'Quote Builder & Scopes', icon: FileSpreadsheet },
-    { to: '/portal/invoices', label: 'Client Portal (ZAR Pay)', icon: DollarSign },
+    { to: '/catalog/invoices', label: 'Invoices & Billing', icon: Receipt },
   ];
 
   const systemItems = [

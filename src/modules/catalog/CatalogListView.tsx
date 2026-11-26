@@ -15,7 +15,8 @@ import {
   XCircle, 
   Trash2, 
   DollarSign, 
-  BookOpen, 
+  FileSpreadsheet,
+  Receipt,
   TrendingUp, 
   RefreshCw, 
   Edit3, 
@@ -149,11 +150,19 @@ export const CatalogListView: React.FC = () => {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/catalog/price-books')}
+            onClick={() => navigate('/catalog/quotes')}
             className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700 transition flex items-center gap-2 shadow-sm"
           >
-            <BookOpen className="w-4 h-4 text-violet-400" />
-            Price Books Tier Engine
+            <FileSpreadsheet className="w-4 h-4 text-indigo-400" />
+            Quote Builder
+          </button>
+
+          <button
+            onClick={() => navigate('/catalog/invoices')}
+            className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700 transition flex items-center gap-2 shadow-sm"
+          >
+            <Receipt className="w-4 h-4 text-emerald-400" />
+            Invoices & Billing
           </button>
 
           <button

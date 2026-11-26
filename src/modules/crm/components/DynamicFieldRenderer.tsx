@@ -6,14 +6,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Mail, 
-  Phone, 
-  ExternalLink, 
-  Building2, 
-  User as UserIcon, 
+import {
+  Mail,
+  Phone,
+  ExternalLink,
+  Building2,
+  User as UserIcon,
   Coins,
-  Calendar, 
+  Calendar,
   Percent,
   CheckCircle2,
   XCircle,
@@ -71,6 +71,28 @@ const getBadgeClasses = (val: string, customColor?: string): string => {
       return 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30';
     case 'prospecting':
       return 'bg-purple-500/20 text-purple-300 border-purple-500/30';
+
+    // Customer Segment & B2B/B2C Types
+    case 'b2b':
+    case 'b2b_enterprise':
+    case 'b2b_smb':
+      return 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30 font-semibold';
+    case 'b2c':
+    case 'b2c_direct':
+    case 'b2c_subscription':
+    case 'individual':
+    case 'consumer':
+    case 'household':
+      return 'bg-teal-500/20 text-teal-300 border-teal-500/30 font-semibold';
+
+    // B2C Channels & Loyalty Tiers
+    case 'whatsapp':
+      return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+    case 'vip':
+    case 'gold':
+      return 'bg-amber-500/20 text-amber-300 border-amber-500/30 font-medium';
+    case 'silver':
+      return 'bg-slate-400/20 text-slate-200 border-slate-400/30';
 
     // Account Types
     case 'customer':
@@ -161,7 +183,7 @@ export const DynamicFieldRenderer: React.FC<DynamicFieldRendererProps> = ({
   const effectiveReadOnly = isReadOnly || field.isReadOnly;
 
   // Normalized picklist options
-  const picklistOptions: { label: string; value: string; color?: string }[] = 
+  const picklistOptions: { label: string; value: string; color?: string }[] =
     (field.picklistValues || []).map((opt) => {
       if (typeof opt === 'string') {
         const formattedLabel = opt.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -220,11 +242,10 @@ export const DynamicFieldRenderer: React.FC<DynamicFieldRendererProps> = ({
                             setDraftValue([...currentArr, opt.value]);
                           }
                         }}
-                        className={`text-xs px-2 py-0.5 rounded border transition-all ${
-                          isSelected
+                        className={`text-xs px-2 py-0.5 rounded border transition-all ${isSelected
                             ? 'bg-indigo-600/30 text-indigo-200 border-indigo-500/50'
                             : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'
-                        }`}
+                          }`}
                       >
                         {opt.label}
                       </button>
@@ -529,16 +550,22 @@ export const DynamicFieldRenderer: React.FC<DynamicFieldRendererProps> = ({
 
           case 'reference': {
             const targetModule = field.referenceModule || 'accounts';
+            const targetId =
+              field.name === 'accountName'
+                ? record.accountId || value
+                : field.name === 'contactName'
+                  ? record.contactId || value
+                  : value;
             const displayName =
               field.name === 'accountId'
-                ? record.accountName || value
+                ? record.accountName || record.account?.accountName || value
                 : field.name === 'contactId'
-                ? record.contactName || value
-                : record[`${field.name}Name`] || value;
+                  ? record.contactName || value
+                  : record[`${field.name}Name`] || value;
 
             return (
               <Link
-                to={`/crm/${targetModule}/${value}`}
+                to={`/crm/${targetModule}/${targetId}`}
                 onClick={(e) => e.stopPropagation()}
                 className="inline-flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 hover:underline font-medium"
               >

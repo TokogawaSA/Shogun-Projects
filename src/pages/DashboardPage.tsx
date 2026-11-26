@@ -1,26 +1,121 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Server,
-  Database,
-  Workflow,
+  FolderKanban,
+  CheckSquare,
+  Building2,
+  Briefcase,
   CheckCircle2,
   Clock,
-  Bot
 } from 'lucide-react';
+import { apiClient } from '../services/api';
+
+interface DashboardCounts {
+  projects: number;
+  tasks: number;
+  accounts: number;
+  deals: number;
+}
+
+interface ActivityItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  timestamp: string;
+}
 
 export const DashboardPage: React.FC = () => {
-  const stats = [
-    { label: 'Active Agent Workers', value: '4 Sentinel / 2 Workers', change: '+2 active', icon: Bot, color: 'text-indigo-600', bg: 'bg-indigo-50 border border-indigo-200/60' },
-    { label: 'Database Entities', value: '14 Synced', change: 'REST Live', icon: Database, color: 'text-emerald-600', bg: 'bg-emerald-50 border border-emerald-200/60' },
-    { label: 'MCP Pipelines', value: '5 Tools Exposed', change: 'MCP OK', icon: Workflow, color: 'text-amber-600', bg: 'bg-amber-50 border border-amber-200/60' },
-    { label: 'API Services', value: '12 Endpoints', change: 'Node 22 / Express', icon: Server, color: 'text-violet-600', bg: 'bg-violet-50 border border-violet-200/60' },
-  ];
+  const [counts, setCounts] = useState<DashboardCounts>({
+    projects: 0,
+    tasks: 0,
+    accounts: 0,
+    deals: 0,
+  });
+  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const recentEvents = [
-    { title: 'REST API Client Connected', time: '2 mins ago', status: 'success', agent: 'Sentinel Subagent' },
-    { title: 'Antigravity MCP Server Initialized', time: '8 mins ago', status: 'success', agent: 'Antigravity IDE' },
-    { title: 'React 19 + Vite Multi-Page Scaffold Built', time: '14 mins ago', status: 'success', agent: 'Worker Subagent' },
-    { title: 'Global Rule Verification & Security Audit Pass', time: '22 mins ago', status: 'info', agent: 'Auditor Subagent' },
+  useEffect(() => {
+    let mounted = true;
+
+    const loadDashboard = async () => {
+      setLoading(true);
+      try {
+        const [projectsRes, tasksRes, accountsRes, dealsRes] = await Promise.all([
+          apiClient.get<any[]>('/projects').catch(() => []),
+          apiClient.get<any[]>('/projects/tasks/all').catch(() => []),
+          apiClient.get<any[]>('/crm/accounts').catch(() => []),
+          apiClient.get<any[]>('/crm/deals').catch(() => []),
+        ]);
+
+        if (!mounted) return;
+
+        const projects = Array.isArray(projectsRes) ? projectsRes : [];
+        const tasks = Array.isArray(tasksRes) ? tasksRes : [];
+        const accounts = Array.isArray(accountsRes) ? accountsRes : [];
+        const deals = Array.isArray(dealsRes) ? dealsRes : [];
+
+        setCounts({
+          projects: projects.length,
+          tasks: tasks.length,
+          accounts: accounts.length,
+          deals: deals.length,
+        });
+
+        const latestTasks: ActivityItem[] = tasks
+          .slice(0, 6)
+          .map((t: any) => ({
+            id: t.id,
+            title: t.title || 'Untitled Task',
+            subtitle: `Status: ${t.status || 'todo'}`,
+            timestamp: t.updatedAt
+              ? new Date(t.updatedAt).toLocaleDateString()
+              : '',
+          }));
+
+        setRecentActivity(latestTasks);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    void loadDashboard();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const stats = [
+    {
+      label: 'Active Projects',
+      value: loading ? '—' : String(counts.projects),
+      change: 'Workspace Live',
+      icon: FolderKanban,
+      color: 'text-indigo-600',
+      bg: 'bg-indigo-50 border border-indigo-200/60',
+    },
+    {
+      label: 'Tracked Tasks',
+      value: loading ? '—' : String(counts.tasks),
+      change: 'REST Live',
+      icon: CheckSquare,
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-50 border border-emerald-200/60',
+    },
+    {
+      label: 'CRM Accounts',
+      value: loading ? '—' : String(counts.accounts),
+      change: 'Tenant Scoped',
+      icon: Building2,
+      color: 'text-amber-600',
+      bg: 'bg-amber-50 border border-amber-200/60',
+    },
+    {
+      label: 'Pipeline Deals',
+      value: loading ? '—' : String(counts.deals),
+      change: 'CRM Live',
+      icon: Briefcase,
+      color: 'text-violet-600',
+      bg: 'bg-violet-50 border border-violet-200/60',
+    },
   ];
 
   return (
@@ -48,74 +143,38 @@ export const DashboardPage: React.FC = () => {
         })}
       </div>
 
-      {/* Dual Architecture Banner */}
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-50 via-white to-violet-50/50 border border-indigo-200/80 shadow-sm glass-panel">
-        <div className="max-w-3xl space-y-3">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-indigo-100 text-indigo-700 text-xs font-semibold uppercase tracking-wider border border-indigo-200">
-            Antigravity 2.0 Dual-Wield Architecture
-          </div>
-          <h3 className="text-xl font-bold text-slate-100 tracking-tight">
-            High-Velocity Parallel Multi-Agent Orchestration & Clean React 19 Frontend
-          </h3>
-          <p className="text-sm text-slate-300 leading-relaxed">
-            Developers dual-wield the standalone Antigravity 2.0 Desktop app for background sweeps and automated tests while actively authoring in the Antigravity IDE. Real-time changes synchronize across REST and MCP endpoints.
+      {/* Live Workspace Activity Log */}
+      <div className="glass-panel p-6 rounded-xl border border-slate-700 bg-slate-900 shadow-sm">
+        <h4 className="text-sm font-bold text-slate-100 mb-4 flex items-center justify-between">
+          <span>Recent Workspace Activity</span>
+          <span className="text-xs font-normal text-slate-400 font-mono">Live Data</span>
+        </h4>
+        {loading ? (
+          <p className="text-xs text-slate-400 py-6 text-center">Loading workspace activity...</p>
+        ) : recentActivity.length === 0 ? (
+          <p className="text-xs text-slate-400 py-6 text-center">
+            No workspace activity recorded yet. Create a project or task to get started.
           </p>
-        </div>
-      </div>
-
-      {/* Live System Log & Agent Status */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 glass-panel p-6 rounded-xl border border-slate-700 bg-slate-900 shadow-sm">
-          <h4 className="text-sm font-bold text-slate-100 mb-4 flex items-center justify-between">
-            <span>Agentic Orchestration Activity Log</span>
-            <span className="text-xs font-normal text-slate-400 font-mono">Live Telemetry</span>
-          </h4>
+        ) : (
           <div className="space-y-3">
-            {recentEvents.map((evt, idx) => (
-              <div key={idx} className="p-3.5 rounded-lg bg-slate-800/70 border border-slate-700 flex items-center justify-between hover:bg-slate-800 transition">
+            {recentActivity.map((evt) => (
+              <div key={evt.id} className="p-3.5 rounded-lg bg-slate-800/70 border border-slate-700 flex items-center justify-between hover:bg-slate-800 transition">
                 <div className="flex items-center gap-3">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-semibold text-slate-100">{evt.title}</p>
-                    <p className="text-xs text-slate-400">Triggered by: <span className="text-indigo-600 font-mono font-medium">{evt.agent}</span></p>
+                    <p className="text-xs text-slate-400">{evt.subtitle}</p>
                   </div>
                 </div>
-                <span className="text-xs text-slate-400 flex items-center gap-1 font-mono">
-                  <Clock className="w-3 h-3" /> {evt.time}
-                </span>
+                {evt.timestamp && (
+                  <span className="text-xs text-slate-400 flex items-center gap-1 font-mono">
+                    <Clock className="w-3 h-3" /> {evt.timestamp}
+                  </span>
+                )}
               </div>
             ))}
           </div>
-        </div>
-
-        <div className="glass-panel p-6 rounded-xl border border-slate-700 bg-slate-900 shadow-sm space-y-4">
-          <h4 className="text-sm font-bold text-slate-100">Subagent Matrix</h4>
-          <div className="space-y-3">
-            <div className="p-3 rounded-lg bg-slate-800/70 border border-slate-700">
-              <div className="flex justify-between items-center text-xs font-semibold text-indigo-700">
-                <span>Sentinel Subagent</span>
-                <span className="text-emerald-600 font-medium">Active</span>
-              </div>
-              <p className="text-[11px] text-slate-300 mt-1">Evaluates form structures, logic flows, and database schemas.</p>
-            </div>
-
-            <div className="p-3 rounded-lg bg-slate-800/70 border border-slate-700">
-              <div className="flex justify-between items-center text-xs font-semibold text-indigo-700">
-                <span>Worker Subagent</span>
-                <span className="text-emerald-600 font-medium">Active</span>
-              </div>
-              <p className="text-[11px] text-slate-300 mt-1">Generates namespaced PHP/TS files, custom REST paths, and React components.</p>
-            </div>
-
-            <div className="p-3 rounded-lg bg-slate-800/70 border border-slate-700">
-              <div className="flex justify-between items-center text-xs font-semibold text-indigo-700">
-                <span>Auditor Subagent</span>
-                <span className="text-emerald-600 font-medium">Active</span>
-              </div>
-              <p className="text-[11px] text-slate-300 mt-1">Inspects security layers, nonces, sanitizations, and MCP policies.</p>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -15,7 +15,8 @@ import {
   Loader2,
   Calendar as CalendarIcon,
   GanttChartSquare,
-  Clock
+  Clock,
+  Receipt,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useProject } from '../../context/ProjectContext';
@@ -31,8 +32,9 @@ import { TaskDetailModal } from './components/TaskDetailModal';
 import { CreateTaskModal } from './components/CreateTaskModal';
 import { ColumnConfigModal } from './components/ColumnConfigModal';
 import { ContextualBookingsPanel } from '../scheduler/components/ContextualBookingsPanel';
+import { ContextualBillingPanel } from '../catalog/components/ContextualBillingPanel';
 
-type WorkspaceTab = 'board' | 'list' | 'gantt' | 'timesheets' | 'milestones' | 'overview' | 'bookings';
+type WorkspaceTab = 'board' | 'list' | 'gantt' | 'timesheets' | 'milestones' | 'overview' | 'bookings' | 'billing';
 
 export const ProjectWorkspace: React.FC = () => {
   const { id: urlProjectId } = useParams<{ id: string }>();
@@ -49,7 +51,7 @@ export const ProjectWorkspace: React.FC = () => {
 
   // Core State
   const [activeTab, setActiveTab] = useState<WorkspaceTab>(() => {
-    if (tabParam && ['board', 'list', 'gantt', 'timesheets', 'milestones', 'overview', 'bookings'].includes(tabParam)) {
+    if (tabParam && ['board', 'list', 'gantt', 'timesheets', 'milestones', 'overview', 'bookings', 'billing'].includes(tabParam)) {
       return tabParam;
     }
     if (location.pathname.includes('/gantt')) {
@@ -465,6 +467,19 @@ export const ProjectWorkspace: React.FC = () => {
             <CalendarIcon className="w-3.5 h-3.5" />
             <span>Meetings & Bookings</span>
           </button>
+
+          <button
+            onClick={() => handleTabChange('billing')}
+            className={clsx(
+              'flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all duration-150',
+              activeTab === 'billing'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-semibold ring-1 ring-indigo-400/40'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            )}
+          >
+            <Receipt className="w-3.5 h-3.5" />
+            <span>Quotes & Invoices</span>
+          </button>
         </div>
       </div>
 
@@ -557,6 +572,15 @@ export const ProjectWorkspace: React.FC = () => {
             <ContextualBookingsPanel
               projectId={activeProjectId}
               title="Project Review Sessions & Consultations"
+            />
+          )}
+
+          {activeTab === 'billing' && (
+            <ContextualBillingPanel
+              projectId={activeProjectId}
+              accountId={currentProjectMeta?.accountId || undefined}
+              dealId={currentProjectMeta?.dealId || undefined}
+              title={`${activeTitle} — Quotes & Invoices`}
             />
           )}
         </div>

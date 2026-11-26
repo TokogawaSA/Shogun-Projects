@@ -21,10 +21,21 @@ import {
   LayoutGrid,
   FileText,
   Radio,
+  Receipt,
 } from 'lucide-react';
 import { ContextualBookingsPanel } from '../../scheduler/components/ContextualBookingsPanel';
+import { ContextualBillingPanel } from '../../catalog/components/ContextualBillingPanel';
+import { getRecordSegment } from '../utils/customerSegment';
 
-export type SubPanelTab = 'summary' | 'details' | 'projects' | 'tasks' | 'activities' | 'social' | 'bookings';
+export type SubPanelTab =
+  | 'summary'
+  | 'details'
+  | 'billing'
+  | 'projects'
+  | 'tasks'
+  | 'activities'
+  | 'social'
+  | 'bookings';
 
 export interface RelatedListsNavProps {
   moduleName: EntityModuleName;
@@ -32,6 +43,8 @@ export interface RelatedListsNavProps {
   record: Record<string, any>;
   activeTab: SubPanelTab;
   onTabChange: (tab: SubPanelTab) => void;
+  billingAction?: 'new_quote' | 'new_invoice' | null;
+  onBillingActionHandled?: () => void;
   className?: string;
 }
 
@@ -41,11 +54,18 @@ export const RelatedListsNav: React.FC<RelatedListsNavProps> = ({
   record,
   activeTab,
   onTabChange,
+  billingAction = null,
+  onBillingActionHandled,
   className = '',
 }) => {
   const { user } = useAuth();
   const tenantId = user?.tenantId || 'tenant-default';
   const navigate = useNavigate();
+  const segment = getRecordSegment(record);
+  const canShowBilling =
+    moduleName === 'accounts' ||
+    moduleName === 'deals' ||
+    (moduleName === 'contacts' && segment === 'B2C');
 
   // Linked Data States
   const [linkedProjects, setLinkedProjects] = useState<any[]>([]);
@@ -193,11 +213,10 @@ export const RelatedListsNav: React.FC<RelatedListsNavProps> = ({
       <div className="flex items-center gap-2 border-b border-slate-800 pb-2 overflow-x-auto select-none">
         <button
           onClick={() => onTabChange('summary')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === 'summary'
-              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-          }`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${activeTab === 'summary'
+            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
+            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+            }`}
         >
           <LayoutGrid className="w-3.5 h-3.5" />
           Summary
@@ -205,32 +224,42 @@ export const RelatedListsNav: React.FC<RelatedListsNavProps> = ({
 
         <button
           onClick={() => onTabChange('details')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === 'details'
-              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-          }`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${activeTab === 'details'
+            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
+            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+            }`}
         >
           <FileText className="w-3.5 h-3.5" />
           Details & Layout Blocks
         </button>
 
-        <button
-          onClick={() => onTabChange('projects')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === 'projects'
+        {canShowBilling && (
+          <button
+            onClick={() => onTabChange('billing')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${activeTab === 'billing'
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-          }`}
+              }`}
+          >
+            <Receipt className="w-3.5 h-3.5" />
+            Quotes & Invoices
+          </button>
+        )}
+
+        <button
+          onClick={() => onTabChange('projects')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${activeTab === 'projects'
+            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
+            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+            }`}
         >
           <Layers className="w-3.5 h-3.5" />
           Linked Projects
           <span
-            className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-              activeTab === 'projects'
-                ? 'bg-white/20 text-white'
-                : 'bg-slate-800 text-slate-400'
-            }`}
+            className={`px-1.5 py-0.2 rounded-full text-[10px] ${activeTab === 'projects'
+              ? 'bg-white/20 text-white'
+              : 'bg-slate-800 text-slate-400'
+              }`}
           >
             {linkedProjects.length}
           </span>
@@ -238,20 +267,18 @@ export const RelatedListsNav: React.FC<RelatedListsNavProps> = ({
 
         <button
           onClick={() => onTabChange('tasks')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === 'tasks'
-              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-          }`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${activeTab === 'tasks'
+            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
+            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+            }`}
         >
           <CheckSquare className="w-3.5 h-3.5" />
           Tasks & Reminders
           <span
-            className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-              activeTab === 'tasks'
-                ? 'bg-white/20 text-white'
-                : 'bg-slate-800 text-slate-400'
-            }`}
+            className={`px-1.5 py-0.2 rounded-full text-[10px] ${activeTab === 'tasks'
+              ? 'bg-white/20 text-white'
+              : 'bg-slate-800 text-slate-400'
+              }`}
           >
             {linkedTasks.length}
           </span>
@@ -259,11 +286,10 @@ export const RelatedListsNav: React.FC<RelatedListsNavProps> = ({
 
         <button
           onClick={() => onTabChange('activities')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === 'activities'
-              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-          }`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${activeTab === 'activities'
+            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
+            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+            }`}
         >
           <Activity className="w-3.5 h-3.5" />
           Activity Stream
@@ -271,20 +297,18 @@ export const RelatedListsNav: React.FC<RelatedListsNavProps> = ({
 
         <button
           onClick={() => onTabChange('social')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === 'social'
-              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-          }`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${activeTab === 'social'
+            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
+            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+            }`}
         >
           <Radio className="w-3.5 h-3.5" />
           Social Activity
           <span
-            className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-              activeTab === 'social'
-                ? 'bg-white/20 text-white'
-                : 'bg-slate-800 text-slate-400'
-            }`}
+            className={`px-1.5 py-0.2 rounded-full text-[10px] ${activeTab === 'social'
+              ? 'bg-white/20 text-white'
+              : 'bg-slate-800 text-slate-400'
+              }`}
           >
             {socialInteractions.length}
           </span>
@@ -292,16 +316,72 @@ export const RelatedListsNav: React.FC<RelatedListsNavProps> = ({
 
         <button
           onClick={() => onTabChange('bookings')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === 'bookings'
-              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-          }`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${activeTab === 'bookings'
+            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
+            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+            }`}
         >
           <Calendar className="w-3.5 h-3.5" />
           Bookings & Meetings
         </button>
       </div>
+
+      {/* Quotes & Invoices Sub-Panel Content (Accounts, Deals & B2C Contacts) */}
+      {activeTab === 'billing' && canShowBilling && (
+        <ContextualBillingPanel
+          accountId={moduleName === 'accounts' ? recordId : record.accountId || undefined}
+          dealId={moduleName === 'deals' ? recordId : undefined}
+          projectId={record.linkedProjectId || undefined}
+          defaultClientDetails={
+            moduleName === 'accounts'
+              ? {
+                accountId: recordId,
+                clientName: record.accountName || record.name || '',
+                email: record.email || '',
+                phone: record.primaryPhone || '',
+                vatNumber: segment === 'B2B' ? record.vatRegistrationNumber || '' : '',
+                registrationNumber: segment === 'B2B' ? record.cipcRegistrationNumber || '' : '',
+                billingAddress: [
+                  record.billingStreet,
+                  record.billingCity,
+                  record.billingState,
+                  record.billingPostalCode,
+                  record.billingCountry,
+                ]
+                  .filter(Boolean)
+                  .join(', '),
+              }
+              : moduleName === 'contacts'
+                ? {
+                  accountId: record.accountId || undefined,
+                  clientName: `${record.firstName || ''} ${record.lastName || ''}`.trim() || record.accountName || '',
+                  email: record.email || '',
+                  phone: record.mobile || record.phone || '',
+                  billingAddress: [
+                    record.mailingStreet,
+                    record.mailingCity,
+                    record.mailingState,
+                    record.mailingPostalCode,
+                    record.mailingCountry,
+                  ]
+                    .filter(Boolean)
+                    .join(', '),
+                }
+                : record.accountId
+                  ? {
+                    accountId: record.accountId,
+                    clientName: record.accountName || '',
+                  }
+                  : undefined
+          }
+          title={`${moduleName === 'contacts'
+              ? `${record.firstName || ''} ${record.lastName || ''}`.trim() || 'Consumer'
+              : record.accountName || record.dealName || 'Client'
+            } Quotes & Invoices`}
+          initialAction={billingAction}
+          onActionHandled={onBillingActionHandled}
+        />
+      )}
 
       {/* 2. Projects Sub-Panel Content */}
       {activeTab === 'projects' && (
@@ -410,11 +490,10 @@ export const RelatedListsNav: React.FC<RelatedListsNavProps> = ({
                 return (
                   <div
                     key={t.id}
-                    className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
-                      isDone
-                        ? 'bg-slate-950/30 border-slate-800/40 opacity-60'
-                        : 'bg-slate-950/60 border-slate-800 hover:border-indigo-500/40'
-                    }`}
+                    className={`flex items-center justify-between p-3 rounded-xl border transition-all ${isDone
+                      ? 'bg-slate-950/30 border-slate-800/40 opacity-60'
+                      : 'bg-slate-950/60 border-slate-800 hover:border-indigo-500/40'
+                      }`}
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <button
@@ -442,13 +521,12 @@ export const RelatedListsNav: React.FC<RelatedListsNavProps> = ({
                     </div>
 
                     <span
-                      className={`text-[10px] px-2 py-0.5 rounded-full capitalize font-semibold ${
-                        t.priority === 'urgent'
-                          ? 'bg-rose-500/20 text-rose-300'
-                          : t.priority === 'high'
+                      className={`text-[10px] px-2 py-0.5 rounded-full capitalize font-semibold ${t.priority === 'urgent'
+                        ? 'bg-rose-500/20 text-rose-300'
+                        : t.priority === 'high'
                           ? 'bg-amber-500/20 text-amber-300'
                           : 'bg-slate-800 text-slate-400'
-                      }`}
+                        }`}
                     >
                       {t.priority || 'medium'}
                     </span>

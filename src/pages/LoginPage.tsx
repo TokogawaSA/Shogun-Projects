@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldCheck, Mail, Lock, ArrowRight, Loader2, Sparkles, KeyRound, Building2 } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, ArrowRight, Loader2, KeyRound, Building2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const LoginPage: React.FC = () => {
@@ -30,58 +30,6 @@ export const LoginPage: React.FC = () => {
       setErrorMessage(
         err?.response?.data?.error || err.message || 'Authentication failed. Please check your credentials.'
       );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const isDev = import.meta.env.DEV;
-
-  const TEST_PRESETS = isDev
-    ? [
-        {
-          role: 'Admin',
-          name: 'Alex Vance',
-          email: 'admin@shogunate.solutions',
-          password: 'AdminPassword@2026',
-          badgeColor: 'border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20',
-        },
-        {
-          role: 'Project Manager',
-          name: 'Sarah Connor',
-          email: 'pm@shogunate.solutions',
-          password: 'PmPassword@2026',
-          badgeColor: 'border-blue-500/30 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20',
-        },
-        {
-          role: 'Developer',
-          name: 'David Chen',
-          email: 'dev@shogunate.solutions',
-          password: 'DevPassword@2026',
-          badgeColor: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20',
-        },
-        {
-          role: 'Viewer',
-          name: 'Victoria Sterling',
-          email: 'viewer@shogunate.solutions',
-          password: 'ViewerPassword@2026',
-          badgeColor: 'border-purple-500/30 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20',
-        },
-      ]
-    : [];
-
-  const handleQuickLogin = async (presetEmail: string, presetPass: string) => {
-    if (!isDev) return;
-    setEmail(presetEmail);
-    setPassword(presetPass);
-    setLoading(true);
-    setErrorMessage(null);
-
-    try {
-      await login(presetEmail, presetPass);
-      navigate('/');
-    } catch (err: any) {
-      setErrorMessage(err?.response?.data?.error || err.message || 'Login failed. Make sure the backend API is online.');
     } finally {
       setLoading(false);
     }
@@ -171,37 +119,6 @@ export const LoginPage: React.FC = () => {
               )}
             </button>
           </form>
-
-          {/* Quick Testing Logins Preset Selection (Dev Mode Only) */}
-          {isDev && TEST_PRESETS.length > 0 && (
-            <div className="pt-3 border-t border-slate-800/80 space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  1-Click Testing Logins
-                </span>
-                <span className="text-[10px] text-amber-400/80 font-mono">Dev Mode</span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                {TEST_PRESETS.map((preset) => (
-                  <button
-                    key={preset.email}
-                    type="button"
-                    onClick={() => handleQuickLogin(preset.email, preset.password)}
-                    disabled={loading}
-                    className={`p-2 rounded-xl border text-left transition-all flex flex-col justify-between ${preset.badgeColor}`}
-                  >
-                    <div className="flex items-center justify-between w-full mb-0.5">
-                      <span className="text-[11px] font-bold truncate">{preset.role}</span>
-                      <ArrowRight className="w-3 h-3 opacity-60" />
-                    </div>
-                    <span className="text-[10px] opacity-80 truncate">{preset.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           <div className="flex items-center justify-center gap-1.5 text-xs text-slate-400 pt-1">
             <span>Don't have an organization workspace?</span>

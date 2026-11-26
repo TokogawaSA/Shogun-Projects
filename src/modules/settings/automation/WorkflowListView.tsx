@@ -46,50 +46,7 @@ export const WorkflowListView: React.FC = () => {
         if (Array.isArray(res) && res.length > 0 && isMounted) {
           setWorkflows(res);
         } else if (isMounted) {
-          const initialRules: WorkflowRule[] = [
-            {
-              id: 'wf_deal_won_notify',
-              name: 'Closed-Won VIP Deal Notification',
-              description: 'Sends email to account executive and creates kickoff task on deals over $10,000.',
-              targetModule: 'deals',
-              triggerType: 'on_stage_change',
-              isActive: true,
-              conditions: [
-                { field: 'pipelineStage', operator: 'equals', value: 'Closed Won' },
-                { field: 'amount', operator: 'greater_than', value: 10000 },
-              ],
-              actions: [
-                {
-                  type: 'send_email',
-                  config: { templateId: 'tpl_deal_won', recipientField: '{{deal.primaryContact.email}}' },
-                },
-                {
-                  type: 'create_task',
-                  config: { taskTitle: 'Schedule Client Onboarding Call', dueInDays: 2, priority: 'urgent' },
-                },
-              ],
-            },
-            {
-              id: 'wf_task_escalation',
-              name: 'High-Priority Task Slack Webhook',
-              description: 'Dispatches outbound webhook to alerting endpoint when urgent task is logged.',
-              targetModule: 'tasks',
-              triggerType: 'on_create',
-              isActive: true,
-              conditions: [{ field: 'priority', operator: 'equals', value: 'urgent' }],
-              actions: [
-                {
-                  type: 'call_webhook',
-                  config: {
-                    url: 'https://hooks.slack.com/services/T00/B00/X00',
-                    method: 'POST',
-                    payloadTemplate: '{"text": "🚨 Urgent Task Created: {{title}}"}',
-                  },
-                },
-              ],
-            },
-          ];
-          setWorkflows(initialRules);
+          setWorkflows([]);
         }
       } catch {
         // Continue
